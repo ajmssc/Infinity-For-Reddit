@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import okhttp3.Cookie;
@@ -47,7 +48,14 @@ public class AccountCookieJar implements CookieJar {
         if (username == null) {
             return Collections.emptyList();
         }
-        return getOrLoadCookies(username);
+
+        // Scope cookies to the requested URL like a real cookie jar (RFC 6265) -- this client is also
+        // reachable with attacker-controlled hosts (e.g. LinkResolverActivity following a deep-link-derived
+        // URL), so returning the account's full cookie list unconditionally would leak its session to
+        // arbitrary third-party hosts.
+        return getOrLoadCookies(username).stream()
+                .filter(cookie -> cookie.matches(url))
+                .collect(Collectors.toList());
     }
 
     @Override
