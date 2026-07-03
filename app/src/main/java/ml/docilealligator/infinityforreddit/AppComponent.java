@@ -8,7 +8,6 @@ import dagger.BindsInstance;
 import dagger.Component;
 import ml.docilealligator.infinityforreddit.activities.AccountPostsActivity;
 import ml.docilealligator.infinityforreddit.activities.AccountSavedThingActivity;
-import ml.docilealligator.infinityforreddit.activities.AppAuthLoginActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentFilterPreferenceActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentFilterUsageListingActivity;
@@ -31,7 +30,6 @@ import ml.docilealligator.infinityforreddit.activities.InboxActivity;
 import ml.docilealligator.infinityforreddit.activities.LinkResolverActivity;
 import ml.docilealligator.infinityforreddit.activities.LockScreenActivity;
 import ml.docilealligator.infinityforreddit.activities.LoginActivity;
-import ml.docilealligator.infinityforreddit.activities.LoginChromeCustomTabActivity;
 import ml.docilealligator.infinityforreddit.activities.MainActivity;
 import ml.docilealligator.infinityforreddit.activities.OnboardingActivity;
 import ml.docilealligator.infinityforreddit.activities.PostFilterPreferenceActivity;
@@ -322,15 +320,11 @@ public interface AppComponent {
 
     void inject(CustomThemeListingFragment customThemeListingFragment);
 
-    void inject(LoginChromeCustomTabActivity loginChromeCustomTabActivity);
-
     void inject(PostOptionsBottomSheetFragment postOptionsBottomSheetFragment);
 
     void inject(ProxyPreferenceFragment proxyPreferenceFragment);
 
     void inject(CopyMultiRedditActivity copyMultiRedditActivity);
-
-    void inject(AppAuthLoginActivity appAuthLoginActivity);
 
     void inject(PostDetailsPreferenceFragment postDetailsPreferenceFragment);
 

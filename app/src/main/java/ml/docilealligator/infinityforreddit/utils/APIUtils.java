@@ -1,7 +1,6 @@
 package ml.docilealligator.infinityforreddit.utils;
 
 import android.os.SystemClock;
-import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,8 +18,6 @@ import okhttp3.RequestBody;
  */
 
 public class APIUtils {
-    public static final String OAUTH_URL = "https://www.reddit.com/api/v1/authorize.compact";
-    public static final String OAUTH_API_BASE_URI = "https://oauth.reddit.com";
     public static final String API_BASE_URI = "https://www.reddit.com";
     public static final String API_UPLOAD_MEDIA_URI = "https://reddit-uploaded-media.s3-accelerate.amazonaws.com";
     public static final String API_UPLOAD_VIDEO_URI = "https://reddit-uploaded-video.s3-accelerate.amazonaws.com";
@@ -32,29 +29,21 @@ public class APIUtils {
 
     public static final String CLIENT_ID_KEY = "client_id";
     public static final String CLIENT_SECRET_KEY = "client_secret";
-    public static final String CLIENT_ID = "";
     public static final String IMGUR_CLIENT_ID = "Client-ID cc671794e0ab397";
     public static final String REDGIFS_CLIENT_ID = "1828d0bcc93-15ac-bde6-0005-d2ecbe8daab3";
     public static final String REDGIFS_CLIENT_SECRET = "TJBlw7jRXW65NAGgFBtgZHu97WlzRXHYybK81sZ9dLM=";
     public static final String GIPHY_GIF_API_KEY = "";
-    public static final String RESPONSE_TYPE_KEY = "response_type";
-    public static final String RESPONSE_TYPE = "code";
-    public static final String STATE_KEY = "state";
-    public static final String STATE = "23ro8xlxvzp4asqd";
-    public static final String REDIRECT_URI_KEY = "redirect_uri";
-    public static final String REDIRECT_URI = "infinity://localhost";
-    public static final String DURATION_KEY = "duration";
-    public static final String DURATION = "permanent";
-    public static final String SCOPE_KEY = "scope";
-    public static final String SCOPE = "identity edit flair history modconfig modflair modlog modposts modwiki mysubreddits privatemessages read report save submit subscribe vote wikiedit wikiread creddits modcontributors modmail modothers livemanage account modself";
     public static final String ACCESS_TOKEN_KEY = "access_token";
 
     public static final String AUTHORIZATION_KEY = "Authorization";
     public static final String AUTHORIZATION_BASE = "bearer ";
     public static final String USER_AGENT_KEY = "User-Agent";
-    public static final String USER_AGENT = "";
-    public static final String ANONYMOUS_USER_AGENT = "";
+    // A real Chrome-on-Android UA so Reddit's web endpoints treat us like a browser instead of an API client.
+    public static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36";
+    public static final String ANONYMOUS_USER_AGENT = USER_AGENT;
     public static final String USERNAME_KEY = "username";
+
+    public static final String MODHASH_KEY = "X-Modhash";
 
     public static final String GRANT_TYPE_KEY = "grant_type";
     public static final String GRANT_TYPE_REFRESH_TOKEN = "refresh_token";
@@ -130,18 +119,25 @@ public class APIUtils {
 
     public static final String PLATFORM_KEY = "platform";
 
-    public static Map<String, String> getHttpBasicAuthHeader() {
+    // Mimics a real browser request to www.reddit.com/old.reddit.com instead of Reddit's OAuth API.
+    public static Map<String, String> getBrowserHeaders() {
         Map<String, String> params = new HashMap<>();
-        String credentials = String.format("%s:%s", APIUtils.CLIENT_ID, "");
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-        params.put(APIUtils.AUTHORIZATION_KEY, auth);
+        params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
+        params.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7");
+        params.put("Accept-Language", "en-US,en;q=0.9");
+        params.put(APIUtils.REFERER_KEY, "https://www.reddit.com/");
+        params.put(APIUtils.ORIGIN_KEY, "https://www.reddit.com");
         return params;
     }
 
-    public static Map<String, String> getOAuthHeader(String accessToken) {
-        Map<String, String> params = new HashMap<>();
-        params.put(APIUtils.AUTHORIZATION_KEY, APIUtils.AUTHORIZATION_BASE + accessToken);
-        params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
+    // Kept as the single call site pattern used throughout the codebase (`getOAuthHeader(account.getAccessToken())`).
+    // `accessToken` is now the account's modhash (see Account#getModhash); the returned headers carry it via
+    // X-Modhash instead of an OAuth bearer token. Session auth itself is handled by the account's CookieJar.
+    public static Map<String, String> getOAuthHeader(String modhash) {
+        Map<String, String> params = getBrowserHeaders();
+        if (modhash != null && !modhash.isEmpty()) {
+            params.put(APIUtils.MODHASH_KEY, modhash);
+        }
         return params;
     }
 

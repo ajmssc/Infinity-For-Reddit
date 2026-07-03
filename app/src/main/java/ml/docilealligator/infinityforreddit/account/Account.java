@@ -25,6 +25,7 @@ public class Account implements Parcelable {
     private final String bannerImageUrl;
     @ColumnInfo(name = "karma")
     private final int karma;
+    // Holds the browser session's modhash (X-Modhash) rather than an OAuth access token.
     @ColumnInfo(name = "access_token")
     private String accessToken;
     @ColumnInfo(name = "refresh_token")
@@ -35,6 +36,9 @@ public class Account implements Parcelable {
     private final boolean isCurrentUser;
     @ColumnInfo(name = "is_mod")
     private final boolean isMod;
+    // JSON-serialized list of the browser session cookies (e.g. reddit_session) harvested at login.
+    @ColumnInfo(name = "session_cookies")
+    private String sessionCookies;
 
     @Ignore
     protected Account(Parcel in) {
@@ -47,6 +51,7 @@ public class Account implements Parcelable {
         code = in.readString();
         isCurrentUser = in.readByte() != 0;
         isMod = in.readByte() != 0;
+        sessionCookies = in.readString();
     }
 
     public static final Creator<Account> CREATOR = new Creator<Account>() {
@@ -108,6 +113,22 @@ public class Account implements Parcelable {
         return refreshToken;
     }
 
+    public String getSessionCookies() {
+        return sessionCookies;
+    }
+
+    public void setSessionCookies(String sessionCookies) {
+        this.sessionCookies = sessionCookies;
+    }
+
+    public String getModhash() {
+        return accessToken;
+    }
+
+    public void setModhash(String modhash) {
+        this.accessToken = modhash;
+    }
+
     public String getCode() {
         return code;
     }
@@ -136,6 +157,7 @@ public class Account implements Parcelable {
         dest.writeString(code);
         dest.writeByte((byte) (isCurrentUser ? 1 : 0));
         dest.writeByte((byte) (isMod ? 1 : 0));
+        dest.writeString(sessionCookies);
     }
 
     public String getJSONModel() {

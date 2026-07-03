@@ -347,7 +347,7 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
             userPosts = api.getUserPostsListenableFuture(subredditOrUserName, loadParams.getKey(), sortType.getType(),
                     sortType.getTime());
         } else {
-            userPosts = api.getUserPostsOauthListenableFuture(APIUtils.AUTHORIZATION_BASE + accessToken,
+            userPosts = api.getUserPostsOauthListenableFuture(accessToken,
                     subredditOrUserName, userWhere, loadParams.getKey(), USER_WHERE_SUBMITTED.equals(userWhere) ? sortType.getType() : null, USER_WHERE_SUBMITTED.equals(userWhere) ? sortType.getTime() : null);
         }
 

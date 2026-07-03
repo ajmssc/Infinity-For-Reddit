@@ -28,9 +28,16 @@ interface AccountDaoKt {
         isMod: Boolean
     )
 
+    // access_token now holds the browser session's modhash.
     @Query("SELECT access_token FROM accounts WHERE username = '-'")
     fun getAnonymousAccessToken(): String?
 
     @Query("UPDATE accounts SET access_token = :accessToken WHERE username = '-'")
     fun setAnonymousAccessToken(accessToken: String?)
+
+    @Query("SELECT session_cookies FROM accounts WHERE username = :username COLLATE NOCASE LIMIT 1")
+    suspend fun getSessionCookies(username: String): String?
+
+    @Query("UPDATE accounts SET session_cookies = :sessionCookies WHERE username = :username")
+    suspend fun updateSessionCookies(username: String, sessionCookies: String?)
 }

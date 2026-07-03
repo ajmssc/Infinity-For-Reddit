@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ml.docilealligator.infinityforreddit.network.AnyAccountAccessTokenAuthenticator;
+import ml.docilealligator.infinityforreddit.network.AccountCookieJar;
+import ml.docilealligator.infinityforreddit.network.BrowserHeaderInterceptor;
 import ml.docilealligator.infinityforreddit.subreddit.Flair;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
@@ -224,7 +225,9 @@ public class SubmitPostService extends JobService {
             boolean isNSFW = bundle.getInt(EXTRA_IS_NSFW, 0) == 1;
             boolean receivePostReplyNotifications = bundle.getInt(EXTRA_RECEIVE_POST_REPLY_NOTIFICATIONS, 1) == 1;
 
-            Retrofit newAuthenticatorOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder().authenticator(new AnyAccountAccessTokenAuthenticator(mRetrofit, mRedditDataRoomDatabase, account, mCurrentAccountSharedPreferences))
+            Retrofit newAuthenticatorOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder()
+                            .cookieJar(new AccountCookieJar(mRedditDataRoomDatabase, account::getAccountName))
+                            .addInterceptor(new BrowserHeaderInterceptor())
                             .connectTimeout(30, TimeUnit.SECONDS)
                             .readTimeout(30, TimeUnit.SECONDS)
                             .writeTimeout(30, TimeUnit.SECONDS)

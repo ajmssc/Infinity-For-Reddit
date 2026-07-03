@@ -1,7 +1,6 @@
 package ml.docilealligator.infinityforreddit.apis
 
 import ml.docilealligator.infinityforreddit.thing.SortType
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FieldMap
@@ -26,23 +25,6 @@ interface RedditAPIKt {
         @HeaderMap headers: Map<String, String>,
         @FieldMap params: Map<String, String>
     ): String
-
-    @FormUrlEncoded
-    @POST("/api/v1/access_token")
-    suspend fun getAccessToken(
-        @HeaderMap headers: Map<String, String>,
-        @FieldMap params: Map<String, String>
-    ): String
-
-    @FormUrlEncoded
-    @POST("/api/v1/access_token")
-    fun getAnonymousAccessToken(
-        @HeaderMap headers: Map<String, String>,
-        @FieldMap params: Map<String, String>
-    ): Call<String>
-
-    @GET("/api/v1/me?raw_json=1")
-    suspend fun getMyInfo(@HeaderMap headers: Map<String, String>): String
 
     @GET("comments/{id}.json?raw_json=1")
     suspend fun getPostOauth(

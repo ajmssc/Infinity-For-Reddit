@@ -79,7 +79,8 @@ import ml.docilealligator.infinityforreddit.markdown.emote.EmotePlugin;
 import ml.docilealligator.infinityforreddit.markdown.imageandgif.ImageAndGifEntry;
 import ml.docilealligator.infinityforreddit.markdown.imageandgif.ImageAndGifPlugin;
 import ml.docilealligator.infinityforreddit.markdown.MarkdownUtils;
-import ml.docilealligator.infinityforreddit.network.AnyAccountAccessTokenAuthenticator;
+import ml.docilealligator.infinityforreddit.network.AccountCookieJar;
+import ml.docilealligator.infinityforreddit.network.BrowserHeaderInterceptor;
 import ml.docilealligator.infinityforreddit.repositories.CommentActivityRepository;
 import ml.docilealligator.infinityforreddit.thing.GiphyGif;
 import ml.docilealligator.infinityforreddit.thing.UploadedImage;
@@ -519,7 +520,9 @@ public class CommentActivity extends BaseActivity implements UploadImageEnabledA
             Snackbar sendingSnackbar = Snackbar.make(binding.commentCoordinatorLayout, R.string.sending_comment, Snackbar.LENGTH_INDEFINITE);
             sendingSnackbar.show();
 
-            Retrofit newAuthenticatorOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder().authenticator(new AnyAccountAccessTokenAuthenticator(mRetrofit, mRedditDataRoomDatabase, selectedAccount, mCurrentAccountSharedPreferences))
+            Retrofit newAuthenticatorOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder()
+                    .cookieJar(new AccountCookieJar(mRedditDataRoomDatabase, selectedAccount::getAccountName))
+                    .addInterceptor(new BrowserHeaderInterceptor())
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)

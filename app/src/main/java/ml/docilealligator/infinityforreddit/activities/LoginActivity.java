@@ -1,7 +1,5 @@
 package ml.docilealligator.infinityforreddit.activities;
 
-import static ml.docilealligator.infinityforreddit.utils.UtilsKt.getChromeCustomTabPackageName;
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -33,11 +31,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.greenrobot.eventbus.EventBus;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
@@ -48,17 +43,16 @@ import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.account.FetchMyInfo;
-import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.asynctasks.ParseAndInsertNewAccount;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.databinding.ActivityLoginBinding;
 import ml.docilealligator.infinityforreddit.events.NewUserLoggedInEvent;
+import ml.docilealligator.infinityforreddit.network.AccountCookieJar;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import okhttp3.Cookie;
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 
 public class LoginActivity extends BaseActivity {
@@ -83,8 +77,8 @@ public class LoginActivity extends BaseActivity {
     CustomThemeWrapper mCustomThemeWrapper;
     @Inject
     Executor mExecutor;
-    private String authCode;
     private boolean isAgreeToUserAgreement = true;
+    private boolean loginHandled = false;
     private ActivityLoginBinding binding;
 
     @Override
@@ -158,30 +152,17 @@ public class LoginActivity extends BaseActivity {
                 .replace("Version/4.0 ", "");
         binding.webviewLoginActivity.getSettings().setUserAgentString(chromeUserAgent);
 
-        Uri baseUri = Uri.parse(APIUtils.OAUTH_URL);
-        Uri.Builder uriBuilder = baseUri.buildUpon();
-        uriBuilder.appendQueryParameter(APIUtils.CLIENT_ID_KEY, APIUtils.CLIENT_ID);
-        uriBuilder.appendQueryParameter(APIUtils.RESPONSE_TYPE_KEY, APIUtils.RESPONSE_TYPE);
-        uriBuilder.appendQueryParameter(APIUtils.STATE_KEY, APIUtils.STATE);
-        uriBuilder.appendQueryParameter(APIUtils.REDIRECT_URI_KEY, APIUtils.REDIRECT_URI);
-        uriBuilder.appendQueryParameter(APIUtils.DURATION_KEY, APIUtils.DURATION);
-        uriBuilder.appendQueryParameter(APIUtils.SCOPE_KEY, APIUtils.SCOPE);
-
-        String url = uriBuilder.toString();
+        // Log in through Reddit's real web login page (not the OAuth authorize page) so we can
+        // harvest the resulting browser session cookies instead of an OAuth code.
+        String url = "https://www.reddit.com/login";
 
         binding.internetDisconnectedErrorRetryButtonLoginActivity.setOnClickListener(view -> {
             recreate();
         });
 
-        binding.fabLoginActivity.setOnClickListener(view -> {
-            if (getChromeCustomTabPackageName(this) == null) {
-                Toast.makeText(this, R.string.login_chrome_required, Toast.LENGTH_SHORT).show();
-            } else {
-                Intent intent = new Intent(this, LoginChromeCustomTabActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });
+        // No more Chrome-Custom-Tab login alternative: a Custom Tab has no way to hand HttpOnly
+        // session cookies back to this app, only a WebView's CookieManager can, so it's retired.
+        binding.fabLoginActivity.setVisibility(View.GONE);
 
         CookieManager.getInstance().removeAllCookies(aBoolean -> {
         });
@@ -190,92 +171,7 @@ public class LoginActivity extends BaseActivity {
         binding.webviewLoginActivity.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.contains("&code=") || url.contains("?code=")) {
-                    Uri uri = Uri.parse(url);
-                    String state = uri.getQueryParameter("state");
-                    if (state.equals(APIUtils.STATE)) {
-                        authCode = uri.getQueryParameter("code");
-
-                        Map<String, String> params = new HashMap<>();
-                        params.put(APIUtils.GRANT_TYPE_KEY, "authorization_code");
-                        params.put("code", authCode);
-                        params.put(APIUtils.REDIRECT_URI_KEY, APIUtils.REDIRECT_URI);
-
-                        RedditAPI api = mRetrofit.create(RedditAPI.class);
-                        Call<String> accessTokenCall = api.getAccessToken(APIUtils.getHttpBasicAuthHeader(), params);
-                        accessTokenCall.enqueue(new Callback<>() {
-                            @Override
-                            public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
-                                if (response.isSuccessful()) {
-                                    try {
-                                        String accountResponse = response.body();
-                                        if (accountResponse == null) {
-                                            //Handle error
-                                            return;
-                                        }
-
-                                        JSONObject responseJSON = new JSONObject(accountResponse);
-                                        String accessToken = responseJSON.getString(APIUtils.ACCESS_TOKEN_KEY);
-                                        String refreshToken = responseJSON.getString(APIUtils.REFRESH_TOKEN_KEY);
-
-                                        FetchMyInfo.fetchAccountInfo(mExecutor, mHandler, mOauthRetrofit,
-                                                mRedditDataRoomDatabase, accessToken,
-                                                new FetchMyInfo.FetchMyInfoListener() {
-                                                    @Override
-                                                    public void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod) {
-                                                        mCurrentAccountSharedPreferences.edit().putString(SharedPreferencesUtils.ACCESS_TOKEN, accessToken)
-                                                                .putString(SharedPreferencesUtils.ACCOUNT_NAME, name)
-                                                                .putString(SharedPreferencesUtils.ACCOUNT_IMAGE_URL, profileImageUrl).apply();
-                                                        mCurrentAccountSharedPreferences.edit().remove(SharedPreferencesUtils.SUBSCRIBED_THINGS_SYNC_TIME).apply();
-                                                        ParseAndInsertNewAccount.parseAndInsertNewAccount(mExecutor, new Handler(), name, accessToken, refreshToken, profileImageUrl, bannerImageUrl,
-                                                                karma, isMod, authCode, mRedditDataRoomDatabase.accountDao(),
-                                                                () -> {
-                                                                    EventBus.getDefault().post(new NewUserLoggedInEvent());
-                                                                    finish();
-                                                                });
-                                                    }
-
-                                                    @Override
-                                                    public void onFetchMyInfoFailed(boolean parseFailed) {
-                                                        if (parseFailed) {
-                                                            Toast.makeText(LoginActivity.this, R.string.parse_user_info_error, Toast.LENGTH_SHORT).show();
-                                                        } else {
-                                                            Toast.makeText(LoginActivity.this, R.string.cannot_fetch_user_info, Toast.LENGTH_SHORT).show();
-                                                        }
-
-                                                        finish();
-                                                    }
-                                        });
-                                    } catch (JSONException e) {
-                                        e.printStackTrace();
-                                        Toast.makeText(LoginActivity.this, R.string.parse_json_response_error, Toast.LENGTH_SHORT).show();
-                                        finish();
-                                    }
-                                } else {
-                                    Toast.makeText(LoginActivity.this, R.string.retrieve_token_error, Toast.LENGTH_SHORT).show();
-                                    finish();
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
-                                Toast.makeText(LoginActivity.this, R.string.retrieve_token_error, Toast.LENGTH_SHORT).show();
-                                t.printStackTrace();
-                                finish();
-                            }
-                        });
-                    } else {
-                        Toast.makeText(LoginActivity.this, R.string.something_went_wrong, Toast.LENGTH_SHORT).show();
-                        finish();
-                    }
-
-                } else if (url.contains("error=access_denied")) {
-                    Toast.makeText(LoginActivity.this, R.string.access_denied, Toast.LENGTH_SHORT).show();
-                    finish();
-                } else {
-                    view.loadUrl(url);
-                }
-
+                view.loadUrl(url);
                 return true;
             }
 
@@ -287,6 +183,22 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                if (loginHandled) {
+                    return;
+                }
+                // A successful login leaves the /login page for reddit's home feed; anything still
+                // under /login (or the account creation flow) means the user isn't done yet.
+                if (url.contains("reddit.com/login") || url.contains("reddit.com/register")) {
+                    return;
+                }
+
+                String cookieHeader = CookieManager.getInstance().getCookie(APIUtils.API_BASE_URI);
+                if (cookieHeader == null || !cookieHeader.contains("reddit_session")) {
+                    return;
+                }
+
+                loginHandled = true;
+                harvestSessionAndFetchIdentity(cookieHeader);
             }
 
             @Override
@@ -336,6 +248,51 @@ public class LoginActivity extends BaseActivity {
                 }
             }
         });
+    }
+
+    /**
+     * Replays the freshly-harvested browser session cookies through a one-off OkHttp client (the
+     * account doesn't exist in Room yet, so the persistent {@link AccountCookieJar} has nothing to
+     * load) to fetch identity info and the session's modhash, then persists the new account.
+     */
+    private void harvestSessionAndFetchIdentity(String cookieHeader) {
+        List<Cookie> cookies = AccountCookieJar.parseCookieHeader(cookieHeader, APIUtils.API_BASE_URI);
+        String sessionCookiesJson = AccountCookieJar.serialize(cookies);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> chain.proceed(chain.request().newBuilder()
+                        .header("Cookie", cookieHeader)
+                        .build()))
+                .build();
+        Retrofit identityRetrofit = mRetrofit.newBuilder().client(client).build();
+
+        FetchMyInfo.fetchAccountInfo(mExecutor, mHandler, identityRetrofit, mRedditDataRoomDatabase,
+                new FetchMyInfo.FetchMyInfoListener() {
+                    @Override
+                    public void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod, String modhash) {
+                        mCurrentAccountSharedPreferences.edit().putString(SharedPreferencesUtils.ACCESS_TOKEN, modhash)
+                                .putString(SharedPreferencesUtils.ACCOUNT_NAME, name)
+                                .putString(SharedPreferencesUtils.ACCOUNT_IMAGE_URL, profileImageUrl).apply();
+                        mCurrentAccountSharedPreferences.edit().remove(SharedPreferencesUtils.SUBSCRIBED_THINGS_SYNC_TIME).apply();
+                        ParseAndInsertNewAccount.parseAndInsertNewAccount(mExecutor, new Handler(), name, modhash,
+                                sessionCookiesJson, profileImageUrl, bannerImageUrl, karma, isMod,
+                                mRedditDataRoomDatabase.accountDao(),
+                                () -> {
+                                    EventBus.getDefault().post(new NewUserLoggedInEvent());
+                                    finish();
+                                });
+                    }
+
+                    @Override
+                    public void onFetchMyInfoFailed(boolean parseFailed) {
+                        loginHandled = false;
+                        if (parseFailed) {
+                            Toast.makeText(LoginActivity.this, R.string.parse_user_info_error, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, R.string.cannot_fetch_user_info, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     @Override

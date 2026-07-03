@@ -27,9 +27,10 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public interface RedditAPI {
-    @FormUrlEncoded
-    @POST("api/v1/access_token")
-    Call<String> getAccessToken(@HeaderMap Map<String, String> headers, @FieldMap Map<String, String> params);
+    // Legacy/web identity endpoint for a cookie-authenticated session: returns identity fields plus the
+    // session's modhash nested under "data", unlike the OAuth-era api/v1/me's flat response shape.
+    @GET("api/me.json?raw_json=1")
+    Call<String> getMyInfoWithModhash();
 
     @GET("r/{subredditName}/about.json?raw_json=1")
     Call<String> getSubredditData(@Path("subredditName") String subredditName);
@@ -39,9 +40,6 @@ public interface RedditAPI {
 
     @GET("subreddits/mine/subscriber?raw_json=1")
     Call<String> getSubscribedThing(@Query("after") String lastItem, @HeaderMap Map<String, String> headers);
-
-    @GET("api/v1/me?raw_json=1")
-    Call<String> getMyInfo(@HeaderMap Map<String, String> headers);
 
     @FormUrlEncoded
     @POST("api/vote")
@@ -290,7 +288,7 @@ public interface RedditAPI {
                                                                                                @Header("User-Agent") String userAgent);
 
     @GET("user/{username}/{where}.json?type=links&raw_json=1&limit=100&sr_detail=1")
-    ListenableFuture<Response<String>> getUserPostsOauthListenableFuture(@Header(APIUtils.AUTHORIZATION_KEY) String authorization,
+    ListenableFuture<Response<String>> getUserPostsOauthListenableFuture(@Header(APIUtils.MODHASH_KEY) String modhash,
                                                                          @Path("username") String username,
                                                                          @Path("where") String where,
                                                                          @Query("after") String lastItem,

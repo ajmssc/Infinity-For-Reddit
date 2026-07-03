@@ -65,7 +65,8 @@ import ml.docilealligator.infinityforreddit.fragments.SubscribedSubredditsListin
 import ml.docilealligator.infinityforreddit.multireddit.DeleteMultiReddit;
 import ml.docilealligator.infinityforreddit.multireddit.FetchMyMultiReddits;
 import ml.docilealligator.infinityforreddit.multireddit.MultiReddit;
-import ml.docilealligator.infinityforreddit.network.AnyAccountAccessTokenAuthenticator;
+import ml.docilealligator.infinityforreddit.network.AccountCookieJar;
+import ml.docilealligator.infinityforreddit.network.BrowserHeaderInterceptor;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditData;
 import ml.docilealligator.infinityforreddit.subscribedsubreddit.SubscribedSubredditData;
 import ml.docilealligator.infinityforreddit.subscribeduser.SubscribedUserData;
@@ -195,7 +196,9 @@ public class SubscribedThingListingActivity extends BaseActivity implements Acti
                 accountName = specifiedAccount.getAccountName();
                 mAccountProfileImageUrl = specifiedAccount.getProfileImageUrl();
 
-                mOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder().authenticator(new AnyAccountAccessTokenAuthenticator(mRetrofit, mRedditDataRoomDatabase, specifiedAccount, mCurrentAccountSharedPreferences))
+                mOauthRetrofit = mOauthRetrofit.newBuilder().client(new OkHttpClient.Builder()
+                                .cookieJar(new AccountCookieJar(mRedditDataRoomDatabase, specifiedAccount::getAccountName))
+                                .addInterceptor(new BrowserHeaderInterceptor())
                                 .connectTimeout(30, TimeUnit.SECONDS)
                                 .readTimeout(30, TimeUnit.SECONDS)
                                 .writeTimeout(30, TimeUnit.SECONDS)

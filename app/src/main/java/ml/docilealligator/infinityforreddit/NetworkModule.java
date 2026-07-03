@@ -14,10 +14,11 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.StreamableAPI;
 import ml.docilealligator.infinityforreddit.apis.StreamableAPIKt;
-import ml.docilealligator.infinityforreddit.network.AccessTokenAuthenticator;
-import ml.docilealligator.infinityforreddit.network.AnonymousAccessTokenInterceptor;
+import ml.docilealligator.infinityforreddit.network.AccountCookieJar;
+import ml.docilealligator.infinityforreddit.network.BrowserHeaderInterceptor;
 import ml.docilealligator.infinityforreddit.network.RedgifsAccessTokenAuthenticator;
 import ml.docilealligator.infinityforreddit.network.ServerAccessTokenAuthenticator;
 import ml.docilealligator.infinityforreddit.network.SortTypeConverterFactory;
@@ -100,42 +101,49 @@ abstract class NetworkModule {
                 .build();
     }
 
+    // Kept as a separate DI name for minimal call-site churn, but it's now just an alias for the
+    // cookie-authenticated "default" client on the same www.reddit.com host as "no_oauth" -- there is
+    // no more oauth.reddit.com.
     @Provides
     @Named("oauth")
     static Retrofit provideOAuthRetrofit(@Named("base") Retrofit retrofit,
                                          @Named("default") OkHttpClient okHttpClient) {
         return retrofit.newBuilder()
-                .baseUrl(APIUtils.OAUTH_API_BASE_URI)
                 .client(okHttpClient)
                 .build();
     }
 
+    // Browser session cookies for anonymous/guest browsing (reuses the "-" sentinel account row).
     @Provides
     @Named("anonymous")
     @Singleton
     static OkHttpClient provideCookieOkHttpClient(@Named("base") OkHttpClient httpClient,
-                                            @Named("base") Retrofit retrofit,
                                             RedditDataRoomDatabase redditDataRoomDatabase,
                                             ConnectionPool connectionPool) {
-        AnonymousAccessTokenInterceptor anonymousAccessTokenInterceptor
-                = new AnonymousAccessTokenInterceptor(retrofit, redditDataRoomDatabase);
+        AccountCookieJar cookieJar = new AccountCookieJar(redditDataRoomDatabase, () -> Account.ANONYMOUS_ACCOUNT);
 
         return httpClient.newBuilder()
-                .addInterceptor(anonymousAccessTokenInterceptor)
+                .cookieJar(cookieJar)
+                .addInterceptor(new BrowserHeaderInterceptor())
                 .connectionPool(connectionPool)
                 .build();
     }
 
+    // Browser session cookies for whichever account is currently active, looked up fresh on every
+    // request (the same singleton client serves every account the user switches to).
     @Provides
     @Named("default")
     @Singleton
     static OkHttpClient provideOkHttpClient(@Named("base") OkHttpClient httpClient,
-                                            @Named("base") Retrofit retrofit,
                                             RedditDataRoomDatabase redditDataRoomDatabase,
                                             @Named("current_account") SharedPreferences currentAccountSharedPreferences,
                                             ConnectionPool connectionPool) {
+        AccountCookieJar cookieJar = new AccountCookieJar(redditDataRoomDatabase,
+                () -> currentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, Account.ANONYMOUS_ACCOUNT));
+
         return httpClient.newBuilder()
-                .authenticator(new AccessTokenAuthenticator(retrofit, redditDataRoomDatabase, currentAccountSharedPreferences))
+                .cookieJar(cookieJar)
+                .addInterceptor(new BrowserHeaderInterceptor())
                 .connectionPool(connectionPool)
                 .build();
     }
@@ -192,15 +200,6 @@ abstract class NetworkModule {
                         return code == 301 || code == 302 || code == 303 || code == 307 || code == 308;
                     }
                 })
-                .build();
-    }
-
-    @Provides
-    @Named("oauth_without_authenticator")
-    @Singleton
-    static Retrofit provideOauthWithoutAuthenticatorRetrofit(@Named("base") Retrofit retrofit) {
-        return retrofit.newBuilder()
-                .baseUrl(APIUtils.OAUTH_API_BASE_URI)
                 .build();
     }
 

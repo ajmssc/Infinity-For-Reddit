@@ -12,7 +12,6 @@ import java.util.concurrent.Executor;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
-import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.JSONUtils;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -21,25 +20,31 @@ import retrofit2.Retrofit;
 
 public class FetchMyInfo {
 
-    public static void fetchAccountInfo(final Executor executor, final Handler handler, final Retrofit oauthRetrofit,
+    // `retrofit` must already be cookie-authenticated for the freshly-logged-in account (see
+    // AccountCookieJar) -- there's no more access token to pass explicitly.
+    public static void fetchAccountInfo(final Executor executor, final Handler handler, final Retrofit retrofit,
                                         final RedditDataRoomDatabase redditDataRoomDatabase,
-                                        final String accessToken, final FetchMyInfoListener fetchMyInfoListener) {
-        oauthRetrofit.create(RedditAPI.class).getMyInfo(APIUtils.getOAuthHeader(accessToken)).enqueue(new Callback<>() {
+                                        final FetchMyInfoListener fetchMyInfoListener) {
+        retrofit.create(RedditAPI.class).getMyInfoWithModhash().enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
                     executor.execute(() -> {
                         try {
-                            JSONObject jsonResponse = new JSONObject(response.body());
+                            JSONObject responseJson = new JSONObject(response.body());
+                            JSONObject jsonResponse = responseJson.has(JSONUtils.DATA_KEY)
+                                    ? responseJson.getJSONObject(JSONUtils.DATA_KEY) : responseJson;
+
                             String name = jsonResponse.getString(JSONUtils.NAME_KEY);
                             String profileImageUrl = Html.fromHtml(jsonResponse.getString(JSONUtils.ICON_IMG_KEY)).toString();
                             String bannerImageUrl = !jsonResponse.isNull(JSONUtils.SUBREDDIT_KEY) ? Html.fromHtml(jsonResponse.getJSONObject(JSONUtils.SUBREDDIT_KEY).getString(JSONUtils.BANNER_IMG_KEY)).toString() : null;
                             int karma = jsonResponse.getInt(JSONUtils.TOTAL_KARMA_KEY);
                             boolean isMod = jsonResponse.getBoolean(JSONUtils.IS_MOD_KEY);
+                            String modhash = jsonResponse.optString("modhash", "");
 
                             redditDataRoomDatabase.accountDao().updateAccountInfo(name, profileImageUrl, bannerImageUrl, karma, isMod);
 
-                            handler.post(() -> fetchMyInfoListener.onFetchMyInfoSuccess(name, profileImageUrl, bannerImageUrl, karma, isMod));
+                            handler.post(() -> fetchMyInfoListener.onFetchMyInfoSuccess(name, profileImageUrl, bannerImageUrl, karma, isMod, modhash));
                         } catch (JSONException e) {
                             handler.post(() -> fetchMyInfoListener.onFetchMyInfoFailed(true));
                         }
@@ -57,7 +62,7 @@ public class FetchMyInfo {
     }
 
     public interface FetchMyInfoListener {
-        void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod);
+        void onFetchMyInfoSuccess(String name, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod, String modhash);
 
         void onFetchMyInfoFailed(boolean parseFailed);
     }

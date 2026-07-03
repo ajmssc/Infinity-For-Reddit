@@ -62,6 +62,13 @@ public interface AccountDao {
     @Query("UPDATE accounts SET access_token = :accessToken, refresh_token = :refreshToken WHERE username = :username")
     void updateAccessTokenAndRefreshToken(String username, String accessToken, String refreshToken);
 
-    @Query("UPDATE accounts SET access_token = :accessToken WHERE username = :username")
-    void updateAccessToken(String username, String accessToken);
+    // access_token now holds the browser session's modhash.
+    @Query("UPDATE accounts SET access_token = :modhash WHERE username = :username")
+    void updateAccessToken(String username, String modhash);
+
+    @Query("UPDATE accounts SET session_cookies = :sessionCookies WHERE username = :username")
+    void updateSessionCookies(String username, String sessionCookies);
+
+    @Query("SELECT session_cookies FROM accounts WHERE username = :username COLLATE NOCASE LIMIT 1")
+    String getSessionCookies(String username);
 }
