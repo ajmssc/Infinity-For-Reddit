@@ -45,6 +45,10 @@ public class APIUtils {
 
     public static final String MODHASH_KEY = "X-Modhash";
 
+    // Generic "state" form field name -- used by Reddit's toggle-sticky/toggle-notifications
+    // endpoints (unrelated to the now-removed OAuth authorize-URL "state" CSRF nonce).
+    public static final String STATE_KEY = "state";
+
     public static final String GRANT_TYPE_KEY = "grant_type";
     public static final String GRANT_TYPE_REFRESH_TOKEN = "refresh_token";
     public static final String GRANT_TYPE_CLIENT_CREDENTIALS = "client_credentials";
