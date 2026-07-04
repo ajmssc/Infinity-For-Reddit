@@ -269,7 +269,7 @@ public interface RedditAPI {
     @GET("/r/{subredditName}/wiki/{wikiPage}.json?raw_json=1")
     Call<String> getWikiPage(@Path("subredditName") String subredditName, @Path("wikiPage") String wikiPage);
 
-    @GET("{sortType}?raw_json=1&limit=100&sr_detail=1")
+    @GET("{sortType}.json?raw_json=1&limit=100&sr_detail=1")
     ListenableFuture<Response<String>> getBestPostsListenableFuture(@Path("sortType") SortType.Type sortType, @Query("t") SortType.Time sortTime,
                                                                     @Query("after") String lastItem, @HeaderMap Map<String, String> headers);
 
@@ -321,7 +321,7 @@ public interface RedditAPI {
                                                                                       @Query("q") String query, @Query("sort") SortType.Type sort,
                                                                                       @Query("t") SortType.Time sortTime, @Query("after") String after);
 
-    @GET("{multipath}?raw_json=1&limit=100&sr_detail=1")
+    @GET("{multipath}/{sortType}.json?raw_json=1&limit=100&sr_detail=1")
     ListenableFuture<Response<String>> getMultiRedditPostsListenableFuture(@Path(value = "multipath", encoded = true) String multiPath,
                                                                            @Path(value = "sortType", encoded = true) SortType.Type sortType,
                                                                            @Query("after") String after, @Query("t") SortType.Time sortTime);
@@ -345,7 +345,7 @@ public interface RedditAPI {
                                                                                    @Query("t") SortType.Time sortTime,
                                                                                    @HeaderMap Map<String, String> headers);
 
-    @GET("{sortType}?raw_json=1&limit=100&sr_detail=1")
+    @GET("{sortType}.json?raw_json=1&limit=100&sr_detail=1")
     Call<String> getBestPosts(@Path("sortType") SortType.Type sortType, @Query("t") SortType.Time sortTime,
                               @Query("after") String lastItem, @HeaderMap Map<String, String> headers);
 
@@ -396,7 +396,7 @@ public interface RedditAPI {
                                                 @Query("q") String query, @Query("sort") SortType.Type sort,
                                                 @Query("t") SortType.Time sortTime, @Query("after") String after);
 
-    @GET("{multipath}?raw_json=1&limit=100&sr_detail=1")
+    @GET("{multipath}.json?raw_json=1&limit=100&sr_detail=1")
     Call<String> getMultiRedditPosts(@Path(value = "multipath", encoded = true) String multiPath,
                                      @Query("after") String after, @Query("t") SortType.Time sortTime);
 
