@@ -20,7 +20,12 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,6 +41,15 @@ import okhttp3.Response;
 import retrofit2.Retrofit;
 
 public class LinkResolverActivity extends AppCompatActivity {
+
+    private static final Set<String> ALLOWED_SHARELINK_HOSTS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    "www.reddit.com",
+                    "reddit.com",
+                    "old.reddit.com",
+                    "redd.it"
+            ))
+    );
 
     public static final String EXTRA_MESSAGE_FULLNAME = "ENF";
     public static final String EXTRA_NEW_ACCOUNT_NAME = "ENAN";
@@ -74,6 +88,24 @@ public class LinkResolverActivity extends AppCompatActivity {
         } else {
             return Uri.parse("https://www.reddit.com" + path);
         }
+    }
+
+    private boolean isAllowedShareLinkUri(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null) {
+            return false;
+        }
+
+        String normalizedScheme = scheme.toLowerCase(Locale.ROOT);
+        String normalizedHost = host.toLowerCase(Locale.ROOT);
+
+        return ("http".equals(normalizedScheme) || "https".equals(normalizedScheme))
+                && ALLOWED_SHARELINK_HOSTS.contains(normalizedHost);
     }
 
     @Override
@@ -279,6 +311,10 @@ public class LinkResolverActivity extends AppCompatActivity {
                                 startActivity(intent);
                             } else if (uri.getPath().matches(SHARELINK_SUBREDDIT_PATTERN)
                                     || uri.getPath().matches(SHARELINK_USER_PATTERN)) {
+                                if (!isAllowedShareLinkUri(uri)) {
+                                    deepLinkError(uri);
+                                    return;
+                                }
                                 mRetrofit.callFactory().newCall(new Request.Builder().url(uri.toString()).build()).enqueue(new Callback() {
                                     @Override
                                     public void onResponse(@NonNull Call call, @NonNull Response response) {
