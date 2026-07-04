@@ -313,6 +313,7 @@ public class LinkResolverActivity extends AppCompatActivity {
                                     || uri.getPath().matches(SHARELINK_USER_PATTERN)) {
                                 if (!isAllowedShareLinkUri(uri)) {
                                     deepLinkError(uri);
+                                    finish();
                                     return;
                                 }
                                 mRetrofit.callFactory().newCall(new Request.Builder().url(uri.toString()).build()).enqueue(new Callback() {
