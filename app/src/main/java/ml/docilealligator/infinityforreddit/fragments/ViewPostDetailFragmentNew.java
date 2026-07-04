@@ -534,10 +534,12 @@ public class ViewPostDetailFragmentNew extends Fragment implements FragmentCommu
             mCommentsStatusAdapter.setSingleCommentThreadMode(uiState.getSingleCommentId() != null && !uiState.getSingleCommentId().isEmpty());
             mCommentsStatusAdapter.setInitialLoading(uiState.isInitialLoading());
             mCommentsStatusAdapter.setInitialLoadingFailed(uiState.isInitialLoadingFailed());
+            mCommentsStatusAdapter.setInitialLoadingFailedErrorMessage(uiState.getInitialLoadingFailedErrorMessage());
             recyclerView.post(() -> mCommentsStatusAdapter.notifyDataSetChanged());
 
             mCommentsFooterAdapter.setLoadingMoreChildren(uiState.isLoadingMoreChildren());
             mCommentsFooterAdapter.setLoadMoreChildrenSuccess(uiState.getLoadMoreChildrenSuccess());
+            mCommentsFooterAdapter.setLoadMoreChildrenErrorMessage(uiState.getLoadMoreChildrenErrorMessage());
             recyclerView.post(() -> mCommentsFooterAdapter.notifyDataSetChanged());
 
             binding.swipeRefreshLayoutViewPostDetailFragment.setRefreshing((mPost == null && uiState.isInitialLoading()) || uiState.isRefreshing());
