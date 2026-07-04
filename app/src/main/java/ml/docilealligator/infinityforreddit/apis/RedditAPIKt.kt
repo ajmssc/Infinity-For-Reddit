@@ -206,7 +206,7 @@ interface RedditAPIKt {
         @FieldMap params: Map<String, String>
     ): Response<String>
 
-    @GET("{sortType}?raw_json=1&limit=100")
+    @GET("{sortType}.json?raw_json=1&limit=100")
     suspend fun getBestPosts(
         @Path("sortType") sortType: SortType.Type, @Query("t") sortTime: SortType.Time?,
         @Query("after") lastItem: String?, @HeaderMap headers: Map<String, String>
@@ -278,7 +278,7 @@ interface RedditAPIKt {
         @Query("t") sortTime: SortType.Time?, @Query("after") after: String?
     ): Response<String>
 
-    @GET("{multipath}?raw_json=1&limit=100")
+    @GET("{multipath}.json?raw_json=1&limit=100")
     suspend fun getMultiRedditPosts(
         @Path(value = "multipath", encoded = true) multiPath: String,
         @Query("after") after: String?, @Query("t") sortTime: SortType.Time?
