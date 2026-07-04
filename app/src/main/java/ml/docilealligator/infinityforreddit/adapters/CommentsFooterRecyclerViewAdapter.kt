@@ -24,6 +24,7 @@ class CommentsFooterRecyclerViewAdapter(
     var hasMoreChildren: Boolean = false
     var isLoadingMoreChildren: Boolean = true
     var loadMoreChildrenSuccess: Boolean = false
+    var loadMoreChildrenErrorMessage: String? = null
 
     override fun getItemViewType(position: Int): Int {
         if (!loadMoreChildrenSuccess) {
@@ -66,7 +67,16 @@ class CommentsFooterRecyclerViewAdapter(
         holder: RecyclerView.ViewHolder,
         position: Int
     ) {
-
+        if (holder is LoadMoreCommentsFailedViewHolder) {
+            val context = holder.itemView.context
+            var message = context.getString(R.string.load_comments_failed)
+            loadMoreChildrenErrorMessage?.let { errorMessage ->
+                if (errorMessage.isNotEmpty()) {
+                    message = message + "\n\n" + errorMessage
+                }
+            }
+            holder.binding?.errorTextViewItemCommentFooterError?.setText(message)
+        }
     }
 
     override fun getItemCount(): Int {
@@ -102,7 +112,6 @@ class CommentsFooterRecyclerViewAdapter(
                 binding.errorTextViewItemCommentFooterError.setTypeface(it)
                 binding.retryButtonItemCommentFooterError.setTypeface(it)
             }
-            binding.errorTextViewItemCommentFooterError.setText(R.string.load_comments_failed)
             binding.retryButtonItemCommentFooterError.setOnClickListener {
                 onRetryFetchingMoreComments()
             }

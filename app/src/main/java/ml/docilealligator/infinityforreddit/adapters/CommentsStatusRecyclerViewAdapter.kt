@@ -31,6 +31,7 @@ class CommentsStatusRecyclerViewAdapter(
     var isSingleCommentThreadMode: Boolean = false
     var isInitialLoading: Boolean = false
     var isInitialLoadingFailed: Boolean = false
+    var initialLoadingFailedErrorMessage: String? = null
     var emptyComments: Boolean = false
 
     private val circularProgressBarBackgroundColor = activity.customThemeWrapper.circularProgressBarBackground
@@ -106,7 +107,16 @@ class CommentsStatusRecyclerViewAdapter(
         holder: RecyclerView.ViewHolder,
         position: Int
     ) {
-
+        if (holder is LoadCommentsFailedViewHolder) {
+            val context = holder.itemView.context
+            var message = context.getString(R.string.load_comments_failed)
+            initialLoadingFailedErrorMessage?.let { errorMessage ->
+                if (errorMessage.isNotEmpty()) {
+                    message = message + "\n\n" + errorMessage
+                }
+            }
+            holder.binding?.errorTextViewItemLoadCommentsFailedPlaceholder?.setText(message)
+        }
     }
 
     override fun getItemCount(): Int {

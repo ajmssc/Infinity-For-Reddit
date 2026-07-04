@@ -48,6 +48,7 @@ import okio.IOException
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import retrofit2.HttpException
 import retrofit2.Response
 import retrofit2.Retrofit
 import java.util.Locale
@@ -76,10 +77,12 @@ class ViewPostDetailFragmentViewModelNew(
         val sortType: SortType.Type?,
         val isInitialLoading: Boolean,
         val isInitialLoadingFailed: Boolean,
+        val initialLoadingFailedErrorMessage: String? = null,
         val fetchPostFailed: Boolean,
         val isRefreshing: Boolean,
         val isLoadingMoreChildren: Boolean,
         val loadMoreChildrenSuccess: Boolean,
+        val loadMoreChildrenErrorMessage: String? = null,
         val shouldShowErrorView: Boolean,
         val singleCommentId: String?
     )
@@ -104,6 +107,14 @@ class ViewPostDetailFragmentViewModelNew(
         data class Response(val code: Int, val message: String?) : SubredditError()
         object Quarantined : SubredditError()
         data class Json(val e: JSONException?) : SubredditError()
+    }
+
+    private fun formatErrorDetail(e: Throwable): String {
+        if (e is HttpException) {
+            return "HTTP " + e.code() + ": " + e.message()
+        }
+        val message = e.message
+        return e.javaClass.simpleName + (if (!message.isNullOrEmpty()) ": $message" else "")
     }
 
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(
@@ -275,6 +286,7 @@ class ViewPostDetailFragmentViewModelNew(
         _uiState.value = _uiState.value.copy(
             isInitialLoading = true,
             isInitialLoadingFailed = false,
+            initialLoadingFailedErrorMessage = null,
             fetchPostFailed = false,
             shouldShowErrorView = false
         )
@@ -323,6 +335,7 @@ class ViewPostDetailFragmentViewModelNew(
                         _uiState.value = _uiState.value.copy(
                             isInitialLoading = false,
                             isInitialLoadingFailed = false,
+                            initialLoadingFailedErrorMessage = null,
                             isRefreshing = if (changeRefreshState) false else _uiState.value.isRefreshing
                         )
                         _dataState.value = _dataState.value.copy(
@@ -331,9 +344,11 @@ class ViewPostDetailFragmentViewModelNew(
                         )
                     }
                     is AppResult.Error<*> -> {
+                        val errorDetail = (parseCommentsResult.error as? Throwable)?.let { formatErrorDetail(it) }
                         _uiState.value = _uiState.value.copy(
                             isInitialLoading = false,
                             isInitialLoadingFailed = true,
+                            initialLoadingFailedErrorMessage = errorDetail,
                             isRefreshing = if (changeRefreshState) false else _uiState.value.isRefreshing
                         )
                     }
@@ -342,6 +357,7 @@ class ViewPostDetailFragmentViewModelNew(
                 _uiState.value = _uiState.value.copy(
                     isInitialLoading = false,
                     isInitialLoadingFailed = true,
+                    initialLoadingFailedErrorMessage = "HTTP " + response.code() + ": " + response.message(),
                     isRefreshing = if (changeRefreshState) false else _uiState.value.isRefreshing
                 )
             }
@@ -350,6 +366,7 @@ class ViewPostDetailFragmentViewModelNew(
             _uiState.value = _uiState.value.copy(
                 isInitialLoading = false,
                 isInitialLoadingFailed = true,
+                initialLoadingFailedErrorMessage = formatErrorDetail(e),
                 isRefreshing = if (changeRefreshState) false else _uiState.value.isRefreshing
             )
         }
@@ -364,6 +381,7 @@ class ViewPostDetailFragmentViewModelNew(
                     _uiState.value = _uiState.value.copy(
                         isInitialLoading = true,
                         isInitialLoadingFailed = false,
+                        initialLoadingFailedErrorMessage = null,
                         fetchPostFailed = false,
                         shouldShowErrorView = false
                     )
@@ -432,13 +450,16 @@ class ViewPostDetailFragmentViewModelNew(
                                         )
                                         _uiState.value = _uiState.value.copy(
                                             isInitialLoading = false,
-                                            isInitialLoadingFailed = false
+                                            isInitialLoadingFailed = false,
+                                            initialLoadingFailedErrorMessage = null
                                         )
                                     }
                                     is AppResult.Error<*> -> {
+                                        val errorDetail = (parseCommentsResult.error as? Throwable)?.let { formatErrorDetail(it) }
                                         _uiState.value = _uiState.value.copy(
                                             isInitialLoading = false,
-                                            isInitialLoadingFailed = true
+                                            isInitialLoadingFailed = true,
+                                            initialLoadingFailedErrorMessage = errorDetail
                                         )
                                     }
                                 }
@@ -483,7 +504,8 @@ class ViewPostDetailFragmentViewModelNew(
 
             _uiState.value = _uiState.value.copy(
                 isLoadingMoreChildren = true,
-                loadMoreChildrenSuccess = true
+                loadMoreChildrenSuccess = true,
+                loadMoreChildrenErrorMessage = null
             )
 
             val childrenIds: String = _dataState.value.children?.let {
@@ -520,28 +542,33 @@ class ViewPostDetailFragmentViewModelNew(
                             )
                             _uiState.value = _uiState.value.copy(
                                 isLoadingMoreChildren = false,
-                                loadMoreChildrenSuccess = true
+                                loadMoreChildrenSuccess = true,
+                                loadMoreChildrenErrorMessage = null
                             )
                         }
 
                         is AppResult.Error<*> -> {
+                            val errorDetail = (parseCommentResult.error as? Throwable)?.let { formatErrorDetail(it) }
                             _uiState.value = _uiState.value.copy(
                                 isLoadingMoreChildren = false,
-                                loadMoreChildrenSuccess = false
+                                loadMoreChildrenSuccess = false,
+                                loadMoreChildrenErrorMessage = errorDetail
                             )
                         }
                     }
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoadingMoreChildren = false,
-                        loadMoreChildrenSuccess = false
+                        loadMoreChildrenSuccess = false,
+                        loadMoreChildrenErrorMessage = "HTTP " + response.code() + ": " + response.message()
                     )
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _uiState.value = _uiState.value.copy(
                     isLoadingMoreChildren = false,
-                    loadMoreChildrenSuccess = false
+                    loadMoreChildrenSuccess = false,
+                    loadMoreChildrenErrorMessage = formatErrorDetail(e)
                 )
             }
         }
