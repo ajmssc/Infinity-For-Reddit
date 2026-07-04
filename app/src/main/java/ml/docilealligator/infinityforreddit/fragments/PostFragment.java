@@ -88,6 +88,7 @@ import ml.docilealligator.infinityforreddit.utils.Utils;
 import ml.docilealligator.infinityforreddit.videoautoplay.ExoCreator;
 import ml.docilealligator.infinityforreddit.videoautoplay.media.PlaybackInfo;
 import ml.docilealligator.infinityforreddit.videoautoplay.media.VolumeInfo;
+import retrofit2.HttpException;
 import retrofit2.Retrofit;
 
 
@@ -961,14 +962,15 @@ public class PostFragment extends PostFragmentBase implements FragmentCommunicat
             } else if (refreshLoadState instanceof LoadState.Error) {
                 binding.fetchPostInfoLinearLayoutPostFragment.setOnClickListener(view -> refresh());
                 Throwable e = ((LoadState.Error) refreshLoadState).getError();
+                String errorDetail = getErrorDetail(e);
                 if (e instanceof PostPagingSource.PostPagingSourceError) {
                     if (((PostPagingSource.PostPagingSourceError) e).code == 403 && Account.ANONYMOUS_ACCOUNT.equals(mActivity.accountName)) {
-                        showErrorView(R.string.load_posts_error_anonymous_403);
+                        showErrorView(R.string.load_posts_error_anonymous_403, errorDetail);
                     } else {
-                        showErrorView(R.string.load_posts_error);
+                        showErrorView(R.string.load_posts_error, errorDetail);
                     }
                 } else {
-                    showErrorView(R.string.load_posts_error);
+                    showErrorView(R.string.load_posts_error, errorDetail);
                 }
             }
             if (!(refreshLoadState instanceof LoadState.Loading) && appendLoadState instanceof LoadState.NotLoading) {
@@ -1156,12 +1158,37 @@ public class PostFragment extends PostFragmentBase implements FragmentCommunicat
 
     @Override
     protected void showErrorView(int stringResId) {
+        showErrorView(stringResId, null);
+    }
+
+    private void showErrorView(int stringResId, @Nullable String errorDetail) {
         if (mActivity != null && isAdded()) {
             binding.swipeRefreshLayoutPostFragment.setRefreshing(false);
             binding.fetchPostInfoLinearLayoutPostFragment.setVisibility(View.VISIBLE);
-            binding.fetchPostInfoTextViewPostFragment.setText(stringResId);
+            String message = getString(stringResId);
+            if (errorDetail != null && !errorDetail.isEmpty()) {
+                message = message + "\n\n" + errorDetail;
+            }
+            binding.fetchPostInfoTextViewPostFragment.setText(message);
             mGlide.load(R.drawable.error_image).into(binding.fetchPostInfoImageViewPostFragment);
         }
+    }
+
+    @Nullable
+    private String getErrorDetail(@Nullable Throwable error) {
+        if (error == null) {
+            return null;
+        }
+        if (error instanceof PostPagingSource.PostPagingSourceError) {
+            PostPagingSource.PostPagingSourceError e = (PostPagingSource.PostPagingSourceError) error;
+            return "HTTP " + e.code + (e.message != null && !e.message.isEmpty() ? ": " + e.message : "");
+        }
+        if (error instanceof HttpException) {
+            HttpException e = (HttpException) error;
+            return "HTTP " + e.code() + ": " + e.message();
+        }
+        String message = error.getMessage();
+        return error.getClass().getSimpleName() + (message != null && !message.isEmpty() ? ": " + message : "");
     }
 
     @NonNull
