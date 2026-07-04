@@ -19,6 +19,7 @@ import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
@@ -62,6 +63,11 @@ import retrofit2.Retrofit;
 public class LoginActivity extends BaseActivity {
 
     private static final String IS_AGREE_TO_USER_AGGREMENT_STATE = "IATUAS";
+    // Reddit's site is a client-rendered SPA; once the WebView already recognizes another
+    // account's session it can finish login via client-side routing instead of a full page
+    // load, so WebViewClient's page-load callbacks alone can miss it. This poller is a
+    // fallback that notices success even without a fresh onPageFinished.
+    private static final long LOGIN_CHECK_POLL_INTERVAL_MS = 1000L;
 
     @Inject
     @Named("no_oauth")
@@ -84,6 +90,21 @@ public class LoginActivity extends BaseActivity {
     private boolean isAgreeToUserAgreement = true;
     private boolean loginHandled = false;
     private ActivityLoginBinding binding;
+    private final Runnable loginCheckPoller = new Runnable() {
+        @Override
+        public void run() {
+            if (loginHandled) {
+                return;
+            }
+            String currentUrl = binding.webviewLoginActivity.getUrl();
+            if (currentUrl != null) {
+                checkLoginSuccess(currentUrl);
+            }
+            if (!loginHandled) {
+                mHandler.postDelayed(this, LOGIN_CHECK_POLL_INTERVAL_MS);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,10 +200,17 @@ public class LoginActivity extends BaseActivity {
         // session cookies back to this app, only a WebView's CookieManager can, so it's retired.
         binding.fabLoginActivity.setVisibility(View.GONE);
 
-        CookieManager.getInstance().removeAllCookies(aBoolean -> {
-        });
+        // Clear cookies, cache, history and local/session storage before loading the login page
+        // so a lingering session from a previously-added account can't make Reddit route this
+        // attempt through its account-switcher UI instead of a plain login. removeAllCookies is
+        // asynchronous, so wait for it to actually finish before loading anything.
+        binding.webviewLoginActivity.clearCache(true);
+        binding.webviewLoginActivity.clearHistory();
+        binding.webviewLoginActivity.clearFormData();
+        WebStorage.getInstance().deleteAllData();
+        CookieManager.getInstance().removeAllCookies(aBoolean ->
+                binding.webviewLoginActivity.loadUrl(url));
 
-        binding.webviewLoginActivity.loadUrl(url);
         binding.webviewLoginActivity.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
@@ -198,25 +226,7 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                if (loginHandled) {
-                    return;
-                }
-                // A successful login leaves the /login page for reddit's home feed; anything still
-                // under /login (or the account creation flow) means the user isn't done yet.
-                if (url.contains("reddit.com/login") || url.contains("reddit.com/register")) {
-                    return;
-                }
-
-                // Don't gate on a specific cookie name (e.g. "reddit_session") -- Reddit's set of
-                // session cookies isn't guaranteed to be stable, so let the identity fetch below be
-                // the actual source of truth for whether the harvested session is authenticated.
-                String cookieHeader = CookieManager.getInstance().getCookie(APIUtils.API_BASE_URI);
-                if (cookieHeader == null || cookieHeader.isEmpty()) {
-                    return;
-                }
-
-                loginHandled = true;
-                harvestSessionAndFetchIdentity(cookieHeader);
+                checkLoginSuccess(url);
             }
 
             @Override
@@ -228,6 +238,8 @@ public class LoginActivity extends BaseActivity {
                 }
             }
         });
+
+        mHandler.postDelayed(loginCheckPoller, LOGIN_CHECK_POLL_INTERVAL_MS);
 
         if (!isAgreeToUserAgreement) {
             TextView messageTextView = new TextView(this);
@@ -269,6 +281,32 @@ public class LoginActivity extends BaseActivity {
     }
 
     /**
+     * A successful login leaves the /login page for reddit's home feed; anything still under
+     * /login (or the account creation flow) means the user isn't done yet. Called both from
+     * {@code onPageFinished} (the common case) and from {@link #loginCheckPoller} (for when
+     * Reddit finishes the login via client-side routing that never fires another page load).
+     */
+    private void checkLoginSuccess(String url) {
+        if (loginHandled) {
+            return;
+        }
+        if (url.contains("reddit.com/login") || url.contains("reddit.com/register")) {
+            return;
+        }
+
+        // Don't gate on a specific cookie name (e.g. "reddit_session") -- Reddit's set of
+        // session cookies isn't guaranteed to be stable, so let the identity fetch below be
+        // the actual source of truth for whether the harvested session is authenticated.
+        String cookieHeader = CookieManager.getInstance().getCookie(APIUtils.API_BASE_URI);
+        if (cookieHeader == null || cookieHeader.isEmpty()) {
+            return;
+        }
+
+        loginHandled = true;
+        harvestSessionAndFetchIdentity(cookieHeader);
+    }
+
+    /**
      * Replays the freshly-harvested browser session cookies through a one-off OkHttp client (the
      * account doesn't exist in Room yet, so the persistent {@link AccountCookieJar} has nothing to
      * load) to fetch identity info and the session's modhash, then persists the new account.
@@ -304,6 +342,10 @@ public class LoginActivity extends BaseActivity {
                     @Override
                     public void onFetchMyInfoFailed(boolean parseFailed) {
                         loginHandled = false;
+                        // The poller stopped once this attempt started; since the WebView may not
+                        // navigate again on its own (e.g. it already settled on the home feed via
+                        // client-side routing), re-arm it so a later cookie/URL change is still caught.
+                        mHandler.postDelayed(loginCheckPoller, LOGIN_CHECK_POLL_INTERVAL_MS);
                         if (parseFailed) {
                             Toast.makeText(LoginActivity.this, R.string.parse_user_info_error, Toast.LENGTH_SHORT).show();
                         } else {
