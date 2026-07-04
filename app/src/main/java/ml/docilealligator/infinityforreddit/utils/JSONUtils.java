@@ -1,5 +1,17 @@
 package ml.docilealligator.infinityforreddit.utils;
 
+import androidx.annotation.Nullable;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
+
 /**
  * Created by alex on 2/25/18.
  */
@@ -109,7 +121,6 @@ public class JSONUtils {
     public static final String IS_FAVORITED_KEY = "is_favorited";
     public static final String SUBREDDITS_KEY = "subreddits";
     public static final String PATH_KEY = "path";
-    public static final String ALL_AWARDINGS_KEY = "all_awardings";
     public static final String RESIZED_ICONS_KEY = "resized_icons";
     public static final String GFY_ITEM_KEY = "gfyItem";
     public static final String MP4_URL_KEY = "mp4Url";
@@ -182,4 +193,132 @@ public class JSONUtils {
     public static final String URLS_KEY = "urls";
     public static final String HD_KEY = "hd";
     public static final String SUGGESTED_SORT_KEY = "suggested_sort";
+    public static final String P_KEY = "p";
+    public static final String VARIANTS_KEY = "variants";
+    public static final String PAGE_KEY = "page";
+    public static final String SEND_REPLIES_KEY = "send_replies";
+    public static final String PROFILE_IMG_KEY = "profile_img";
+    public static final String AUTHOR_FULLNAME_KEY = "author_fullname";
+    public static final String IS_MOD_KEY = "is_mod";
+    public static final String CAN_MOD_POST_KEY = "can_mod_post";
+    public static final String APPROVED_KEY = "approved";
+    public static final String APPROVED_AT_UTC_KEY = "approved_at_utc";
+    public static final String APPROVED_BY_KEY = "approved_by";
+    public static final String SPAM_KEY = "spam";
+    public static final String O_EMBED_KEY = "oembed";
+    public static final String THUMBNAIL_URL_KEY = "thumbnail_url";
+    public static final String VIDEO_DOWNLOAD_URL = "videoDownloadUrl";
+    public static final String EXPLANATION_KEY = "explanation";
+    public static final String SR_DETAIL_KEY = "sr_detail";
+
+    @Nullable
+    public static Map<String, MediaMetadata> parseMediaMetadata(JSONObject data) {
+        try {
+            if (data.has(JSONUtils.MEDIA_METADATA_KEY)) {
+                Map<String, MediaMetadata> mediaMetadataMap = new HashMap<>();
+                JSONObject mediaMetadataJSON = data.getJSONObject(JSONUtils.MEDIA_METADATA_KEY);
+                for (Iterator<String> it = mediaMetadataJSON.keys(); it.hasNext();) {
+                    try {
+                        String k = it.next();
+                        JSONObject media = mediaMetadataJSON.getJSONObject(k);
+
+                        // Handle giphy entries with "invalid" status by constructing direct Giphy URLs
+                        if (media.has(STATUS_KEY) && "invalid".equals(media.getString(STATUS_KEY))) {
+                            if (k.startsWith("giphy|")) {
+                                MediaMetadata giphyMetadata = createGiphyFallbackMetadata(k);
+                                if (giphyMetadata != null) {
+                                    mediaMetadataMap.put(k, giphyMetadata);
+                                }
+                            }
+                            continue;
+                        }
+
+                        String e = media.getString(JSONUtils.E_KEY);
+
+                        JSONObject originalItemJSON = media.getJSONObject(JSONUtils.S_KEY);
+                        MediaMetadata.MediaItem originalItem;
+                        if (e.equalsIgnoreCase("Image")) {
+                            originalItem = new MediaMetadata.MediaItem(originalItemJSON.getInt(JSONUtils.X_KEY),
+                                    originalItemJSON.getInt(JSONUtils.Y_KEY), originalItemJSON.getString(JSONUtils.U_KEY));
+                        } else {
+                            if (originalItemJSON.has(JSONUtils.MP4_KEY)) {
+                                originalItem = new MediaMetadata.MediaItem(originalItemJSON.getInt(JSONUtils.X_KEY),
+                                        originalItemJSON.getInt(JSONUtils.Y_KEY), originalItemJSON.getString(JSONUtils.GIF_KEY),
+                                        originalItemJSON.getString(JSONUtils.MP4_KEY));
+                            } else {
+                                originalItem = new MediaMetadata.MediaItem(originalItemJSON.getInt(JSONUtils.X_KEY),
+                                        originalItemJSON.getInt(JSONUtils.Y_KEY), originalItemJSON.getString(JSONUtils.GIF_KEY));
+                            }
+                        }
+
+                        MediaMetadata.MediaItem downscaledItem;
+                        if (media.has(JSONUtils.P_KEY)) {
+                            JSONArray downscales = media.getJSONArray(JSONUtils.P_KEY);
+                            JSONObject downscaledItemJSON;
+                            if (downscales.length() <= 0) {
+                                downscaledItem = originalItem;
+                            } else {
+                                if (downscales.length() <= 3) {
+                                    downscaledItemJSON = downscales.getJSONObject(downscales.length() - 1);
+                                } else {
+                                    downscaledItemJSON = downscales.getJSONObject(3);
+                                }
+                                downscaledItem = new MediaMetadata.MediaItem(downscaledItemJSON.getInt(JSONUtils.X_KEY),
+                                        downscaledItemJSON.getInt(JSONUtils.Y_KEY), downscaledItemJSON.getString(JSONUtils.U_KEY));
+                            }
+                        } else {
+                            downscaledItem = originalItem;
+                        }
+
+                        String id = media.getString(JSONUtils.ID_KEY);
+                        mediaMetadataMap.put(id, new MediaMetadata(id, e, originalItem, downscaledItem));
+                    } catch (JSONException e) {
+                        /*
+                        https://www.reddit.com/r/Leathercraft/comments/1qo3jrv/one_year_of_patina/.json?raw_json=1
+
+                        "media_metadata": {
+"1a9oi91fitfg1": {
+"status": "failed"
+},
+"2ik58hyditfg1": {
+"status": "failed"
+}
+}
+                         */
+                        e.printStackTrace();
+                    }
+                }
+                return mediaMetadataMap;
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
+     * Creates a fallback MediaMetadata for giphy entries with "invalid" status.
+     * Extracts the giphy ID from the key (format: "giphy|{id}" or "giphy|{id}|downsized")
+     * and constructs direct Giphy URLs.
+     *
+     * @param key The media_metadata key (e.g., "giphy|abc123|downsized")
+     * @return A MediaMetadata with direct Giphy URLs, or null if the key format is invalid
+     */
+    @Nullable
+    private static MediaMetadata createGiphyFallbackMetadata(String key) {
+        // Key format: "giphy|{id}" or "giphy|{id}|downsized"
+        String[] parts = key.split("\\|");
+        if (parts.length < 2) {
+            return null;
+        }
+
+        String giphyId = parts[1];
+        String gifUrl = "https://media.giphy.com/media/" + giphyId + "/giphy.gif";
+        String mp4Url = "https://media.giphy.com/media/" + giphyId + "/giphy.mp4";
+
+        // Use reasonable default dimensions (will be adjusted when loaded)
+        MediaMetadata.MediaItem originalItem = new MediaMetadata.MediaItem(480, 480, gifUrl, mp4Url);
+        return new MediaMetadata(key, "AnimatedImage", originalItem, originalItem);
+    }
 }

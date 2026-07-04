@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="ml.docilealligator.infinityforreddit">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <queries>
         <intent>
@@ -23,12 +22,14 @@
         android:maxSdkVersion="28" />
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".Infinity"
         android:allowBackup="false"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/application_name"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -37,9 +38,46 @@
         android:usesCleartextTraffic="true"
         tools:replace="android:label">
         <activity
+            android:name=".activities.OnboardingActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.ComposeActivity" />
+        <activity
+            android:name=".activities.SetReminderActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.ComposeActivity" />
+        <activity
+            android:name=".activities.ReminderListingActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.ComposeActivity" />
+        <activity
+            android:name=".activities.CopyMultiRedditActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.MainActivity"
+            android:theme="@style/AppTheme.ComposeActivity" />
+        <activity
+            android:name=".activities.CommentFilterUsageListingActivity"
+            android:exported="false"
+            android:parentActivityName=".activities.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activities.CustomizeCommentFilterActivity"
+            android:exported="false"
+            android:label="@string/customize_comment_filter_activity_label"
+            android:parentActivityName=".activities.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.CommentFilterPreferenceActivity"
+            android:exported="false"
+            android:label="@string/comment_filter_preference_activity_label"
+            android:parentActivityName=".activities.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".activities.HistoryActivity"
             android:exported="false"
-            android:label="@string/history_activity_label"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Slidable" />
         <activity
@@ -52,16 +90,11 @@
             android:name=".activities.EditProfileActivity"
             android:label="@string/edit_profile_activity_label"
             android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".activities.WikiActivity"
             android:label="@string/wiki_activity_label"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
-        <activity
-            android:name=".activities.TrendingActivity"
-            android:label="@string/trending_activity_label"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Slidable" />
         <activity
@@ -81,11 +114,6 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.SuicidePreventionActivity"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".activities.MultiredditSelectionActivity"
-            android:label="@string/multireddit_selection_activity_label"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
@@ -113,11 +141,6 @@
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.GiveAwardActivity"
-            android:label="@string/give_award_activity_label"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
-        <activity
             android:name=".activities.SelectUserFlairActivity"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Slidable" />
@@ -135,7 +158,8 @@
         <service
             android:name=".services.DownloadMediaService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity
             android:name=".activities.ViewRedditGalleryActivity"
@@ -152,7 +176,8 @@
         <service
             android:name=".services.DownloadRedditVideoService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity
             android:name=".activities.ViewPrivateMessagesActivity"
@@ -178,7 +203,7 @@
             android:name=".activities.EditMultiRedditActivity"
             android:label="@string/edit_multi_reddit_activity_label"
             android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.CustomThemePreviewActivity"
             android:label="@string/theme_preview_activity_label"
@@ -198,7 +223,7 @@
             android:name=".activities.SubredditMultiselectionActivity"
             android:label="@string/subreddit_multiselection_activity_label"
             android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.CreateMultiRedditActivity"
             android:label="@string/create_multi_reddit_activity_label"
@@ -263,7 +288,7 @@
             android:name=".activities.EditPostActivity"
             android:label="@string/edit_post_activity_label"
             android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable"
+            android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.FilteredPostsActivity"
@@ -352,11 +377,6 @@
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.Slidable" />
         <activity
-            android:name=".activities.SubredditSelectionActivity"
-            android:label="@string/subreddit_selection_activity_label"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
-        <activity
             android:name=".activities.PostTextActivity"
             android:label="@string/post_text_activity_label"
             android:parentActivityName=".activities.MainActivity"
@@ -390,7 +410,7 @@
             android:configChanges="orientation|screenLayout|screenSize|layoutDirection"
             android:label="@string/login_activity_label"
             android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/AppTheme.Slidable" />
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".activities.ViewImageOrGifActivity"
             android:parentActivityName=".activities.MainActivity"
@@ -436,13 +456,25 @@
         <service
             android:name=".services.SubmitPostService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
             android:name=".services.EditProfileService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <receiver android:name=".broadcastreceivers.DownloadedMediaDeleteActionBroadcastReceiver" />
+        <receiver android:name=".broadcastreceivers.ReminderAlarmReceiver" />
+        <receiver
+            android:name=".broadcastreceivers.BootCompletedBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

@@ -3,6 +3,7 @@ package ml.docilealligator.infinityforreddit.post;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
@@ -14,42 +15,46 @@ import androidx.paging.PagingConfig;
 import androidx.paging.PagingData;
 import androidx.paging.PagingLiveData;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
+import ml.docilealligator.infinityforreddit.user.UserProfileImagesBatchLoader;
 import retrofit2.Retrofit;
 
 public class HistoryPostViewModel extends ViewModel {
-    private Executor executor;
-    private Retrofit retrofit;
-    private RedditDataRoomDatabase redditDataRoomDatabase;
-    private String accessToken;
-    private String accountName;
-    private SharedPreferences sharedPreferences;
-    private int postType;
-    private PostFilter postFilter;
+    private final Executor executor;
+    private final Retrofit retrofit;
+    private final RedditDataRoomDatabase redditDataRoomDatabase;
+    private final String accessToken;
+    private final String accountName;
+    private final SharedPreferences sharedPreferences;
+    private final int readPostType;
+    private final PostFilter postFilter;
+    private final UserProfileImagesBatchLoader loader;
 
-    private LiveData<PagingData<Post>> posts;
+    private final LiveData<PagingData<Post>> posts;
 
-    private MutableLiveData<PostFilter> postFilterLiveData;
+    private final MutableLiveData<PostFilter> postFilterLiveData;
 
     public HistoryPostViewModel(Executor executor, Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
-                                String accessToken, String accountName, SharedPreferences sharedPreferences,
-                                int postType, PostFilter postFilter) {
+                                @Nullable String accessToken, @NonNull String accountName, SharedPreferences sharedPreferences,
+                                int readPostType, PostFilter postFilter,
+                                UserProfileImagesBatchLoader loader) {
         this.executor = executor;
         this.retrofit = retrofit;
         this.redditDataRoomDatabase = redditDataRoomDatabase;
         this.accessToken = accessToken;
         this.accountName = accountName;
         this.sharedPreferences = sharedPreferences;
-        this.postType = postType;
+        this.readPostType = readPostType;
         this.postFilter = postFilter;
+        this.loader = loader;
 
-        postFilterLiveData = new MutableLiveData<>();
-        postFilterLiveData.postValue(postFilter);
+        postFilterLiveData = new MutableLiveData<>(postFilter);
 
-        Pager<String, Post> pager = new Pager<>(new PagingConfig(25, 25, false), this::returnPagingSoruce);
+        Pager<String, Post> pager = new Pager<>(new PagingConfig(25, 4, false, 10), this::returnPagingSource);
 
         posts = Transformations.switchMap(postFilterLiveData, postFilterValue -> PagingLiveData.cachedIn(PagingLiveData.getLiveData(pager), ViewModelKt.getViewModelScope(this)));
     }
@@ -58,58 +63,49 @@ public class HistoryPostViewModel extends ViewModel {
         return posts;
     }
 
-    public HistoryPostPagingSource returnPagingSoruce() {
-        HistoryPostPagingSource paging3PagingSource;
-        switch (postType) {
-            case HistoryPostPagingSource.TYPE_READ_POSTS:
-                paging3PagingSource = new HistoryPostPagingSource(retrofit, executor, redditDataRoomDatabase, accessToken, accountName,
-                        sharedPreferences, accountName, postType, postFilter);
-                break;
-            default:
-                paging3PagingSource = new HistoryPostPagingSource(retrofit, executor, redditDataRoomDatabase, accessToken, accountName,
-                        sharedPreferences, accountName, postType, postFilter);
-                break;
-        }
-        return paging3PagingSource;
+    public HistoryPostPagingSource returnPagingSource() {
+        return new HistoryPostPagingSource(retrofit, executor, redditDataRoomDatabase, accessToken, accountName,
+                sharedPreferences, accountName, readPostType, postFilter);
     }
 
     public void changePostFilter(PostFilter postFilter) {
         postFilterLiveData.postValue(postFilter);
     }
 
+    public void loadAuthorIcons(List<Post> posts, UserProfileImagesBatchLoader.LoadIconListener loadIconListener) {
+        loader.loadAuthorImagesInPosts(accessToken, posts, loadIconListener);
+    }
+
     public static class Factory extends ViewModelProvider.NewInstanceFactory {
-        private Executor executor;
-        private Retrofit retrofit;
-        private RedditDataRoomDatabase redditDataRoomDatabase;
-        private String accessToken;
-        private String accountName;
-        private SharedPreferences sharedPreferences;
-        private int postType;
-        private PostFilter postFilter;
+        private final Executor executor;
+        private final Retrofit retrofit;
+        private final RedditDataRoomDatabase redditDataRoomDatabase;
+        private final String accessToken;
+        private final String accountName;
+        private final SharedPreferences sharedPreferences;
+        private final int readPostType;
+        private final PostFilter postFilter;
+        private final UserProfileImagesBatchLoader loader;
 
         public Factory(Executor executor, Retrofit retrofit, RedditDataRoomDatabase redditDataRoomDatabase,
-                       String accessToken, String accountName, SharedPreferences sharedPreferences, int postType,
-                       PostFilter postFilter) {
+                       @Nullable String accessToken, @NonNull String accountName, SharedPreferences sharedPreferences, int readPostType,
+                       PostFilter postFilter, UserProfileImagesBatchLoader loader) {
             this.executor = executor;
             this.retrofit = retrofit;
             this.redditDataRoomDatabase = redditDataRoomDatabase;
             this.accessToken = accessToken;
             this.accountName = accountName;
             this.sharedPreferences = sharedPreferences;
-            this.postType = postType;
+            this.readPostType = readPostType;
             this.postFilter = postFilter;
+            this.loader = loader;
         }
 
         @NonNull
         @Override
         public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-            if (postType == HistoryPostPagingSource.TYPE_READ_POSTS) {
-                return (T) new HistoryPostViewModel(executor, retrofit, redditDataRoomDatabase, accessToken, accountName, sharedPreferences,
-                        postType, postFilter);
-            } else {
-                return (T) new HistoryPostViewModel(executor, retrofit, redditDataRoomDatabase, accessToken, accountName, sharedPreferences,
-                        postType, postFilter);
-            }
+            return (T) new HistoryPostViewModel(executor, retrofit, redditDataRoomDatabase, accessToken, accountName, sharedPreferences,
+                    readPostType, postFilter, loader);
         }
     }
 }

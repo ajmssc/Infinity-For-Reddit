@@ -24,13 +24,23 @@
     <string name="edit_multi_reddit_activity_label">"मल्टीरैडिट सम्पादित करें"</string>
     <string name="selected_subeddits_activity_label">"चुनी हुई सबरैडिट्स"</string>
     <string name="report_activity_label">"शिकायत करें"</string>
+
+    <!-- Fuzzy -->
     <string name="view_imgur_media_activity_image_label">"चित्र %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_imgur_media_activity_video_label">"वीडियो %1$/%2$d"</string>
 
     <!-- Or one can use as is form in Devnagari script ' पी एम भेजें' -->
     <string name="send_private_message_activity_label">"व्यक्तिगत संदेश भेजें"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_image_label">"चित्र %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_gif_label">"गिफ %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_video_label">"वीडियो %1$d/%2$d"</string>
     <string name="navigation_drawer_open">"नेवीगेशन दराज खोलें"</string>
     <string name="navigation_drawer_close">"नेवीगेशन दराज बंद करें"</string>
@@ -52,8 +62,6 @@
     <string name="action_unhide_post">"पोस्ट दिखाएं"</string>
     <string name="action_edit_post">"पोस्ट संपादित करें"</string>
     <string name="action_delete_post">"पोस्ट मिटायें"</string>
-    <string name="action_mark_nsfw">"NSFW चिन्ह लगाएं"</string>
-    <string name="action_unmark_nsfw">"NSFW चिन्ह हटाएं"</string>
     <string name="action_mark_spoiler">"Spoiler चिन्ह लगाएं"</string>
     <string name="action_unmark_spoiler">"Spoiler चिन्ह हटाएं"</string>
     <string name="action_edit_flair">"फ्लेयर संपादित करें"</string>
@@ -64,7 +72,6 @@
     <string name="action_share">"दूसरो को भेजे"</string>
     <string name="action_preview">"पूर्वदर्शन"</string>
     <string name="action_report">"शिकायत करें"</string>
-    <string name="action_see_removed">"हटाए हुए पोस्ट देखें"</string>
     <string name="action_set_wallpaper">"वालपेपर लगाएं "</string>
     <string name="action_send_private_message">"व्यक्तिगत संदेश भेजें"</string>
     <string name="parse_json_response_error">"JSON प्रतिक्रिया को समझने में त्रुटि"</string>
@@ -104,8 +111,11 @@
     <string name="load_messages_failed">"संदेश दिखाने में त्रुटि।
 पुनः प्रयास के लिए यहां दबाएं।"</string>
     <string name="no_messages">"रिक्त "</string>
-    <string name="nsfw">"NSFW"</string>
+
+    <!-- Fuzzy -->
     <string name="karma_info">"कर्म: %1$d"</string>
+
+    <!-- Fuzzy -->
     <string name="karma_info_user_detail">"कर्म: %1$d(%2$d + %3$d)"</string>
     <string name="cakeday_info">"केक दिवस: %1$s"</string>
     <string name="since">"से (समय):
@@ -119,9 +129,12 @@
     <string name="hidden">"छिपी हुई"</string>
     <string name="saved">"सहेजी हुई
 "</string>
-    <string name="gilded">"पदक प्राप्त"</string>
     <string name="settings">"सैटिंग्स"</string>
+
+    <!-- Fuzzy -->
     <string name="subscribers_number_detail">"सब्सक्राइबर्स: %1$d"</string>
+
+    <!-- Fuzzy -->
     <string name="online_subscribers_number_detail">"ऑनलाइन: %1$d"</string>
     <string name="cannot_fetch_subreddit_info">"सबरैडिट की जानकारी प्राप्त नहीं हो सकी"</string>
     <string name="cannot_fetch_user_info">"यूजर की जानकारी प्राप्त नहीं हो सकी"</string>
@@ -139,7 +152,6 @@
     <string name="follow_failed">"अनुसरण असफल"</string>
     <string name="unfollowed">"अनफॉलोड"</string>
     <string name="unfollow_failed">"अ-अनुसरण असफल"</string>
-    <string name="content_description_banner_imageview">"सबरैडिट बैनर चित्र"</string>
     <string name="app_label">"इनफिनिटी"</string>
     <string name="search_hint">"कुछ खोजिए"</string>
     <string name="no_posts_no_lazy_mode">"कोई पोस्ट उपलब्ध नहीं"</string>
@@ -207,6 +219,8 @@ Behavior -->
     <string name="no_flair">"कोई फ्लेयर नहीं"</string>
     <string name="error_loading_flairs">"फ्लेयर लोड होने में  त्रुटि।
 यहां दबाएं"</string>
+
+    <!-- Fuzzy -->
     <string name="no_rule">"कोई नियम उप्लब्ध नहीं"</string>
     <string name="error_loading_rules">"नियम लोड होने में त्रुटि।
 यहां दबाएं"</string>
@@ -278,11 +292,6 @@ Behavior -->
     <string name="are_you_sure">"क्या आप सुनिश्चित हैं? "</string>
     <string name="edit">"संपादन करें "</string>
     <string name="delete">"हटाएं "</string>
-    <string name="see_removed_comment">"हटाई हुई टिप्पणी देखें "</string>
-    <string name="fetching_removed_comment">"हटाई हुई टिप्पणी प्राप्त हो रही है "</string>
-    <string name="show_removed_comment_failed">"हटाई हुई टिप्पणी नहीं खोज सका "</string>
-    <string name="fetching_removed_post">"हटाई हुई पोस्ट प्राप्त हो रही है "</string>
-    <string name="show_removed_post_failed">"हटाई हुई पोस्ट नहीं खोजी जा सकी"</string>
     <string name="cancel">"निरस्त करें "</string>
     <string name="ok">"ठीक है "</string>
 
@@ -292,14 +301,6 @@ Behavior -->
     <!-- Shouldn't it be "'Deleted Successfully'? -->
     <string name="delete_post_success">"हटाना सफल रहा "</string>
     <string name="delete_post_failed">"हटाना असफल "</string>
-
-    <!-- Fuzzy -->
-    <string name="mark_nsfw_success">"NSFW चिह्नीकरण सफल "</string>
-    <string name="mark_nsfw_failed">"NSFW चिह्नीकरण असफल "</string>
-
-    <!-- Fuzzy -->
-    <string name="unmark_nsfw_success">"NSFW अचिह्नीकरण सफल "</string>
-    <string name="unmark_nsfw_failed">"NSFW अचिह्नीकरण असफल"</string>
 
     <!-- Fuzzy -->
     <string name="mark_spoiler_success">"Spoiler चिह्नीकरण सफल"</string>
@@ -319,6 +320,8 @@ Behavior -->
     <string name="notification_summary_message">"नया संदेश "</string>
     <string name="notification_summary_subreddit">"सबरैडिट "</string>
     <string name="notification_summary_award">"पुरस्कार "</string>
+
+    <!-- Fuzzy -->
     <string name="notification_new_messages">"%1$d नया संदेश"</string>
     <string name="label_account">"खाता "</string>
     <string name="label_post">"पोस्ट "</string>
@@ -336,17 +339,18 @@ Behavior -->
     <string name="settigns_video_title">"वीडियो "</string>
     <string name="settings_video_autoplay_title">"वीडियो स्वचालन"</string>
     <string name="settings_mute_autoplaying_videos_title">"स्वचालित वीडियोज को मौन करें "</string>
-    <string name="settings_autoplay_nsfw_videos_title">"स्वचालित NSFW वीडियोड"</string>
     <string name="settings_start_autoplay_visible_area_offset_portrait_title">"स्वचालित वीडियो के दृश्य क्षेत्र का संतुलन (खड़े में)"</string>
+
+    <!-- Fuzzy -->
     <string name="settings_start_autoplay_visible_area_offset_portrait_summary">"वीडियोज स्वयं ही चलेंगी जब उनका %1$d%% दिखाई दे "</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_title">"स्वचालित वीडियो के दृश्य क्षेत्र का संतुलन (लेटे में)"</string>
+
+    <!-- Fuzzy -->
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">"वीडियोज स्वयं ही चलेंगी जब उनका %1$d%% दिखाई दे "</string>
     <string name="settings_immersive_interface_title">"इमरसिव इंटरफेस "</string>
 
     <!-- Fuzzy -->
     <string name="settings_immersive_interface_summary">"सभी पृष्ठों पर लागू नहीं होता है"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"इमरसिव इंटरफेस में नेवीगेशन बार को छिपा दें"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"निचले नेवीगेशन बार को अतिरिक्त स्थान लेने से रोकें "</string>
     <string name="settings_customize_tabs_in_main_page_title">"मुख्य पृष्ट पर टैब्स अनुकूलित करें "</string>
     <string name="settings_enable_bottom_app_bar_title">"निचला नेवीगेशन शुरू करें "</string>
     <string name="settings_category_post_and_comment_title">"पोस्ट एवं टिप्पणी "</string>
@@ -355,11 +359,7 @@ Behavior -->
     <string name="settings_volume_keys_navigate_posts_title">"पोस्ट्स नेवीगेशन के लिए वॉल्यूम कुंजियों का प्रयोग "</string>
     <string name="settings_mute_video_title">"मौन वीडियोज "</string>
 
-    <!-- Are those commands or a state? Like 'search' is a state in 'search opration' but is a command in 'search something'. Hindi has different appraoch for these two. -->
-    <string name="settings_mute_nsfw_video_title">"मौन NSFW वीडियोज"</string>
-
     <!-- Fuzzy -->
-    <string name="settings_automatically_try_redgifs_title">"स्वतः ही Redgifs खोलने का प्रयास यदि Gfycat पर वीडियोज हटा दी गयी  हों "</string>
     <string name="settings_video_player_ignore_nav_bar_title">"वीडियो प्लेयर में नेवीगेशन बार का छिपना"</string>
     <string name="settings_video_player_ignore_nav_bar_summary">"वीडियो कंट्रोलर द्वारा अतिरिक्त हाशिया लेने पर रोक "</string>
     <string name="settings_confirm_to_exit">"एप छोड़ने की पुष्टि "</string>
@@ -400,8 +400,6 @@ Behavior -->
     <string name="settings_font_size_title">"फॉन्ट का आकार "</string>
     <string name="settings_title_font_size_title">"शीर्षक फॉन्ट का आकार "</string>
     <string name="settings_content_font_size_title">"अंतःवस्तु फॉन्ट का आकार "</string>
-    <string name="settings_enable_nsfw_title">"NSFW शुरू करें "</string>
-    <string name="settings_blur_nsfw_title">"धुंधले NSFW चित्र "</string>
     <string name="settings_blur_spoiler_title">"धुंधले Spoiler चित्र "</string>
     <string name="settings_about_master_title">"एप के बारे में"</string>
     <string name="settings_acknowledgement_master_title">"स्वीकृति"</string>
@@ -412,8 +410,6 @@ Behavior -->
     <string name="settings_credits_icon_background_summary">"ब्याकग्राउंड डिज़ाइन बनाया हे फ्रीपिक - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"त्रुटि चित्र "</string>
     <string name="settings_credits_error_image_summary">"प्रौद्योगिकी डिज़ाइन बनाया हे फ्रीपिक - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"पदक आइकॉन "</string>
-    <string name="settings_credits_gilded_icon_summary">"फ्रीपिक द्वारा आइकॉन डिजाइन  www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"क्रॉसपोस्ट आइकॉन "</string>
     <string name="settings_credits_crosspost_icon_summary">"आइकन बनाया है फ्रीपिक ने - www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"थम्बटेक आइकॉन "</string>
@@ -485,14 +481,24 @@ Behavior -->
     <string name="post_layout_compact">"संक्षिप्त विन्यास "</string>
     <string name="elapsed_time_just_now">"अभी अभी "</string>
     <string name="elapsed_time_a_minute_ago">"1 मिनट "</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_minutes_ago">"%1$d मिनट "</string>
     <string name="elapsed_time_an_hour_ago">"1 घंटा "</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_hours_ago">"%1$d घंटे "</string>
     <string name="elapsed_time_yesterday">"कल "</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_days_ago">"%1$d दिन "</string>
     <string name="elapsed_time_a_month_ago">"1 महीना "</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_months_ago">"%1$d महीने "</string>
     <string name="elapsed_time_a_year_ago">"1 वर्ष "</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_years_ago">"%1$d वर्ष "</string>
     <string name="error_getting_multi_reddit_data">"मल्टीरैडिट डेटा प्राप्ति में त्रुटि "</string>
     <string name="error_loading_multi_reddit_list">"मल्टीरैडिट्स सिंक नहीं कर सकता "</string>
@@ -530,11 +536,11 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="create_multi_reddit_failed">"इस मल्टीरैडिट का  निर्माण असफल "</string>
     <string name="duplicate_multi_reddit">"यह मल्टीरैडिट पहले से उपलब्ध है "</string>
     <string name="edit_multi_reddit_failed">"इस मल्टीरैडिट का संपादन असफल "</string>
+
+    <!-- Fuzzy -->
     <string name="delete_multi_reddit_success">"सफलतापूर्वक मिटाई गई "</string>
     <string name="delete_multi_reddit_failed">"मिटाना असफल "</string>
     <string name="delete_multi_reddit_dialog_message">"क्या आप निश्चित हैं? "</string>
-    <string name="enable_nsfw">"NSFW शुरू करें "</string>
-    <string name="disable_nsfw">"NSFW बंद करें "</string>
     <string name="cannot_save_image">"चित्र सुरक्षित करने में असफल "</string>
     <string name="cannot_save_gif">"जिफ सुरक्षित करने में असफल "</string>
     <string name="cannot_get_storage">"एप्प स्टोरेज तक अभिगम असफल "</string>
@@ -630,10 +636,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="theme_item_spoiler_background_color_detail">"पर लागू होगा: Spoiler टैग की पृष्ठभूमि "</string>
     <string name="theme_item_spoiler_text_color">"Spoiler टेक्स्ट रंग "</string>
     <string name="theme_item_spoiler_text_color_detail">"पर लागू होगा: Spoiler टैग में टेक्स्ट का रंग "</string>
-    <string name="theme_item_nsfw_background_color">"NSFW पृष्टभूमि रंग "</string>
-    <string name="theme_item_nsfw_background_color_detail">"पर लागू होगा: NSFW टैग की पृष्टभूमि "</string>
-    <string name="theme_item_nsfw_text_color">"NSFW टेक्स्ट रंग "</string>
-    <string name="theme_item_nsfw_text_color_detail">"पर लागू होगा: NSFW टैग के टेक्स्ट का रंग "</string>
     <string name="theme_item_flair_background_color">"फ्लेयर पृष्ठभूमि रंग "</string>
     <string name="theme_item_flair_background_color_detail">"पर लागू होगा: फ्लेयर टैग की पृष्ठभूमि"</string>
     <string name="theme_item_flair_text_color">"फ्लेयर टेक्स्ट रंग "</string>
@@ -718,6 +720,8 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="edit_theme_name">"थीम का नाम संपादित करें "</string>
     <string name="edit_theme">"थीम संपादित करें "</string>
     <string name="delete_theme">"थीम मिटाएं"</string>
+
+    <!-- Fuzzy -->
     <string name="delete_theme_dialog_message">"%1$s को मिटाने के लिए सुनिश्चित हैं? "</string>
     <string name="share_theme">"थीम साझा करें "</string>
     <string name="change_theme_name">"नाम बदलें "</string>
@@ -771,8 +775,8 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
 वह बीमार नहीं है, लेकिन वह निश्चित रूप से अच्छी हो जाएगी।"</string>
     <string name="edit_multi_reddit">"मल्टीरैडिट्स संपादित करें "</string>
     <string name="delete_multi_reddit">"मल्टीरैडिट्स मिटा दें "</string>
-    <string name="n_awards">"%1$d पदक "</string>
-    <string name="one_award">"1 पदक "</string>
+
+    <!-- Fuzzy -->
     <string name="report">"रिपोर्ट "</string>
     <string name="reporting">"रिपोर्ट हो रही है "</string>
     <string name="report_successful">"रिपोर्ट कर दी गई "</string>
@@ -787,7 +791,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="notifications">"अधिसूचनाएं "</string>
     <string name="messages">"संदेश "</string>
     <string name="message">"संदेश "</string>
-    <string name="fetch_gfycat_video_failed">"Gfycat वीडियो प्राप्ति सफल "</string>
     <string name="fetch_redgifs_video_failed">"Redgifs वीडियो प्राप्ति असफल "</string>
     <string name="fetching_video_info_please_wait">"वीडियो इनफो प्राप्त हो रहा है। कृपया प्रतीक्षा करें। "</string>
     <string name="error_fetching_imgur_media">"चित्र लोड नहीं हो सका "</string>
@@ -824,7 +827,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="settings_number_of_columns_in_post_feed_title">"पोस्ट फीड में स्तम्भों की संख्या "</string>
     <string name="settings_number_of_columns_in_post_feed_portrait_title">"ऊर्ध्वाधर"</string>
     <string name="settings_number_of_columns_in_post_feed_landscape_title">" क्षैतिज "</string>
-    <string name="settings_nsfw_and_spoiler_title">"समाचारपत्र एवं स्प्वाॅइलर"</string>
     <string name="settings_delete_all_legacy_settings_title">"सभी पुरानी सैटिंग्स को मिटाएं"</string>
     <string name="restart_app_see_changes">"परिवर्तन देखने के लिए एप्प को पुनः शुरू करें "</string>
     <string name="settings_tab_count">"टैब संख्या "</string>
@@ -892,17 +894,9 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="refresh">"ताजा करें "</string>
     <string name="change_sort_type">"क्रम प्रकार बदलें"</string>
     <string name="change_post_layout">"पोस्ट विन्यास बदलें "</string>
-    <string name="give_award_dialog_title">"पुरस्कार दें? "</string>
-    <string name="anonymous">"अज्ञात"</string>
 
     <!-- Fuzzy -->
-    <string name="give_award_error_message">"कूट: %1$d
-संदेश: %2$s"</string>
-    <string name="give_award_success">"पुरस्कार दे दिया गया "</string>
-    <string name="give_award_failed">"असफल "</string>
     <string name="warning">"चेतावनी "</string>
-    <string name="this_is_a_nsfw_subreddit">"यह एक NSFW सबरैडिट है "</string>
-    <string name="this_user_has_nsfw_content">"इस यूजर के पास NSFW सामग्री है। "</string>
     <string name="dismiss">"रद्द करें "</string>
     <string name="leave">"निकासी "</string>
 
@@ -913,10 +907,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="go_to_user">"यूजर पर जाएं "</string>
     <string name="go_to_thing_hint">"नाम "</string>
     <string name="random">"यादृच्छिक "</string>
-    <string name="random_subreddit">"यादृच्छिक सबरैडिट "</string>
-    <string name="random_nsfw_subreddit">"यादृच्छिक NSFW सबरैडिट"</string>
-    <string name="random_post">"यादृच्छिक पोस्ट "</string>
-    <string name="random_nsfw_post">"यादृच्छिक NSFW पोस्ट "</string>
     <string name="fetch_random_thing_failed">"बाद में पुनः प्रयास करें"</string>
     <string name="downloading">"डाउनलोड हो रहा है "</string>
     <string name="subreddit_filter_popular_and_all_activity_label">"r/all एवं r/popular"</string>
@@ -954,10 +944,50 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="settings_privacy_policy_title">"गोपनीयता नीति"</string>
     <string name="settings_delete_read_posts_in_database_title">"डेटाबेस में सभी पढ़े गए पोस्ट हटाएं"</string>
     <string name="settings_post_filter_title">"पोस्ट फ़िल्टर"</string>
+    <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"केवल वीडियो और जिफ़ पोस्ट में वीडियो अक्षम करें"</string>
     <string name="settings_enable_search_history_title">"सुरक्षा इतिहास सक्षम करें"</string>
     <string name="settings_post_history_title">"इतिहास के बाद"</string>
-    <string name="settings_mark_posts_as_read_title">"पोस्ट को पढ़ने के रूप में चिह्नित करें"</string>
+    <string name="settings_mark_posts_as_read_after_voting_title">"वोट करने के बाद ही पोस्ट को पढ़ा हुआ मार्क करें"</string>
+    <string name="settings_mark_posts_as_read_on_scroll_title">"स्क्रोल करते ही पोस्ट को पढ़ा हुआ मार्क करें"</string>
     <string name="settings_hide_read_posts_automatically_title">"पठन पोस्ट स्वचालित रूप से छुपाएँ"</string>
+    <string name="settings_sort_type_title">"क्रमबद्ध प्रकार"</string>
+    <string name="settings_save_sort_type_title">"क्रमबद्ध प्रकार सहेजें"</string>
+    <string name="settings_subreddit_default_sort_type_title">"सबरेडिट डिफ़ॉल्ट सॉर्ट प्रकार"</string>
+    <string name="settings_subreddit_default_sort_time_title">"सब्रेडिट डिफ़ॉल्ट सॉर्ट समय"</string>
+    <string name="settings_user_default_sort_type_title">"उपयोगकर्ता डिफ़ॉल्ट सॉर्ट प्रकार"</string>
+    <string name="settings_user_default_sort_time_title">"उपयोगकर्ता डिफ़ॉल्ट सॉर्ट समय"</string>
+    <string name="open_link">"लिंक खोलें"</string>
+    <string name="select_subreddits_and_users">"Subredditsऔर Users चुने"</string>
+    <string name="theme_item_read_post_title_color">"पहले से पढ़ी पोस्ट के लिए रंग"</string>
+    <string name="theme_item_read_post_title_color_detail">"पर लागू: वह पोस्ट जो पहले ही पढ़ी जा चुकी है"</string>
+    <string name="theme_item_read_post_content_color">"पहले से पढ़ी गई पोस्ट के मुख्य भाग के लिए रंग चुनें"</string>
+    <string name="theme_item_read_post_content_color_detail">"उन पर लागू: पोस्ट की सामग्री जो पहले ही पढ़ी जा चुकी है"</string>
+    <string name="theme_item_read_post_card_view_background_color">"Card View में पढे हुऐ पोस्ट के बैकग्राउंड का रंग"</string>
+    <string name="theme_item_read_post_card_view_background_color_detail">"लागू होगा: पढ़े हुए पोस्ट के बैकग्राउंड पर"</string>
+    <string name="delete_all_read_posts_success">"पढ़े हुए सारे पोस्टों को पूर्णतः डिलीट करें"</string>
+    <string name="hide_read_posts">"पढ़े हुए पोस्ट ना दिखाएं"</string>
+    <string name="filter_posts">"पोस्ट को छानें"</string>
+    <string name="only_spoiler">"केवल Spoiler"</string>
+    <string name="title_excludes_strings_hint">"शीर्षक: इन शब्दों का प्रयोग ना करें (जैसे- key1,key2)"</string>
+    <string name="title_excludes_regex_hint">"शीर्षक: रेगेक्स को शामिल नहीं करता है"</string>
+    <string name="exclude_subreddits_hint">"सबरेडिट्स शामिल न करें (e.g. funny, Askreddit)"</string>
+    <string name="exclude_users_hint">"उपयोगकर्ताओं को शामिल न करें (e.g. Hostilenemy,random)"</string>
+    <string name="exclude_flairs_hint">"फ्लेयर्स शामिल न करें (e.g. flair1,flair2)"</string>
+    <string name="post_filter_name_hint">"Post filter का नाम"</string>
+    <string name="post_filter_requires_a_name">"इस post filter का नाम क्या है?"</string>
+    <string name="duplicate_post_filter_dialog_title">"'%1$s' पहले से ही है"</string>
+    <string name="apply_to">"लागू करें"</string>
+    <string name="post_filter_usage_subreddit">"Subreddit: %1$s"</string>
+    <string name="post_filter_usage_subreddit_all">"Subreddit"</string>
+    <string name="post_filter_usage_user">"User: %1$s"</string>
+    <string name="post_filter_usage_user_all">"User"</string>
+    <string name="post_filter_usage_multireddit">"MultiReddit: %1$s"</string>
+    <string name="post_filter_usage_multireddit_all">"Multireddit"</string>
+    <string name="post_filter_usage_search">"खोजें"</string>
+    <string name="subreddit">"Subreddit"</string>
+    <string name="user">"User"</string>
+    <string name="read_all_messages_success">"सभी messages सफलतापूर्वक पढ लिए"</string>
+    <string name="read_all_messages_failed">"सभी messages पढ़ने में असक्षम"</string>
     <string name="about">"एप के बारे में"</string>
     <string name="app_lock_timeout_immediately">"तुरंत "</string>
     <string name="app_lock_timeout_1_min">"1 मिनट "</string>

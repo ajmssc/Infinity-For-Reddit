@@ -9,36 +9,35 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.activities.SettingsActivity;
 import ml.docilealligator.infinityforreddit.adapters.AcknowledgementRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
+import ml.docilealligator.infinityforreddit.databinding.FragmentAcknowledgementBinding;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 /**
  * A simple {@link Fragment} subclass.
  */
 public class AcknowledgementFragment extends Fragment {
 
-    @BindView(R.id.recycler_view_acknowledgement_fragment)
-    RecyclerView recyclerView;
-    private SettingsActivity activity;
+    private SettingsActivity mActivity;
 
     public AcknowledgementFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_acknowledgement, container, false);
-        ButterKnife.bind(this, rootView);
+        FragmentAcknowledgementBinding binding = FragmentAcknowledgementBinding.inflate(inflater, container, false);
 
         ArrayList<Acknowledgement> acknowledgements = new ArrayList<>();
         acknowledgements.add(new Acknowledgement("ExoPlayer",
@@ -56,9 +55,6 @@ public class AcknowledgementFragment extends Fragment {
         acknowledgements.add(new Acknowledgement("Dagger",
                 "A fast dependency injector for Java and Android.",
                 Uri.parse("https://github.com/google/dagger")));
-        acknowledgements.add(new Acknowledgement("Butter Knife",
-                "Field and method binding for Android views",
-                Uri.parse("https://github.com/JakeWharton/butterknife")));
         acknowledgements.add(new Acknowledgement("Aspect Ratio ImageView",
                 "A simple imageview which scales the width or height aspect with the given ratio",
                 Uri.parse("https://github.com/santalu/aspect-ratio-imageview")));
@@ -80,9 +76,6 @@ public class AcknowledgementFragment extends Fragment {
         acknowledgements.add(new Acknowledgement("Customized and Expandable TextView",
                 "Simple library to change the Textview as rectangle, circle and square shapes",
                 Uri.parse("https://github.com/Rajagopalr3/CustomizedTextView")));
-        acknowledgements.add(new Acknowledgement("Rounded Bottom Sheet",
-                "Bottom sheet with rounded corners",
-                Uri.parse("https://github.com/Deishelon/RoundedBottomSheet")));
         acknowledgements.add(new Acknowledgement("Bridge",
                 "A library for avoiding TransactionTooLargeException during state saving and restoration",
                 Uri.parse("https://github.com/livefront/bridge")));
@@ -123,18 +116,30 @@ public class AcknowledgementFragment extends Fragment {
                 "2D zoom and pan behavior for View hierarchies, images, video streams, and much more, written in Kotlin for Android.",
                 Uri.parse("https://github.com/natario1/ZoomLayout")));
 
-        AcknowledgementRecyclerViewAdapter adapter = new AcknowledgementRecyclerViewAdapter(activity, acknowledgements);
-        recyclerView.setLayoutManager(new LinearLayoutManagerBugFixed(activity));
-        recyclerView.setAdapter(adapter);
+        AcknowledgementRecyclerViewAdapter adapter = new AcknowledgementRecyclerViewAdapter(mActivity, acknowledgements);
+        binding.getRoot().setLayoutManager(new LinearLayoutManagerBugFixed(mActivity));
+        binding.getRoot().setAdapter(adapter);
 
-        rootView.setBackgroundColor(activity.customThemeWrapper.getBackgroundColor());
+        binding.getRoot().setBackgroundColor(mActivity.customThemeWrapper.getBackgroundColor());
 
-        return rootView;
+        if (mActivity.isImmersiveInterfaceRespectForcedEdgeToEdge()) {
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = Utils.getInsets(insets, false, mActivity.isForcedImmersiveInterface());
+                    binding.getRoot().setPadding(allInsets.left, 0, allInsets.right, allInsets.bottom);
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
+        }
+
+        return binding.getRoot();
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        activity = (SettingsActivity) context;
+        mActivity = (SettingsActivity) context;
     }
 }

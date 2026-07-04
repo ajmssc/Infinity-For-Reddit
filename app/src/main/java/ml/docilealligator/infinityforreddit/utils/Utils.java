@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -31,52 +30,64 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
 import androidx.core.text.HtmlCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParserException;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.noties.markwon.core.spans.CustomTypefaceSpan;
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.SortType;
-import ml.docilealligator.infinityforreddit.UploadedImage;
+import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
+import ml.docilealligator.infinityforreddit.thing.SortType;
+import ml.docilealligator.infinityforreddit.thing.UploadedImage;
 import retrofit2.Retrofit;
 
 public final class Utils {
     public static final int NETWORK_TYPE_OTHER = -1;
     public static final int NETWORK_TYPE_WIFI = 0;
     public static final int NETWORK_TYPE_CELLULAR = 1;
-    private static final long SECOND_MILLIS = 1000;
-    private static final long MINUTE_MILLIS = 60 * SECOND_MILLIS;
-    private static final long HOUR_MILLIS = 60 * MINUTE_MILLIS;
-    private static final long DAY_MILLIS = 24 * HOUR_MILLIS;
-    private static final long MONTH_MILLIS = 30 * DAY_MILLIS;
-    private static final long YEAR_MILLIS = 12 * MONTH_MILLIS;
+    public static final long SECOND_MILLIS = 1000;
+    public static final long MINUTE_MILLIS = 60 * SECOND_MILLIS;
+    public static final long HOUR_MILLIS = 60 * MINUTE_MILLIS;
+    public static final long DAY_MILLIS = 24 * HOUR_MILLIS;
+    public static final long MONTH_MILLIS = 30 * DAY_MILLIS;
+    public static final long YEAR_MILLIS = 12 * MONTH_MILLIS;
+
+    // The label group avoids a `(X{0,n}X)*`-style nested quantifier (flagged by CodeQL as
+    // exponential-backtracking-prone on long runs of repeated characters) by making the
+    // middle/end part of each label optional instead of unbounded-repeated.
+    public static String HOSTNAME_REGEX = "^(?=^.{1,253}$)((?:[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?[\\.]){1,3}[a-z]{1,61})$";
     private static final Pattern[] REGEX_PATTERNS = {
             Pattern.compile("((?<=[\\s])|^)/[rRuU]/[\\w-]+/{0,1}"),
             Pattern.compile("((?<=[\\s])|^)[rRuU]/[\\w-]+/{0,1}"),
             Pattern.compile("\\^{2,}"),
-            Pattern.compile("!\\[gif]\\(giphy\\|\\w+\\)"),
-            Pattern.compile("!\\[gif]\\(giphy\\|\\w+\\|downsized\\)"),
-            Pattern.compile("!\\[gif]\\(emote\\|\\w+\\|\\w+\\)"),
+            //Sometimes the reddit preview images and gifs have a caption and the markdown will become [caption](image_link)
+            //Matches preview.redd.it and i.redd.it media
+            //For i.redd.it media, it only matches [caption](image-link. Notice there is no ) at the end.
+            //i.redd.it: (\\[(?:(?!((?<!\\\\)\\[)).)*?]\\()?https://i.redd.it/\\w+.(jpg|png|jpeg|gif)"
+            Pattern.compile("((?:\\[(.*?)]\\()?(https://preview.redd.it/(\\w+).(?:jpg|png|jpeg)(?:\\?+[-a-zA-Z0-9()@:%_+.~#?&/=]*|)))|((?:\\[(.*?)]\\()?(https://i.redd.it/(\\w+).(?:jpg|png|jpeg|gif)))"),
+            Pattern.compile("(?:\\[(.*?)]\\()?(https://reddit\\.com/link/([^/]+)/video/([^/]+)/player)")
     };
+
+    private static final Pattern PROCESSING_IMG_PATTERN = Pattern.compile("\\*?Processing img (\\w+)\\.{3}\\*?");
 
     public static String modifyMarkdown(String markdown) {
         String regexed = REGEX_PATTERNS[0].matcher(markdown).replaceAll("[$0](https://www.reddit.com$0)");
@@ -86,66 +97,150 @@ public final class Utils {
         return regexed;
     }
 
-    public static String parseInlineGifInComments(String markdown) {
-        StringBuilder markdownStringBuilder = new StringBuilder(markdown);
-        Pattern inlineGifPattern = REGEX_PATTERNS[3];
-        Matcher matcher = inlineGifPattern.matcher(markdownStringBuilder);
-        while (matcher.find()) {
-            markdownStringBuilder.replace(matcher.start(), matcher.end(), "[gif](https://i.giphy.com/media/" + markdownStringBuilder.substring(matcher.start() + "![gif](giphy|".length(), matcher.end() - 1) + "/giphy.mp4)");
-            matcher = inlineGifPattern.matcher(markdownStringBuilder);
-        }
+    public static ParseRedditMediaBlockResult parseRedditImagesBlock(String markdown, @Nullable Map<String, MediaMetadata> mediaMetadataMap) {
+        if (mediaMetadataMap == null) {
+            StringBuilder markdownStringBuilder = new StringBuilder(markdown);
+            int start = 0;
+            while (true) {
+                Matcher videoMatcher = REGEX_PATTERNS[4].matcher(markdownStringBuilder);
 
-        Pattern inlineGifPattern2 = REGEX_PATTERNS[4];
-        Matcher matcher2 = inlineGifPattern2.matcher(markdownStringBuilder);
-        while (matcher2.find()) {
-            markdownStringBuilder.replace(matcher2.start(), matcher2.end(), "[gif](https://i.giphy.com/media/" + markdownStringBuilder.substring(matcher2.start() + "![gif](giphy|".length(), matcher2.end() - "|downsized\\)".length() + 1) + "/giphy.mp4)");
-            matcher2 = inlineGifPattern2.matcher(markdownStringBuilder);
-        }
+                if (videoMatcher.find(start)) {
+                    String id = videoMatcher.group(4);
+                    String linkId = videoMatcher.group(3);
+                    String caption = videoMatcher.group(1);
 
-        Pattern inlineGifPattern3 = REGEX_PATTERNS[5];
-        Matcher matcher3 = inlineGifPattern3.matcher(markdownStringBuilder);
-        while (matcher3.find()) {
-            markdownStringBuilder.replace(matcher3.start(), matcher3.end(),
-                    "[gif](https://reddit-meta-production.s3.amazonaws.com/public/fortnitebr/emotes/snoomoji_emotes/"
-                            + markdownStringBuilder.substring(
-                            matcher3.start() + "![gif](emote|".length(), matcher3.end() - 1).replace('|', '/') + ".gif)");
-            matcher3 = inlineGifPattern3.matcher(markdownStringBuilder);
-        }
-
-        return markdownStringBuilder.toString();
-    }
-
-    public static String parseInlineEmotes(String markdown, JSONObject mediaMetadataObject) throws JSONException {
-        JSONArray mediaMetadataNames = mediaMetadataObject.names();
-        if (mediaMetadataNames != null) {
-            for (int i = 0; i < mediaMetadataNames.length(); i++) {
-                if (!mediaMetadataNames.isNull(i)) {
-                    String mediaMetadataKey = mediaMetadataNames.getString(i);
-                    if (mediaMetadataObject.isNull(mediaMetadataKey)) {
-                        continue;
+                    if (mediaMetadataMap == null) {
+                        mediaMetadataMap = new HashMap<>();
                     }
-                    JSONObject item = mediaMetadataObject.getJSONObject(mediaMetadataKey);
-                    if (item.isNull(JSONUtils.STATUS_KEY)
-                            || !item.getString(JSONUtils.STATUS_KEY).equals("valid")
-                            || item.isNull(JSONUtils.ID_KEY)
-                            || item.isNull(JSONUtils.T_KEY)
-                            || item.isNull(JSONUtils.S_KEY)) {
-                        continue;
-                    }
-                    String emote_type = item.getString(JSONUtils.T_KEY);
-                    String emote_id = item.getString(JSONUtils.ID_KEY);
 
-                    JSONObject s_key = item.getJSONObject(JSONUtils.S_KEY);
-                    if (s_key.isNull(JSONUtils.U_KEY)) {
-                        continue;
-                    }
-                    String emote_url = s_key.getString(JSONUtils.U_KEY);
+                    MediaMetadata.MediaItem item = new MediaMetadata.MediaItem(0, 0, "https://v.redd.it/link/" + linkId + "/asset/" + id + "/HLSPlaylist.m3u8", null);
+                    MediaMetadata mediaMetadata = new MediaMetadata(id, "Video", item, item);
+                    mediaMetadataMap.put(id, mediaMetadata);
 
-                    markdown = markdown.replace("![img](" + emote_id + ")", "[" + emote_type + "](" + emote_url + ") ");
+                    mediaMetadata.caption = caption;
+
+                    if (markdownStringBuilder.charAt(videoMatcher.start()) == '[') {
+                        //Has caption
+                        markdownStringBuilder.insert(videoMatcher.start(), '!');
+                        start = videoMatcher.end() + 1;
+                    } else {
+                        String replacingText = "![](" + videoMatcher.group(2) + ")";
+                        markdownStringBuilder.replace(videoMatcher.start(), videoMatcher.end(), replacingText);
+                        start = replacingText.length() + videoMatcher.start();
+                    }
+                } else {
+                    break;
                 }
             }
+
+            return new ParseRedditMediaBlockResult(markdownStringBuilder.toString(), mediaMetadataMap);
         }
-        return markdown;
+
+        // Replace "Processing img <id>..." placeholders with the actual URL from media_metadata.
+        // The bare URL will then be wrapped by the existing preview.redd.it / i.redd.it logic below.
+        Matcher processingMatcher = PROCESSING_IMG_PATTERN.matcher(markdown);
+        StringBuffer sb = new StringBuffer();
+        while (processingMatcher.find()) {
+            String imgId = processingMatcher.group(1);
+            MediaMetadata mediaMetadata = mediaMetadataMap.get(imgId);
+            if (mediaMetadata != null && mediaMetadata.original != null) {
+                processingMatcher.appendReplacement(sb, Matcher.quoteReplacement(mediaMetadata.original.url));
+            }
+        }
+        processingMatcher.appendTail(sb);
+        markdown = sb.toString();
+
+        StringBuilder markdownStringBuilder = new StringBuilder(markdown);
+        int start = 0;
+        while (true) {
+            Matcher previewReddItAndIReddItImageMatcher = REGEX_PATTERNS[3].matcher(markdownStringBuilder);
+            Matcher videoMatcher = REGEX_PATTERNS[4].matcher(markdownStringBuilder);
+
+            if (previewReddItAndIReddItImageMatcher.find(start)) {
+                if (previewReddItAndIReddItImageMatcher.group(1) != null) {
+                    String id = previewReddItAndIReddItImageMatcher.group(4);
+                    String caption = previewReddItAndIReddItImageMatcher.group(2);
+
+                    MediaMetadata mediaMetadata = mediaMetadataMap.get(id);
+                    if (mediaMetadata == null) {
+                        start = previewReddItAndIReddItImageMatcher.end();
+                        continue;
+                    }
+
+                    mediaMetadata.caption = caption;
+
+                    if (markdownStringBuilder.charAt(previewReddItAndIReddItImageMatcher.start()) == '[') {
+                        //Has caption
+                        markdownStringBuilder.insert(previewReddItAndIReddItImageMatcher.start(), '!');
+                        start = previewReddItAndIReddItImageMatcher.end() + 1;
+                    } else {
+                        String replacingText = "![](" + previewReddItAndIReddItImageMatcher.group(3) + ")";
+                        markdownStringBuilder.replace(previewReddItAndIReddItImageMatcher.start(), previewReddItAndIReddItImageMatcher.end(), replacingText);
+                        start = replacingText.length() + previewReddItAndIReddItImageMatcher.start();
+                    }
+                } else if (previewReddItAndIReddItImageMatcher.group(2) != null) {
+                    String id = previewReddItAndIReddItImageMatcher.group(8);
+                    String caption = previewReddItAndIReddItImageMatcher.group(6);
+
+                    MediaMetadata mediaMetadata = mediaMetadataMap.get(id);
+                    if (mediaMetadata == null) {
+                        start = previewReddItAndIReddItImageMatcher.end();
+                        continue;
+                    }
+
+                    mediaMetadata.caption = caption;
+
+                    if (markdownStringBuilder.charAt(previewReddItAndIReddItImageMatcher.start()) == '[') {
+                        //Has caption
+                        markdownStringBuilder.insert(previewReddItAndIReddItImageMatcher.start(), '!');
+                        start = previewReddItAndIReddItImageMatcher.end() + 1;
+                    } else {
+                        String replacingText = "![](" + previewReddItAndIReddItImageMatcher.group(7) + ")";
+                        markdownStringBuilder.replace(previewReddItAndIReddItImageMatcher.start(), previewReddItAndIReddItImageMatcher.end(), replacingText);
+                        start = replacingText.length() + previewReddItAndIReddItImageMatcher.start();
+                    }
+                } else {
+                    start = previewReddItAndIReddItImageMatcher.end();
+                }
+            } else if (videoMatcher.find(start)) {
+                String id = videoMatcher.group(4);
+                String linkId = videoMatcher.group(3);
+                String caption = videoMatcher.group(1);
+
+                MediaMetadata mediaMetadata = mediaMetadataMap.get(id);
+                if (mediaMetadata == null) {
+                    MediaMetadata.MediaItem item = new MediaMetadata.MediaItem(0, 0, "https://v.redd.it/link/" + linkId + "/asset/" + id + "/HLSPlaylist.m3u8", null);
+                    mediaMetadata = new MediaMetadata(id, "Video", item, item);
+                    mediaMetadataMap.put(id, mediaMetadata);
+                }
+
+                mediaMetadata.caption = caption;
+
+                if (markdownStringBuilder.charAt(videoMatcher.start()) == '[') {
+                    //Has caption
+                    markdownStringBuilder.insert(videoMatcher.start(), '!');
+                    start = videoMatcher.end() + 1;
+                } else {
+                    String replacingText = "![](" + videoMatcher.group(2) + ")";
+                    markdownStringBuilder.replace(videoMatcher.start(), videoMatcher.end(), replacingText);
+                    start = replacingText.length() + videoMatcher.start();
+                }
+            } else {
+                break;
+            }
+        }
+
+        return new ParseRedditMediaBlockResult(markdownStringBuilder.toString(), mediaMetadataMap);
+    }
+
+    public final static class ParseRedditMediaBlockResult {
+        public String parsedMarkdown;
+        public Map<String, MediaMetadata> mediaMetadataMap;
+
+        public ParseRedditMediaBlockResult(String parsedMarkdown, Map<String, MediaMetadata> mediaMetadataMap) {
+            this.parsedMarkdown = parsedMarkdown;
+            this.mediaMetadataMap = mediaMetadataMap;
+        }
     }
 
     public static String trimTrailingWhitespace(String source) {
@@ -322,6 +417,24 @@ public final class Utils {
         return false;
     }
 
+    public static boolean isConnectedToInternet(Context context) {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Network network = connectivityManager.getActiveNetwork();
+                if (network == null) {
+                    return false;
+                }
+                NetworkCapabilities networkCapabilities = connectivityManager.getNetworkCapabilities(network);
+                return networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+            } else {
+                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                return networkInfo != null && networkInfo.isConnected();
+            }
+        }
+        return false;
+    }
+
     public static void displaySortTypeInToolbar(SortType sortType, Toolbar toolbar) {
         if (sortType != null) {
             if (sortType.getTime() != null) {
@@ -369,29 +482,33 @@ public final class Utils {
         Handler handler = new Handler();
         executor.execute(() -> {
             try {
-                Bitmap bitmap = Glide.with(context).asBitmap().load(imageUri).submit().get();
-                String imageUrlOrError = UploadImageUtils.uploadImage(oauthRetrofit, uploadMediaRetrofit, accessToken, bitmap);
+                String imageKeyOrError = UploadImageUtils.uploadImage(oauthRetrofit, uploadMediaRetrofit,
+                        context.getContentResolver(), accessToken, imageUri, true);
                 handler.post(() -> {
-                    if (imageUrlOrError != null && !imageUrlOrError.startsWith("Error: ")) {
+                    if (imageKeyOrError != null && !imageKeyOrError.startsWith("Error: ")) {
                         String fileName = Utils.getFileName(context, imageUri);
                         if (fileName == null) {
-                            fileName = imageUrlOrError;
+                            fileName = imageKeyOrError;
                         }
-                        uploadedImages.add(new UploadedImage(fileName, imageUrlOrError));
+                        uploadedImages.add(new UploadedImage(fileName, imageKeyOrError));
 
                         int start = Math.max(editText.getSelectionStart(), 0);
                         int end = Math.max(editText.getSelectionEnd(), 0);
-                        editText.getText().replace(Math.min(start, end), Math.max(start, end),
-                                "[" + fileName + "](" + imageUrlOrError + ")",
-                                0, "[]()".length() + fileName.length() + imageUrlOrError.length());
+                        int realStart = Math.min(start, end);
+                        if (realStart > 0 && editText.getText().toString().charAt(realStart - 1) != '\n') {
+                            editText.getText().replace(realStart, Math.max(start, end),
+                                    "\n![](" + imageKeyOrError + ")\n",
+                                    0, "\n![]()\n".length() + imageKeyOrError.length());
+                        } else {
+                            editText.getText().replace(realStart, Math.max(start, end),
+                                    "![](" + imageKeyOrError + ")\n",
+                                    0, "![]()\n".length() + imageKeyOrError.length());
+                        }
                         Snackbar.make(coordinatorLayout, R.string.upload_image_success, Snackbar.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(context, R.string.upload_image_failed, Toast.LENGTH_LONG).show();
                     }
                 });
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-                handler.post(() -> Toast.makeText(context, R.string.get_image_bitmap_failed, Toast.LENGTH_LONG).show());
             } catch (XmlPullParserException | JSONException | IOException e) {
                 e.printStackTrace();
                 handler.post(() -> Toast.makeText(context, R.string.error_processing_image, Toast.LENGTH_LONG).show());
@@ -464,6 +581,49 @@ public final class Utils {
             }
         } else if (rootView instanceof TextView) {
             ((TextView) rootView).setTypeface(typeface);
+        }
+    }
+
+    public static <T> int fixIndexOutOfBounds(T[] array, int index) {
+        return index >= array.length ? array.length - 1 : index;
+    }
+
+    public static <T> int fixIndexOutOfBoundsUsingPredetermined(T[] array, int index, int predeterminedIndex) {
+        return index >= array.length ? predeterminedIndex : index;
+    }
+
+    @Nullable
+    public static File getCacheDir(Context context) {
+        File cacheDir = context.getExternalCacheDir();
+        if (cacheDir != null) {
+            return cacheDir;
+        }
+
+        cacheDir = context.getCacheDir();
+        if (cacheDir != null) {
+            return cacheDir;
+        }
+
+        cacheDir = context.getExternalFilesDir(null);
+        if (cacheDir != null) {
+            return cacheDir;
+        }
+
+        return context.getFilesDir();
+    }
+
+    public static Insets getInsets(WindowInsetsCompat insets, boolean includeIME, boolean forcedImmersiveMode) {
+        int insetTypes = WindowInsetsCompat.Type.systemBars()
+                | WindowInsetsCompat.Type.displayCutout();
+        if (includeIME) {
+            insetTypes |= WindowInsetsCompat.Type.ime();
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            // For Android 10 and below
+            return insets.getInsetsIgnoringVisibility(insetTypes);
+        } else {
+            Insets originalInsets = insets.getInsets(insetTypes);
+            return forcedImmersiveMode ? Insets.of(0, 0, 0, originalInsets.bottom) : originalInsets;
         }
     }
 }

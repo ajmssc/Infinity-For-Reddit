@@ -8,25 +8,40 @@ import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.account.AccountDao;
+import ml.docilealligator.infinityforreddit.account.AccountDaoKt;
+import ml.docilealligator.infinityforreddit.comment.CommentDraft;
+import ml.docilealligator.infinityforreddit.comment.CommentDraftDao;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilter;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterDao;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterDaoKt;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterUsage;
+import ml.docilealligator.infinityforreddit.commentfilter.CommentFilterUsageDao;
 import ml.docilealligator.infinityforreddit.customtheme.CustomTheme;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeDao;
+import ml.docilealligator.infinityforreddit.customtheme.CustomThemeDaoKt;
 import ml.docilealligator.infinityforreddit.multireddit.AnonymousMultiredditSubreddit;
 import ml.docilealligator.infinityforreddit.multireddit.AnonymousMultiredditSubredditDao;
+import ml.docilealligator.infinityforreddit.multireddit.AnonymousMultiredditSubredditDaoKt;
 import ml.docilealligator.infinityforreddit.multireddit.MultiReddit;
 import ml.docilealligator.infinityforreddit.multireddit.MultiRedditDao;
+import ml.docilealligator.infinityforreddit.multireddit.MultiRedditDaoKt;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilterDao;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilterUsage;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilterUsageDao;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
 import ml.docilealligator.infinityforreddit.readpost.ReadPostDao;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostDaoKt;
 import ml.docilealligator.infinityforreddit.recentsearchquery.RecentSearchQuery;
 import ml.docilealligator.infinityforreddit.recentsearchquery.RecentSearchQueryDao;
+import ml.docilealligator.infinityforreddit.reminder.Reminder;
+import ml.docilealligator.infinityforreddit.reminder.ReminderDao;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditDao;
 import ml.docilealligator.infinityforreddit.subreddit.SubredditData;
 import ml.docilealligator.infinityforreddit.subscribedsubreddit.SubscribedSubredditDao;
@@ -38,7 +53,9 @@ import ml.docilealligator.infinityforreddit.user.UserData;
 
 @Database(entities = {Account.class, SubredditData.class, SubscribedSubredditData.class, UserData.class,
         SubscribedUserData.class, MultiReddit.class, CustomTheme.class, RecentSearchQuery.class,
-        ReadPost.class, PostFilter.class, PostFilterUsage.class, AnonymousMultiredditSubreddit.class}, version = 23)
+        ReadPost.class, PostFilter.class, PostFilterUsage.class, AnonymousMultiredditSubreddit.class,
+        CommentFilter.class, CommentFilterUsage.class, CommentDraft.class, Reminder.class}, version = 34, exportSchema = false)
+@TypeConverters(Converters.class)
 public abstract class RedditDataRoomDatabase extends RoomDatabase {
 
     public static RedditDataRoomDatabase create(final Context context) {
@@ -49,11 +66,16 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
                         MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
                         MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17,
                         MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20, MIGRATION_20_21,
-                        MIGRATION_21_22, MIGRATION_22_23)
+                        MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24, MIGRATION_24_25,
+                        MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29,
+                        MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33,
+                        MIGRATION_33_34)
                 .build();
     }
 
     public abstract AccountDao accountDao();
+
+    public abstract AccountDaoKt accountDaoKt();
 
     public abstract SubredditDao subredditDao();
 
@@ -65,17 +87,35 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
 
     public abstract MultiRedditDao multiRedditDao();
 
+    public abstract MultiRedditDaoKt multiRedditDaoKt();
+
     public abstract CustomThemeDao customThemeDao();
+
+    public abstract CustomThemeDaoKt customThemeDaoKt();
 
     public abstract RecentSearchQueryDao recentSearchQueryDao();
 
     public abstract ReadPostDao readPostDao();
+
+    public abstract ReadPostDaoKt readPostDaoKt();
 
     public abstract PostFilterDao postFilterDao();
 
     public abstract PostFilterUsageDao postFilterUsageDao();
 
     public abstract AnonymousMultiredditSubredditDao anonymousMultiredditSubredditDao();
+
+    public abstract AnonymousMultiredditSubredditDaoKt anonymousMultiredditSubredditDaoKt();
+
+    public abstract CommentFilterDao commentFilterDao();
+
+    public abstract CommentFilterDaoKt commentFilterDaoKt();
+
+    public abstract CommentFilterUsageDao commentFilterUsageDao();
+
+    public abstract CommentDraftDao commentDraftDao();
+
+    public abstract ReminderDao reminderDao();
 
     private static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
@@ -383,4 +423,110 @@ public abstract class RedditDataRoomDatabase extends RoomDatabase {
             }
         }
     };
+
+    private static final Migration MIGRATION_23_24 = new Migration(23, 24) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE custom_themes ADD COLUMN filled_card_view_background_color INTEGER DEFAULT " + Color.parseColor("#E6F4FF") + " NOT NULL");
+            database.execSQL("ALTER TABLE custom_themes ADD COLUMN read_post_filled_card_view_background_color INTEGER DEFAULT " + Color.parseColor("#F5F5F5") + " NOT NULL");
+        }
+    };
+
+    private static final Migration MIGRATION_24_25 = new Migration(24, 25) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE comment_filter " +
+                    "(name TEXT NOT NULL PRIMARY KEY, max_vote INTEGER NOT NULL, min_vote INTEGER NOT NULL, exclude_strings TEXT, exclude_users TEXT)");
+            database.execSQL("CREATE TABLE comment_filter_usage (name TEXT NOT NULL, usage INTEGER NOT NULL, " +
+                    "name_of_usage TEXT NOT NULL, PRIMARY KEY(name, usage, name_of_usage), FOREIGN KEY(name) REFERENCES comment_filter(name) ON DELETE CASCADE)");
+        }
+    };
+
+    private static final Migration MIGRATION_25_26 = new Migration(25, 26) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE comment_filter ADD COLUMN display_mode INTEGER DEFAULT 0 NOT NULL");
+        }
+    };
+
+    private static final Migration MIGRATION_26_27 = new Migration(26, 27) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE recent_search_queries ADD COLUMN search_in_subreddit_or_user_name TEXT");
+            database.execSQL("ALTER TABLE recent_search_queries ADD COLUMN search_in_multireddit_path TEXT");
+            database.execSQL("ALTER TABLE recent_search_queries ADD COLUMN search_in_multireddit_display_name TEXT");
+            database.execSQL("ALTER TABLE recent_search_queries ADD COLUMN search_in_thing_type INTEGER DEFAULT 0 NOT NULL");
+        }
+    };
+  
+    private static final Migration MIGRATION_27_28 = new Migration(27, 28) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE INDEX index_subscribed_subreddits_username ON subscribed_subreddits(username)");
+            database.execSQL("CREATE INDEX index_subscribed_users_username ON subscribed_users(username)");
+            database.execSQL("CREATE INDEX index_multi_reddits_username ON multi_reddits(username)");
+        }
+    };
+
+    private static final Migration MIGRATION_28_29 = new Migration(28, 29) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE accounts ADD COLUMN is_mod INTEGER DEFAULT 0 NOT NULL");
+            database.execSQL("CREATE TABLE comment_draft(" +
+                    "full_name TEXT NOT NULL, " +
+                    "content TEXT NOT NULL, " +
+                    "last_updated INTEGER NOT NULL," +
+                    "draft_type TEXT NOT NULL," +
+                    "PRIMARY KEY (full_name, draft_type))");
+        }
+    };
+
+    private static final Migration MIGRATION_29_30 = new Migration(29, 30) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE post_filter ADD COLUMN contain_users TEXT");
+            database.execSQL("ALTER TABLE post_filter ADD COLUMN contain_subreddits TEXT");
+        }
+    };
+
+    private static final Migration MIGRATION_30_31 = new Migration(30, 31) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE anonymous_multireddit_subreddits ADD COLUMN icon_url TEXT");
+        }
+    };
+
+    private static final Migration MIGRATION_31_32 = new Migration(31, 32) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE read_posts_new"
+                    + "(username TEXT NOT NULL, id TEXT NOT NULL, time INTEGER DEFAULT 0 NOT NULL, "
+                    + "read_post_type INTEGER DEFAULT 0 NOT NULL, PRIMARY KEY(username, id, read_post_type), "
+                    + "FOREIGN KEY(username) REFERENCES accounts(username) ON DELETE CASCADE)");
+            database.execSQL("INSERT INTO read_posts_new (username, id, time) SELECT username, id, time FROM read_posts");
+            database.execSQL("DROP TABLE read_posts");
+            database.execSQL("ALTER TABLE read_posts_new RENAME TO read_posts");
+        }
+    };
+
+    private static final Migration MIGRATION_32_33 = new Migration(32, 33) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("CREATE TABLE reminders"
+                    + "(username TEXT, post_id TEXT NOT NULL, comment_id TEXT NOT NULL, content TEXT NOT NULL, "
+                    + "created_at INTEGER DEFAULT 0 NOT NULL, reminder_time INTEGER DEFAULT 0 NOT NULL, "
+                    + "PRIMARY KEY(post_id, comment_id, reminder_time), "
+                    + "FOREIGN KEY(username) REFERENCES accounts(username) ON DELETE SET NULL)");
+        }
+    };
+
+    // Stores the browser session cookies harvested at login (replaces OAuth token storage).
+    // The existing access_token column is repurposed to hold the session's modhash.
+    private static final Migration MIGRATION_33_34 = new Migration(33, 34) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            database.execSQL("ALTER TABLE accounts ADD COLUMN session_cookies TEXT");
+        }
+    };
 }
+

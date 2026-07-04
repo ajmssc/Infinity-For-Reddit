@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -12,18 +11,17 @@ import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.content.FileProvider;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -40,19 +38,16 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.UploadImageEnabledActivity;
-import ml.docilealligator.infinityforreddit.UploadedImage;
 import ml.docilealligator.infinityforreddit.adapters.MarkdownBottomBarRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.UploadedImagesBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
+import ml.docilealligator.infinityforreddit.databinding.ActivityEditPostBinding;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
+import ml.docilealligator.infinityforreddit.thing.UploadedImage;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
@@ -73,20 +68,6 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
 
     private static final String UPLOADED_IMAGES_STATE = "UIS";
 
-    @BindView(R.id.coordinator_layout_edit_post_activity)
-    CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.appbar_layout_edit_post_activity)
-    AppBarLayout appBarLayout;
-    @BindView(R.id.toolbar_edit_post_activity)
-    Toolbar toolbar;
-    @BindView(R.id.post_title_text_view_edit_post_activity)
-    TextView titleTextView;
-    @BindView(R.id.divider_edit_post_activity)
-    View divider;
-    @BindView(R.id.post_text_content_edit_text_edit_post_activity)
-    EditText contentEditText;
-    @BindView(R.id.markdown_bottom_bar_recycler_view_edit_post_activity)
-    RecyclerView markdownBottomBarRecyclerView;
     @Inject
     @Named("oauth")
     Retrofit mOauthRetrofit;
@@ -109,39 +90,60 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
     private boolean isSubmitting = false;
     private Uri capturedImageUri;
     private ArrayList<UploadedImage> uploadedImages = new ArrayList<>();
+    private ActivityEditPostBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
 
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_edit_post);
-
-        ButterKnife.bind(this);
+        binding = ActivityEditPostBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         EventBus.getDefault().register(this);
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            Slidr.attach(this);
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
+            if (isChangeStatusBarIconColor()) {
+                addOnOffsetChangedListener(binding.appbarLayoutEditPostActivity);
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
+
+                    setMargins(binding.toolbarEditPostActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.linearLayoutEditPostActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom
+                    );
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isChangeStatusBarIconColor()) {
-            addOnOffsetChangedListener(appBarLayout);
-        }
-
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbarEditPostActivity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mFullName = getIntent().getStringExtra(EXTRA_FULLNAME);
         mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        titleTextView.setText(getIntent().getStringExtra(EXTRA_TITLE));
+        binding.postTitleTextViewEditPostActivity.setText(getIntent().getStringExtra(EXTRA_TITLE));
         mPostContent = getIntent().getStringExtra(EXTRA_CONTENT);
-        contentEditText.setText(mPostContent);
+        binding.postContentEditTextEditPostActivity.setText(mPostContent);
 
         if (savedInstanceState != null) {
             uploadedImages = savedInstanceState.getParcelableArrayList(UPLOADED_IMAGES_STATE);
@@ -152,7 +154,7 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
             @Override
             public void onClick(int item) {
                 MarkdownBottomBarRecyclerViewAdapter.bindEditTextWithItemClickListener(
-                        EditPostActivity.this, contentEditText, item);
+                        EditPostActivity.this, binding.postContentEditTextEditPostActivity, item);
             }
 
             @Override
@@ -167,12 +169,28 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
             }
         });
 
-        markdownBottomBarRecyclerView.setLayoutManager(new LinearLayoutManagerBugFixed(this,
-                LinearLayoutManagerBugFixed.HORIZONTAL, false));
-        markdownBottomBarRecyclerView.setAdapter(adapter);
+        binding.markdownBottomBarRecyclerViewEditPostActivity.setLayoutManager(new LinearLayoutManagerBugFixed(this,
+                LinearLayoutManagerBugFixed.HORIZONTAL, true).setStackFromEndAndReturnCurrentObject());
+        binding.markdownBottomBarRecyclerViewEditPostActivity.setAdapter(adapter);
 
-        contentEditText.requestFocus();
-        Utils.showKeyboard(this, new Handler(), contentEditText);
+        binding.postContentEditTextEditPostActivity.requestFocus();
+        Utils.showKeyboard(this, new Handler(), binding.postContentEditTextEditPostActivity);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isSubmitting) {
+                    promptAlertDialog(R.string.exit_when_submit, R.string.exit_when_edit_post_detail);
+                } else {
+                    if (binding.postContentEditTextEditPostActivity.getText().toString().equals(mPostContent)) {
+                        setEnabled(false);
+                        triggerBackPress();
+                    } else {
+                        promptAlertDialog(R.string.discard, R.string.discard_detail);
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -181,23 +199,28 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
     @Override
     protected void applyCustomTheme() {
-        coordinatorLayout.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(appBarLayout, null, toolbar);
-        titleTextView.setTextColor(mCustomThemeWrapper.getPostTitleColor());
-        divider.setBackgroundColor(mCustomThemeWrapper.getPostTitleColor());
-        contentEditText.setTextColor(mCustomThemeWrapper.getPostContentColor());
+        binding.coordinatorLayoutEditPostActivity.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutEditPostActivity, null, binding.toolbarEditPostActivity);
+        binding.postTitleTextViewEditPostActivity.setTextColor(mCustomThemeWrapper.getPostTitleColor());
+        binding.dividerEditPostActivity.setBackgroundColor(mCustomThemeWrapper.getPostTitleColor());
+        binding.postContentEditTextEditPostActivity.setTextColor(mCustomThemeWrapper.getPostContentColor());
 
         if (titleTypeface != null) {
-            titleTextView.setTypeface(titleTypeface);
+            binding.postTitleTextViewEditPostActivity.setTypeface(titleTypeface);
         }
         if (contentTypeface != null) {
-            contentEditText.setTypeface(contentTypeface);
+            binding.postContentEditTextEditPostActivity.setTypeface(contentTypeface);
         }
     }
 
@@ -218,14 +241,14 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_preview_edit_post_activity) {
             Intent intent = new Intent(this, FullMarkdownActivity.class);
-            intent.putExtra(FullMarkdownActivity.EXTRA_COMMENT_MARKDOWN, contentEditText.getText().toString());
+            intent.putExtra(FullMarkdownActivity.EXTRA_MARKDOWN, binding.postContentEditTextEditPostActivity.getText().toString());
             intent.putExtra(FullMarkdownActivity.EXTRA_SUBMIT_POST, true);
             startActivityForResult(intent, MARKDOWN_PREVIEW_REQUEST_CODE);
         } else if (item.getItemId() == R.id.action_send_edit_post_activity) {
             editPost();
             return true;
         } else if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            triggerBackPress();
             return true;
         }
         return false;
@@ -235,11 +258,11 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
         if (!isSubmitting) {
             isSubmitting = true;
 
-            Snackbar.make(coordinatorLayout, R.string.posting, Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.coordinatorLayoutEditPostActivity, R.string.posting, Snackbar.LENGTH_SHORT).show();
 
             Map<String, String> params = new HashMap<>();
             params.put(APIUtils.THING_ID_KEY, mFullName);
-            params.put(APIUtils.TEXT_KEY, contentEditText.getText().toString());
+            params.put(APIUtils.TEXT_KEY, binding.postContentEditTextEditPostActivity.getText().toString());
 
             mOauthRetrofit.create(RedditAPI.class)
                     .editPostOrComment(APIUtils.getOAuthHeader(mAccessToken), params)
@@ -256,7 +279,7 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
                         @Override
                         public void onFailure(@NonNull Call<String> call, @NonNull Throwable t) {
                             isSubmitting = false;
-                            Snackbar.make(coordinatorLayout, R.string.post_failed, Snackbar.LENGTH_SHORT).show();
+                            Snackbar.make(binding.coordinatorLayoutEditPostActivity, R.string.post_failed, Snackbar.LENGTH_SHORT).show();
                         }
                     });
 
@@ -273,10 +296,12 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
                     return;
                 }
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        mAccessToken, contentEditText, coordinatorLayout, data.getData(), uploadedImages);
+                        mAccessToken, binding.postContentEditTextEditPostActivity,
+                        binding.coordinatorLayoutEditPostActivity, data.getData(), uploadedImages);
             } else if (requestCode == CAPTURE_IMAGE_REQUEST_CODE) {
                 Utils.uploadImageToReddit(this, mExecutor, mOauthRetrofit, mUploadMediaRetrofit,
-                        mAccessToken, contentEditText, coordinatorLayout, capturedImageUri, uploadedImages);
+                        mAccessToken, binding.postContentEditTextEditPostActivity,
+                        binding.coordinatorLayoutEditPostActivity, capturedImageUri, uploadedImages);
             } else if (requestCode == MARKDOWN_PREVIEW_REQUEST_CODE) {
                 editPost();
             }
@@ -297,19 +322,6 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
                         -> finish())
                 .setNegativeButton(R.string.no, null)
                 .show();
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (isSubmitting) {
-            promptAlertDialog(R.string.exit_when_submit, R.string.exit_when_edit_post_detail);
-        } else {
-            if (contentEditText.getText().toString().equals(mPostContent)) {
-                finish();
-            } else {
-                promptAlertDialog(R.string.discard, R.string.discard_detail);
-            }
-        }
     }
 
     @Override
@@ -336,7 +348,7 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
     public void captureImage() {
         Intent pictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
-            capturedImageUri = FileProvider.getUriForFile(this, "ml.docilealligator.infinityforreddit.provider",
+            capturedImageUri = FileProvider.getUriForFile(this, getPackageName() + ".provider",
                     File.createTempFile("captured_image", ".jpg", getExternalFilesDir(Environment.DIRECTORY_PICTURES)));
             pictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
             startActivityForResult(pictureIntent, CAPTURE_IMAGE_REQUEST_CODE);
@@ -349,10 +361,10 @@ public class EditPostActivity extends BaseActivity implements UploadImageEnabled
 
     @Override
     public void insertImageUrl(UploadedImage uploadedImage) {
-        int start = Math.max(contentEditText.getSelectionStart(), 0);
-        int end = Math.max(contentEditText.getSelectionEnd(), 0);
-        contentEditText.getText().replace(Math.min(start, end), Math.max(start, end),
-                "[" + uploadedImage.imageName + "](" + uploadedImage.imageUrl + ")",
-                0, "[]()".length() + uploadedImage.imageName.length() + uploadedImage.imageUrl.length());
+        int start = Math.max(binding.postContentEditTextEditPostActivity.getSelectionStart(), 0);
+        int end = Math.max(binding.postContentEditTextEditPostActivity.getSelectionEnd(), 0);
+        binding.postContentEditTextEditPostActivity.getText().replace(Math.min(start, end), Math.max(start, end),
+                "[" + uploadedImage.imageName + "](" + uploadedImage.imageUrlOrKey + ")",
+                0, "[]()".length() + uploadedImage.imageName.length() + uploadedImage.imageUrlOrKey.length());
     }
 }

@@ -2,7 +2,6 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/coordinator_layout_report_activity"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:application=".PostImageActivity">
@@ -27,6 +26,7 @@
         android:id="@+id/recycler_view_report_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         app:layoutManager="ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 

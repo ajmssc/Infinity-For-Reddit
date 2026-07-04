@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
@@ -17,8 +18,14 @@ import androidx.browser.customtabs.CustomTabsService;
 
 import org.apache.commons.io.FilenameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,8 +34,22 @@ import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Request;
+import okhttp3.Response;
+import retrofit2.Retrofit;
 
 public class LinkResolverActivity extends AppCompatActivity {
+
+    private static final Set<String> ALLOWED_SHARELINK_HOSTS = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    "www.reddit.com",
+                    "reddit.com",
+                    "old.reddit.com",
+                    "redd.it"
+            ))
+    );
 
     public static final String EXTRA_MESSAGE_FULLNAME = "ENF";
     public static final String EXTRA_NEW_ACCOUNT_NAME = "ENAN";
@@ -40,22 +61,24 @@ public class LinkResolverActivity extends AppCompatActivity {
     private static final String COMMENT_PATTERN = "/(r|u|U|user)/[\\w-]+/comments/\\w+/?[\\w-]+/\\w+/?";
     private static final String SUBREDDIT_PATTERN = "/[rR]/[\\w-]+/?";
     private static final String USER_PATTERN = "/(u|U|user)/[\\w-]+/?";
+    private static final String SHARELINK_SUBREDDIT_PATTERN = "/r/[\\w-]+/s/[\\w-]+";
+    private static final String SHARELINK_USER_PATTERN = "/u/[\\w-]+/s/[\\w-]+";
     private static final String SIDEBAR_PATTERN = "/[rR]/[\\w-]+/about/sidebar";
-    private static final String MULTIREDDIT_PATTERN = "/user/[\\w-]+/m/\\w+/?";
     private static final String MULTIREDDIT_PATTERN_2 = "/[rR]/(\\w+\\+?)+/?";
     private static final String REDD_IT_POST_PATTERN = "/\\w+/?";
-    private static final String GFYCAT_PATTERN = "(/i?fr)?/[\\w-]+$";
     private static final String REDGIFS_PATTERN = "/watch/[\\w-]+$";
-    private static final String IMGUR_GALLERY_PATTERN = "/gallery/\\w+/?";
-    private static final String IMGUR_ALBUM_PATTERN = "/(album|a)/\\w+/?";
-    private static final String IMGUR_IMAGE_PATTERN = "/\\w+/?";
+    private static final String REDDIT_IMAGE_PATTERN =  "^/media$";
     private static final String WIKI_PATTERN = "/[rR]/[\\w-]+/(wiki|w)(?:/[\\w-]+)*";
     private static final String GOOGLE_AMP_PATTERN = "/amp/s/amp.reddit.com/.*";
     private static final String STREAMABLE_PATTERN = "/\\w+/?";
-
+    
+    @Inject
+    @Named("no_oauth")
+    Retrofit mRetrofit;
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
+    
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
 
@@ -65,6 +88,24 @@ public class LinkResolverActivity extends AppCompatActivity {
         } else {
             return Uri.parse("https://www.reddit.com" + path);
         }
+    }
+
+    private boolean isAllowedShareLinkUri(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+        if (scheme == null || host == null) {
+            return false;
+        }
+
+        String normalizedScheme = scheme.toLowerCase(Locale.ROOT);
+        String normalizedHost = host.toLowerCase(Locale.ROOT);
+
+        return ("http".equals(normalizedScheme) || "https".equals(normalizedScheme))
+                && ALLOWED_SHARELINK_HOSTS.contains(normalizedHost);
     }
 
     @Override
@@ -117,7 +158,7 @@ public class LinkResolverActivity extends AppCompatActivity {
                 if (path.endsWith(".jpg") || path.endsWith(".png") || path.endsWith(".jpeg")) {
                     Intent intent = new Intent(this, ViewImageOrGifActivity.class);
                     String url = uri.toString();
-                    String fileName = FilenameUtils.getName(path);
+                    String fileName = uri.getLastPathSegment();
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_IMAGE_URL_KEY, url);
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, fileName);
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_POST_TITLE_KEY, fileName);
@@ -125,7 +166,7 @@ public class LinkResolverActivity extends AppCompatActivity {
                 } else if (path.endsWith(".gif")) {
                     Intent intent = new Intent(this, ViewImageOrGifActivity.class);
                     String url = uri.toString();
-                    String fileName = FilenameUtils.getName(path);
+                    String fileName = uri.getLastPathSegment();
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_GIF_URL_KEY, url);
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, fileName);
                     intent.putExtra(ViewImageOrGifActivity.EXTRA_POST_TITLE_KEY, fileName);
@@ -144,7 +185,9 @@ public class LinkResolverActivity extends AppCompatActivity {
                     List<String> segments = uri.getPathSegments();
 
                     if (authority != null) {
-                        if (authority.equals("reddit-uploaded-media.s3-accelerate.amazonaws.com")) {
+                        if (authority.equals("sh.reddit.com")) {
+                            deepLinkError(uri);
+                        } else if (authority.equals("reddit-uploaded-media.s3-accelerate.amazonaws.com")) {
                             String unescapedUrl = uri.toString().replace("%2F", "/");
                             int lastSlashIndex = unescapedUrl.lastIndexOf("/");
                             if (lastSlashIndex < 0 || lastSlashIndex == unescapedUrl.length() - 1) {
@@ -174,6 +217,25 @@ public class LinkResolverActivity extends AppCompatActivity {
                                 startActivity(intent);
                             } else if (path.equals("/report")) {
                                 openInWebView(uri);
+                            } else if (path.matches(REDDIT_IMAGE_PATTERN)) {
+                                // reddit.com/media, actual image url is stored in the "url" query param
+                                try {
+                                    Intent intent = new Intent(this, ViewImageOrGifActivity.class);
+                                    String real_url = uri.getQueryParameter("url");
+                                    Uri real_uri = Uri.parse(real_url);
+                                    String fileName = FilenameUtils.getBaseName(real_uri.getPath());
+                                    intent.putExtra(ViewImageOrGifActivity.EXTRA_IMAGE_URL_KEY, real_url);
+                                    intent.putExtra(ViewImageOrGifActivity.EXTRA_FILE_NAME_KEY, fileName);
+                                    intent.putExtra(ViewImageOrGifActivity.EXTRA_POST_TITLE_KEY, fileName);
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    deepLinkError(uri);
+                                }
+                            } else if(segments.size() == 4 && segments.get(0).equals("user") && segments.get(2).equals("m")) {
+                                // Multireddit
+                                Intent intent = new Intent(this, ViewMultiRedditDetailActivity.class);
+                                intent.putExtra(ViewMultiRedditDetailActivity.EXTRA_MULTIREDDIT_PATH, path);
+                                startActivity(intent);
                             } else if (path.matches(POST_PATTERN) || path.matches(POST_PATTERN_2)) {
                                 int commentsIndex = segments.lastIndexOf("comments");
                                 if (commentsIndex >= 0 && commentsIndex < segments.size() - 1) {
@@ -236,10 +298,6 @@ public class LinkResolverActivity extends AppCompatActivity {
                                 intent.putExtra(ViewSubredditDetailActivity.EXTRA_SUBREDDIT_NAME_KEY, path.substring(3, path.length() - 14));
                                 intent.putExtra(ViewSubredditDetailActivity.EXTRA_VIEW_SIDEBAR, true);
                                 startActivity(intent);
-                            } else if (path.matches(MULTIREDDIT_PATTERN)) {
-                                Intent intent = new Intent(this, ViewMultiRedditDetailActivity.class);
-                                intent.putExtra(ViewMultiRedditDetailActivity.EXTRA_MULTIREDDIT_PATH, path);
-                                startActivity(intent);
                             } else if (path.matches(MULTIREDDIT_PATTERN_2)) {
                                 String subredditName = path.substring(3);
                                 Intent intent = new Intent(this, ViewSubredditDetailActivity.class);
@@ -251,6 +309,38 @@ public class LinkResolverActivity extends AppCompatActivity {
                                 Intent intent = new Intent(this, ViewPostDetailActivity.class);
                                 intent.putExtra(ViewPostDetailActivity.EXTRA_POST_ID, path.substring(1));
                                 startActivity(intent);
+                            } else if (uri.getPath().matches(SHARELINK_SUBREDDIT_PATTERN)
+                                    || uri.getPath().matches(SHARELINK_USER_PATTERN)) {
+                                if (!isAllowedShareLinkUri(uri)) {
+                                    deepLinkError(uri);
+                                    finish();
+                                    return;
+                                }
+                                mRetrofit.callFactory().newCall(new Request.Builder().url(uri.toString()).build()).enqueue(new Callback() {
+                                    @Override
+                                    public void onResponse(@NonNull Call call, @NonNull Response response) {
+                                        if (response.isSuccessful()) {
+                                            Uri newUri = Uri.parse(response.request().url().toString());
+                                            if (newUri.getPath() != null) {
+                                                if (newUri.getPath().matches(SHARELINK_SUBREDDIT_PATTERN)
+                                                        || newUri.getPath().matches(SHARELINK_USER_PATTERN)) {
+                                                    deepLinkError(newUri);
+                                                } else {
+                                                    handleUri(newUri);
+                                                }
+                                            } else {
+                                                handleUri(uri);
+                                            }
+                                        } else {
+                                            deepLinkError(uri);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                        deepLinkError(uri);
+                                    }
+                                });
                             } else {
                                 deepLinkError(uri);
                             }
@@ -258,20 +348,10 @@ public class LinkResolverActivity extends AppCompatActivity {
                             if (path.startsWith("/CL0/")) {
                                 handleUri(Uri.parse(path.substring("/CL0/".length())));
                             }
-                        } else if (authority.contains("gfycat.com")) {
-                            if (path.matches(GFYCAT_PATTERN)) {
-                                Intent intent = new Intent(this, ViewVideoActivity.class);
-                                intent.putExtra(ViewVideoActivity.EXTRA_GFYCAT_ID, path.substring(path.lastIndexOf("/") + 1));
-                                intent.putExtra(ViewVideoActivity.EXTRA_VIDEO_TYPE, ViewVideoActivity.VIDEO_TYPE_GFYCAT);
-                                intent.putExtra(ViewVideoActivity.EXTRA_IS_NSFW, getIntent().getBooleanExtra(EXTRA_IS_NSFW, false));
-                                startActivity(intent);
-                            } else {
-                                deepLinkError(uri);
-                            }
                         } else if (authority.contains("redgifs.com")) {
                             if (path.matches(REDGIFS_PATTERN)) {
                                 Intent intent = new Intent(this, ViewVideoActivity.class);
-                                intent.putExtra(ViewVideoActivity.EXTRA_GFYCAT_ID, path.substring(path.lastIndexOf("/") + 1));
+                                intent.putExtra(ViewVideoActivity.EXTRA_REDGIFS_ID, path.substring(path.lastIndexOf("/") + 1));
                                 intent.putExtra(ViewVideoActivity.EXTRA_VIDEO_TYPE, ViewVideoActivity.VIDEO_TYPE_REDGIFS);
                                 intent.putExtra(ViewVideoActivity.EXTRA_IS_NSFW, true);
                                 startActivity(intent);
@@ -279,22 +359,36 @@ public class LinkResolverActivity extends AppCompatActivity {
                                 deepLinkError(uri);
                             }
                         } else if (authority.contains("imgur.com")) {
-                            if (path.matches(IMGUR_GALLERY_PATTERN)) {
-                                Intent intent = new Intent(this, ViewImgurMediaActivity.class);
-                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_TYPE, ViewImgurMediaActivity.IMGUR_TYPE_GALLERY);
-                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, segments.get(1));
-                                startActivity(intent);
-                            } else if (path.matches(IMGUR_ALBUM_PATTERN)) {
-                                Intent intent = new Intent(this, ViewImgurMediaActivity.class);
-                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_TYPE, ViewImgurMediaActivity.IMGUR_TYPE_ALBUM);
-                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, segments.get(1));
-                                startActivity(intent);
-                            } else if (path.matches(IMGUR_IMAGE_PATTERN)) {
+                            if (segments.size() == 1) {
                                 Intent intent = new Intent(this, ViewImgurMediaActivity.class);
                                 intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_TYPE, ViewImgurMediaActivity.IMGUR_TYPE_IMAGE);
-                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, path.substring(1));
+                                intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, getImgurId(segments.get(0)));
                                 startActivity(intent);
-                            } else if (path.endsWith("gifv") || path.endsWith("mp4")) {
+
+                                finish();
+                                return;
+                            } else if (segments.size() == 2) {
+                                if (segments.get(0).equalsIgnoreCase("gallery")) {
+                                    Intent intent = new Intent(this, ViewImgurMediaActivity.class);
+                                    intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_TYPE, ViewImgurMediaActivity.IMGUR_TYPE_GALLERY);
+                                    intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, getImgurId(segments.get(1)));
+                                    startActivity(intent);
+
+                                    finish();
+                                    return;
+                                } else if (segments.get(0).equalsIgnoreCase("album")
+                                        || segments.get(0).equalsIgnoreCase("a")) {
+                                    Intent intent = new Intent(this, ViewImgurMediaActivity.class);
+                                    intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_TYPE, ViewImgurMediaActivity.IMGUR_TYPE_ALBUM);
+                                    intent.putExtra(ViewImgurMediaActivity.EXTRA_IMGUR_ID, getImgurId(segments.get(1)));
+                                    startActivity(intent);
+
+                                    finish();
+                                    return;
+                                }
+                            }
+
+                            if (path.endsWith("gifv") || path.endsWith("mp4")) {
                                 String url = uri.toString();
                                 if (path.endsWith("gifv")) {
                                     url = url.substring(0, url.length() - 5) + ".mp4";
@@ -335,6 +429,15 @@ public class LinkResolverActivity extends AppCompatActivity {
 
         }
         finish();
+    }
+
+    private String getImgurId(String pathSegment) {
+        int dashIndex = pathSegment.lastIndexOf('-');
+        if (dashIndex < 0 || dashIndex >= pathSegment.length() - 1) {
+            return pathSegment;
+        }
+
+        return pathSegment.substring(dashIndex + 1);
     }
 
     private void deepLinkError(Uri uri) {
@@ -406,7 +509,7 @@ public class LinkResolverActivity extends AppCompatActivity {
             CustomTabsIntent customTabsIntent = builder.build();
             customTabsIntent.intent.setPackage(resolveInfos.get(0).activityInfo.packageName);
             if (uri.getScheme() == null) {
-                uri = Uri.parse("http://" + uri.toString());
+                uri = Uri.parse("http://" + uri);
             }
             try {
                 customTabsIntent.launchUrl(this, uri);

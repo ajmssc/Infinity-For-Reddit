@@ -19,31 +19,50 @@ import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 
 public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    public static final int BOLD = 0;
-    public static final int ITALIC = 1;
-    public static final int LINK = 2;
-    public static final int STRIKE_THROUGH = 3;
-    public static final int HEADER = 4;
-    public static final int ORDERED_LIST = 5;
-    public static final int UNORDERED_LIST = 6;
-    public static final int SPOILER = 7;
-    public static final int QUOTE = 8;
-    public static final int CODE_BLOCK = 9;
-    public static final int UPLOAD_IMAGE = 10;
+    public static final int BOLD = 10;
+    public static final int ITALIC = 9;
+    public static final int LINK = 8;
+    public static final int STRIKE_THROUGH = 7;
+    public static final int SUPERSCRIPT = 6;
+    public static final int HEADER = 5;
+    public static final int ORDERED_LIST = 4;
+    public static final int UNORDERED_LIST = 3;
+    public static final int SPOILER = 2;
+    public static final int QUOTE = 1;
+    public static final int CODE_BLOCK = 0;
+    public static final int UPLOAD_IMAGE = 11;
+    public static final int GIPHY_GIF = 12;
 
-    private static final int ITEM_COUNT = 10;
+    private static final int REGULAR_ITEM_COUNT = 11;
 
-    private CustomThemeWrapper customThemeWrapper;
-    private ItemClickListener itemClickListener;
+    private final CustomThemeWrapper customThemeWrapper;
+    private final boolean canUploadImage;
+    private final boolean canSendGiphyGIf;
+    private final ItemClickListener itemClickListener;
 
     public interface ItemClickListener {
         void onClick(int item);
         void onUploadImage();
+        default void onSelectGiphyGif() {}
     }
 
     public MarkdownBottomBarRecyclerViewAdapter(CustomThemeWrapper customThemeWrapper,
                                                 ItemClickListener itemClickListener) {
+        this(customThemeWrapper, false, false, itemClickListener);
+    }
+
+    public MarkdownBottomBarRecyclerViewAdapter(CustomThemeWrapper customThemeWrapper,
+                                                boolean canUploadImage,
+                                                ItemClickListener itemClickListener) {
+        this(customThemeWrapper, canUploadImage, false, itemClickListener);
+    }
+
+    public MarkdownBottomBarRecyclerViewAdapter(CustomThemeWrapper customThemeWrapper,
+                                                boolean canUploadImage, boolean canSendGiphyGif,
+                                                ItemClickListener itemClickListener) {
         this.customThemeWrapper = customThemeWrapper;
+        this.canUploadImage = canUploadImage;
+        this.canSendGiphyGIf = canSendGiphyGif;
         this.itemClickListener = itemClickListener;
     }
 
@@ -69,6 +88,9 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
                 case STRIKE_THROUGH:
                     ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_strikethrough_black_24dp);
                     break;
+                case SUPERSCRIPT:
+                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_superscript_24dp);
+                    break;
                 case HEADER:
                     ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_title_24dp);
                     break;
@@ -76,7 +98,7 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
                     ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_ordered_list_black_24dp);
                     break;
                 case UNORDERED_LIST:
-                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_unordered_list_black_24dp);
+                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_unordered_list_24dp);
                     break;
                 case SPOILER:
                     ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_spoiler_black_24dp);
@@ -88,7 +110,10 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
                     ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_code_24dp);
                     break;
                 case UPLOAD_IMAGE:
-                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_image_24dp);
+                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_image_day_night_24dp);
+                    break;
+                case GIPHY_GIF:
+                    ((MarkdownBottomBarItemViewHolder) holder).imageView.setImageResource(R.drawable.ic_gif_24dp);
                     break;
             }
         }
@@ -96,7 +121,7 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
 
     @Override
     public int getItemCount() {
-        return ITEM_COUNT;
+        return canUploadImage ? (canSendGiphyGIf ? REGULAR_ITEM_COUNT + 2 : REGULAR_ITEM_COUNT + 1) : REGULAR_ITEM_COUNT;
     }
 
     public static void bindEditTextWithItemClickListener(Activity activity, EditText commentEditText, int item) {
@@ -170,6 +195,20 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
                     commentEditText.getText().replace(start, end,
                             "~~~~", 0, "~~~~".length());
                     commentEditText.setSelection(start + "~~".length());
+                }
+                break;
+            }
+            case MarkdownBottomBarRecyclerViewAdapter.SUPERSCRIPT: {
+                int start = Math.max(commentEditText.getSelectionStart(), 0);
+                int end = Math.max(commentEditText.getSelectionEnd(), 0);
+                if (end != start) {
+                    String currentSelection = commentEditText.getText().subSequence(start, end).toString();
+                    commentEditText.getText().replace(Math.min(start, end), Math.max(start, end),
+                            "^(" + currentSelection + ")", 0, "^()".length() + currentSelection.length());
+                } else {
+                    commentEditText.getText().replace(start, end,
+                            "^()", 0, "^()".length());
+                    commentEditText.setSelection(start + "^(".length());
                 }
                 break;
             }
@@ -298,6 +337,8 @@ public class MarkdownBottomBarRecyclerViewAdapter extends RecyclerView.Adapter<R
                 int position = getBindingAdapterPosition();
                 if (position == UPLOAD_IMAGE) {
                     itemClickListener.onUploadImage();
+                } else if (position == GIPHY_GIF) {
+                    itemClickListener.onSelectGiphyGif();
                 } else {
                     itemClickListener.onClick(position);
                 }

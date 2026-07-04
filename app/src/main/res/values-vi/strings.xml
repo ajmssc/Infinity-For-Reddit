@@ -24,11 +24,21 @@
     <string name="edit_multi_reddit_activity_label">"Sửa Multireddit"</string>
     <string name="selected_subeddits_activity_label">"Các Subreddit đã chọn"</string>
     <string name="report_activity_label">"Báo cáo"</string>
+
+    <!-- Fuzzy -->
     <string name="view_imgur_media_activity_image_label">"Hình ảnh %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_imgur_media_activity_video_label">"Video %1$d/%2$d"</string>
     <string name="send_private_message_activity_label">"Gửi tin nhắn riêng tư"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_image_label">"Hình ảnh %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_gif_label">"Gif %1$d/%2$d"</string>
+
+    <!-- Fuzzy -->
     <string name="view_reddit_gallery_activity_video_label">"Video %1$d/%2$d"</string>
     <string name="navigation_drawer_open">"Mở thanh điều hướng"</string>
     <string name="navigation_drawer_close">"Đóng thanh điều hướng"</string>
@@ -46,8 +56,6 @@
     <string name="action_unhide_post">"Hiện bài đăng"</string>
     <string name="action_edit_post">"Sửa bài đăng"</string>
     <string name="action_delete_post">"Xóa bài đăng"</string>
-    <string name="action_mark_nsfw">"Đánh dấu NSFW (18+)"</string>
-    <string name="action_unmark_nsfw">"Bỏ đánh dấu NSFW (18+)"</string>
     <string name="action_mark_spoiler">"Đánh dấu Spoiler"</string>
     <string name="action_unmark_spoiler">"Bỏ đánh dấu Spoiler"</string>
     <string name="action_edit_flair">"Sửa tư cách"</string>
@@ -58,7 +66,6 @@
     <string name="action_share">"Chia sẻ"</string>
     <string name="action_preview">"Xem trước"</string>
     <string name="action_report">"Báo cáo"</string>
-    <string name="action_see_removed">"Xem bài đăng đã bị xóa"</string>
     <string name="action_set_wallpaper">"Đặt làm hình nền"</string>
     <string name="action_send_private_message">"Gửi tin nhắn riêng tư"</string>
     <string name="parse_json_response_error">"Lỗi khi phân tích phản hồi JSON"</string>
@@ -87,8 +94,11 @@
     <string name="refresh_post_failed">"Lỗi khi làm mới bài đăng"</string>
     <string name="load_messages_failed">"Lỗi khi tải tin nhắn. Chạm để thử lại"</string>
     <string name="no_messages">"Không có tin nhắn"</string>
-    <string name="nsfw">"NSFW (18+)"</string>
+
+    <!-- Fuzzy -->
     <string name="karma_info">"Karma: %1$d"</string>
+
+    <!-- Fuzzy -->
     <string name="karma_info_user_detail">"Karma:
 %1$d (%2$d + %3$d)"</string>
     <string name="cakeday_info">"Ngày bánh ga tô:
@@ -102,9 +112,12 @@
     <string name="downvoted">"Không thích"</string>
     <string name="hidden">"Ẩn"</string>
     <string name="saved">"Lưu"</string>
-    <string name="gilded">"Mạ vàng"</string>
     <string name="settings">"Cài đặt"</string>
+
+    <!-- Fuzzy -->
     <string name="subscribers_number_detail">"Người đăng ký: %1$d"</string>
+
+    <!-- Fuzzy -->
     <string name="online_subscribers_number_detail">"Trực tuyến: %1$d"</string>
     <string name="cannot_fetch_subreddit_info">"Không thể lấy thông tin subreddit"</string>
     <string name="cannot_fetch_user_info">"Không thể lấy thông tin người dùng"</string>
@@ -124,7 +137,6 @@
     <string name="follow_failed">"Theo dõi thất bại"</string>
     <string name="unfollowed">"Đã hủy theo dõi"</string>
     <string name="unfollow_failed">"Hủy theo dõi thất bại"</string>
-    <string name="content_description_banner_imageview">"Ảnh bìa của Subreddit"</string>
     <string name="app_label">"Infinity"</string>
     <string name="search_hint">"Tìm bất cứ thứ gì"</string>
     <string name="no_posts_no_lazy_mode">"Không bài đăng nào có sẵn"</string>
@@ -186,6 +198,8 @@
     <string name="no_flair">"Không có tư cách"</string>
     <string name="error_loading_flairs">"Lỗi khi tải tư cách.
 Nhấn để thử lại."</string>
+
+    <!-- Fuzzy -->
     <string name="no_rule">"Không có luật lệ"</string>
     <string name="error_loading_rules">"Lỗi khi tải qui định. Chạm để thử lại."</string>
     <string name="error_loading_rules_without_retry">"Lỗi khi tải qui định"</string>
@@ -252,11 +266,6 @@ Nhấn để thử lại."</string>
     <string name="are_you_sure">"Bạn có chắc không?"</string>
     <string name="edit">"Sửa"</string>
     <string name="delete">"Xóa"</string>
-    <string name="see_removed_comment">"Xem bình luận bị xóa"</string>
-    <string name="fetching_removed_comment">"Đang tìm bình luận bị xóa"</string>
-    <string name="show_removed_comment_failed">"Không thể tìm được bình luận bị xóa"</string>
-    <string name="fetching_removed_post">"Đang tìm bài đăng bị xóa"</string>
-    <string name="show_removed_post_failed">"Không thể tìm được bài đăng bị xóa"</string>
     <string name="cancel">"Hủy"</string>
     <string name="ok">"OK"</string>
 
@@ -264,14 +273,6 @@ Nhấn để thử lại."</string>
     <string name="edit_success">"Sửa thành công"</string>
     <string name="delete_post_success">"Xóa thành công"</string>
     <string name="delete_post_failed">"Xóa thất bại"</string>
-
-    <!-- Fuzzy -->
-    <string name="mark_nsfw_success">"Đánh dấu NSFW thành công"</string>
-    <string name="mark_nsfw_failed">"Đánh dấu NSFW thất bại"</string>
-
-    <!-- Fuzzy -->
-    <string name="unmark_nsfw_success">"Bỏ đánh dấu NSFW thành công"</string>
-    <string name="unmark_nsfw_failed">"Bỏ đánh dấu NSFW thất bại"</string>
 
     <!-- Fuzzy -->
     <string name="mark_spoiler_success">"Đánh dấu spoiler thành công"</string>
@@ -289,6 +290,8 @@ Nhấn để thử lại."</string>
     <string name="notification_summary_message">"Tin nhắn mới"</string>
     <string name="notification_summary_subreddit">"Subreddit"</string>
     <string name="notification_summary_award">"Giải thưởng"</string>
+
+    <!-- Fuzzy -->
     <string name="notification_new_messages">"%1$d Tin nhắn mới"</string>
     <string name="label_account">"Tài khoản"</string>
     <string name="label_post">"Bài đăng"</string>
@@ -306,15 +309,16 @@ Nhấn để thử lại."</string>
     <string name="settigns_video_title">"VIDEO"</string>
     <string name="settings_video_autoplay_title">"Tự động phát Video"</string>
     <string name="settings_mute_autoplaying_videos_title">"Tắt tiếng những Video tự động phát"</string>
-    <string name="settings_autoplay_nsfw_videos_title">"Tự động phát những video NSFW"</string>
     <string name="settings_start_autoplay_visible_area_offset_portrait_title">"Tự phát Video theo diện tích có thể nhìn được (Dọc)"</string>
+
+    <!-- Fuzzy -->
     <string name="settings_start_autoplay_visible_area_offset_portrait_summary">"Tự động phát các video khi %1$d%% trong số chúng có thể nhìn thấy được"</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_title">"Tự phát Video theo diện tích có thể nhìn được (Ngang)"</string>
+
+    <!-- Fuzzy -->
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">"Tự động phát các video khi %1$d%% trong số chúng có thể nhìn thấy được"</string>
     <string name="settings_immersive_interface_title">"Giao diện đắm mình"</string>
     <string name="settings_immersive_interface_summary">"Không áp dụng cho tất cả trang"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">"Bỏ qua thanh điều hướng trong giao diện đắm mình"</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">"Ngăn cho thanh điều hướng có thêm đệm dưới cùng"</string>
     <string name="settings_customize_tabs_in_main_page_title">"Tùy chỉnh các Tab trong trang chính"</string>
     <string name="settings_enable_bottom_app_bar_title">"Bật điều hướng ở dưới cùng"</string>
     <string name="settings_category_post_and_comment_title">"Bài đăng và bình luận"</string>
@@ -322,10 +326,8 @@ Nhấn để thử lại."</string>
     <string name="settings_volume_keys_navigate_comments_title">"Dùng nút âm lượng để di chuyển bình luận trong bài đăng"</string>
     <string name="settings_volume_keys_navigate_posts_title">"Dùng nút âm lượng để di chuyển bài đăng"</string>
     <string name="settings_mute_video_title">"Tắt tiếng Video"</string>
-    <string name="settings_mute_nsfw_video_title">"Tắt tiếng video NSFW"</string>
 
     <!-- Fuzzy -->
-    <string name="settings_automatically_try_redgifs_title">"Tự động thử truy cập Redgifs nếu Video trên Gfycat bị xóa."</string>
     <string name="settings_video_player_ignore_nav_bar_title">"Bỏ qua thanh điều hướng trong trình phát video"</string>
     <string name="settings_video_player_ignore_nav_bar_summary">"Ngăn trình điều khiển video có thêm lề"</string>
     <string name="settings_confirm_to_exit">"Xác nhận để thoát"</string>
@@ -360,8 +362,6 @@ Nhấn để thử lại."</string>
     <string name="settings_font_size_title">"Cỡ chữ"</string>
     <string name="settings_title_font_size_title">"Cỡ chữ tiêu đề"</string>
     <string name="settings_content_font_size_title">"Cỡ chữ nội dung"</string>
-    <string name="settings_enable_nsfw_title">"Bật NSFW"</string>
-    <string name="settings_blur_nsfw_title">"Làm mờ hình ảnh NSFW"</string>
     <string name="settings_blur_spoiler_title">"Làm mờ hình ảnh Spoiler"</string>
     <string name="settings_about_master_title">"Giới thiệu"</string>
     <string name="settings_acknowledgement_master_title">"Sự công nhận"</string>
@@ -372,8 +372,6 @@ Nhấn để thử lại."</string>
     <string name="settings_credits_icon_background_summary">"Véc tơ nền được tạo bởi freepik - www.freepik.com"</string>
     <string name="settings_credits_error_image_title">"Hình ảnh lỗi"</string>
     <string name="settings_credits_error_image_summary">"Véc tơ công nghệ được tạo bởi freepik - www.freepik.com"</string>
-    <string name="settings_credits_gilded_icon_title">"Biểu tượng mạ vàng"</string>
-    <string name="settings_credits_gilded_icon_summary">"Biểu tượng được tạo bởi Freepik từ www.flaticon.com"</string>
     <string name="settings_credits_crosspost_icon_title">"Biểu tượng bài đăng chéo"</string>
     <string name="settings_credits_crosspost_icon_summary">"Biểu tượng được tạo bởi Freepik từ www.flaticon.com"</string>
     <string name="settings_credits_thumbtack_icon_title">"Biểu tượng đinh ghim"</string>
@@ -445,14 +443,24 @@ Nhấn để thử lại."</string>
     <string name="post_layout_compact">"Bố cục nhỏ gọn"</string>
     <string name="elapsed_time_just_now">"Vừa ngay lúc này"</string>
     <string name="elapsed_time_a_minute_ago">"1 phút"</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_minutes_ago">"%1$d phút"</string>
     <string name="elapsed_time_an_hour_ago">"1 tiếng"</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_hours_ago">"%1$d tiếng"</string>
     <string name="elapsed_time_yesterday">"Hôm qua"</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_days_ago">"%1$d ngày"</string>
     <string name="elapsed_time_a_month_ago">"1 tháng"</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_months_ago">"%1$d tháng"</string>
     <string name="elapsed_time_a_year_ago">"1 năm"</string>
+
+    <!-- Fuzzy -->
     <string name="elapsed_time_years_ago">"%1$d năm"</string>
     <string name="error_getting_multi_reddit_data">"Lỗi khi lấy dữ liệu multireddit"</string>
     <string name="error_loading_multi_reddit_list">"Không thể đồng bộ các multireddit"</string>
@@ -488,11 +496,11 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="create_multi_reddit_failed">"Không thể tạo multireddit này"</string>
     <string name="duplicate_multi_reddit">"Multireddit này đã tồn tại"</string>
     <string name="edit_multi_reddit_failed">"Không thể chỉnh sửa multireddit này"</string>
+
+    <!-- Fuzzy -->
     <string name="delete_multi_reddit_success">"Xoá thành công"</string>
     <string name="delete_multi_reddit_failed">"Xoá thất bại"</string>
     <string name="delete_multi_reddit_dialog_message">"Bạn có chắc không?"</string>
-    <string name="enable_nsfw">"Bật NSFW"</string>
-    <string name="disable_nsfw">"Tắt NSFW"</string>
     <string name="cannot_save_image">"Không thể lưu hình ảnh"</string>
     <string name="cannot_save_gif">"Không thể lưu gif"</string>
     <string name="cannot_get_storage">"Không thể truy cập bộ nhớ ứng dụng"</string>
@@ -588,10 +596,6 @@ https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforredd
     <string name="theme_item_spoiler_background_color_detail">"Áp dụng cho: Nền của thẻ spoiler"</string>
     <string name="theme_item_spoiler_text_color">"Màu văn bản spoiler"</string>
     <string name="theme_item_spoiler_text_color_detail">"Áp dụng cho: Màu văn bản trong thẻ spoiler"</string>
-    <string name="theme_item_nsfw_background_color">"Màu nền NSFW"</string>
-    <string name="theme_item_nsfw_background_color_detail">"Áp dụng cho: Nền của thẻ NSFW"</string>
-    <string name="theme_item_nsfw_text_color">"Màu văn bản NSFW"</string>
-    <string name="theme_item_nsfw_text_color_detail">"Áp dụng cho: Màu văn bản của thẻ NSFW"</string>
     <string name="theme_item_flair_background_color">"Màu nền tư cách"</string>
     <string name="theme_item_flair_background_color_detail">"Áp dụng cho: Nền của thẻ tư cách"</string>
     <string name="theme_item_flair_text_color">"Màu văn bản tư cách"</string>
@@ -676,6 +680,8 @@ Dựa trên chủ đề Chàm Amoled"</string>
     <string name="edit_theme_name">"Sửa tên chủ đề"</string>
     <string name="edit_theme">"Sửa chủ đề"</string>
     <string name="delete_theme">"Xoá chủ đề"</string>
+
+    <!-- Fuzzy -->
     <string name="delete_theme_dialog_message">"Bạn có chắc muốn xoá %1$s không?"</string>
     <string name="share_theme">"Chia sẻ chủ đề"</string>
     <string name="change_theme_name">"Đổi tên"</string>
@@ -713,8 +719,8 @@ Dựa trên chủ đề Chàm Amoled"</string>
 Cô ta không ốm hay gì cả, nhưng cô ấy chắc chắn có thể khá hơn."</string>
     <string name="edit_multi_reddit">"Sửa Multireddit"</string>
     <string name="delete_multi_reddit">"Xoá Multireddit"</string>
-    <string name="n_awards">"%1$d giải thưởng"</string>
-    <string name="one_award">"1 giải thưởng"</string>
+
+    <!-- Fuzzy -->
     <string name="report">"Báo cáo"</string>
     <string name="reporting">"Đang báo cáo"</string>
     <string name="report_successful">"Đã báo cáo"</string>
@@ -729,7 +735,6 @@ Cô ta không ốm hay gì cả, nhưng cô ấy chắc chắn có thể khá h�
     <string name="notifications">"Thông báo"</string>
     <string name="messages">"Tin nhắn"</string>
     <string name="message">"Tin nhắn"</string>
-    <string name="fetch_gfycat_video_failed">"Lấy video Gfycat thất bại"</string>
     <string name="fetch_redgifs_video_failed">"Lấy video Redgifs thất bại"</string>
     <string name="fetching_video_info_please_wait">"Đang lấy thông tin video. Vui lòng đợi."</string>
     <string name="error_fetching_imgur_media">"Không thể tải hình ảnh"</string>
@@ -764,7 +769,6 @@ Ví dụ: yourpass:123456"</string>
     <string name="settings_number_of_columns_in_post_feed_title">"Số lượng cột trong nguồn dữ liệu bài đăng"</string>
     <string name="settings_number_of_columns_in_post_feed_portrait_title">"Dọc"</string>
     <string name="settings_number_of_columns_in_post_feed_landscape_title">"Ngang"</string>
-    <string name="settings_nsfw_and_spoiler_title">"NSFW &amp; Spoiler"</string>
     <string name="settings_delete_all_legacy_settings_title">"Xoá tất cả cài đặt cũ"</string>
     <string name="restart_app_see_changes">"Khởi động lại ứng dụng để thấy các thay đổi"</string>
     <string name="settings_tab_count">"Số tab"</string>
@@ -825,25 +829,15 @@ Tự động phát video bị tắt."</string>
     <string name="refresh">"Làm mới"</string>
     <string name="change_sort_type">"Thay đổi loại sắp xếp"</string>
     <string name="change_post_layout">"Thay đổi bố cục bài đăng"</string>
-    <string name="give_award_dialog_title">"Cho giải thưởng?"</string>
-    <string name="anonymous">"Vô danh"</string>
-    <string name="give_award_error_message">"Mã: %1$d/
-Thông báo: %2$s"</string>
-    <string name="give_award_success">"Giải thưởng đã được cho"</string>
-    <string name="give_award_failed">"Thất bại"</string>
+
+    <!-- Fuzzy -->
     <string name="warning">"Cảnh báo"</string>
-    <string name="this_is_a_nsfw_subreddit">"Đây là một subreddit NSFW."</string>
-    <string name="this_user_has_nsfw_content">"Người dùng này có nội dung NSFW"</string>
     <string name="dismiss">"Bỏ qua"</string>
     <string name="leave">"Rời khỏi"</string>
     <string name="go_to_subreddit">"Đi đến subreddit"</string>
     <string name="go_to_user">"Đi đến người dùng"</string>
     <string name="go_to_thing_hint">"Tên"</string>
     <string name="random">"Ngẫu nhiên"</string>
-    <string name="random_subreddit">"Subreddit ngẫu nhiên"</string>
-    <string name="random_nsfw_subreddit">"Subreddit NSFW ngẫu nhiên"</string>
-    <string name="random_post">"Bài đăng ngẫu nhiên"</string>
-    <string name="random_nsfw_post">"Bài đăng NSFW ngẫu nhiên"</string>
     <string name="fetch_random_thing_failed">"Hãy thử lại sau"</string>
     <string name="downloading">"Đang tải xuống"</string>
     <string name="subreddit_filter_popular_and_all_activity_label">"r/all và r/popular"</string>
@@ -884,7 +878,6 @@ Thông báo: %2$s"</string>
     <string name="settings_only_disable_preview_in_video_and_gif_posts_title">"Chỉ tắt xem trước trong các bài đăng video và gif"</string>
     <string name="settings_enable_search_history_title">"Bật lịch sử tìm kiếm"</string>
     <string name="settings_post_history_title">"Lịch sử bài đăng"</string>
-    <string name="settings_mark_posts_as_read_title">"Đánh dấu các bài đăng là đã đọc"</string>
     <string name="settings_mark_posts_as_read_after_voting_title">"Đánh dấu các bài đăng là đã đọc sau khi vote"</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">"Đánh dấu các bài đăng là đã đọc khi cuộn"</string>
     <string name="settings_hide_read_posts_automatically_title">"Tự động ẩn các bài đăng đã đọc"</string>
@@ -905,7 +898,6 @@ Thông báo: %2$s"</string>
     <string name="delete_all_read_posts_success">"Xoá tất cả bài đăng đã đọc thành công"</string>
     <string name="hide_read_posts">"Ẩn bài đăng đã đọc"</string>
     <string name="filter_posts">"Lọc bài đăng"</string>
-    <string name="only_nsfw">"Chỉ NSFW"</string>
     <string name="only_spoiler">"Chỉ Spoiler"</string>
     <string name="title_excludes_strings_hint">"Tiêu đề: loại trừ từ khoá (key1,key2)"</string>
     <string name="title_excludes_regex_hint">"Tiêu đề: loại trừ biểu thức tìm kiếm"</string>
@@ -923,7 +915,7 @@ Thông báo: %2$s"</string>
     <string name="post_filter_requires_a_name">"Bộ lọc bài đăng này tên là gì?"</string>
     <string name="duplicate_post_filter_dialog_title">"'%1$s' đã tồn tại"</string>
     <string name="duplicate_post_filter_dialog_message">"Ghi đè nó?"</string>
-    <string name="apply_post_filter_to">"Áp dụng vào"</string>
+    <string name="apply_to">"Áp dụng vào"</string>
     <string name="post_filter_usage_home">"Trang chủ"</string>
     <string name="post_filter_usage_subreddit">"Subreddit: %1$s"</string>
     <string name="post_filter_usage_subreddit_all">"Subreddit"</string>
@@ -943,19 +935,15 @@ Thông báo: %2$s"</string>
     <string name="choose_a_user">"Chọn người dùng"</string>
     <string name="settings_click_to_show_media_in_gallery_layout">"Nhấn để hiện phương tiện trong bố cục thư viện"</string>
     <string name="settings_hide_post_type">"Ẩn loại bài đăng"</string>
-    <string name="settings_hide_the_number_of_awards">"Ẩn số lượng giải thưởng"</string>
     <string name="settings_hide_subreddit_and_user_prefix">"Ẩn subreddit và tiền tố người dùng"</string>
     <string name="settings_hide_the_number_of_votes">"Ẩn số lượng vote"</string>
     <string name="settings_hide_the_number_of_comments">"Ẩn số lượng bình luận"</string>
     <string name="post_layout_gallery">"Bố cục bộ sưu tập"</string>
     <string name="post_layout_card_2">"Bố cục thẻ 2"</string>
-    <string name="have_trouble_login_title">"Đang gặp rắc rối khi đăng nhập"</string>
-    <string name="have_trouble_login_message">"Bạn có muốn thử một cách khác để đăng nhập không?"</string>
     <string name="vote">"Vote"</string>
     <string name="action_share_link">"Chia sẻ liên kết"</string>
     <string name="action_copy_link">"Sao chép liên kết"</string>
     <string name="action_add_to_post_filter">"Thêm vào bộ lọc bài đăng"</string>
-    <string name="settings_do_not_blur_nsfw_in_nsfw_subreddits_title">"Không làm mờ các hình ảnh NSFW trong các subreddit NSFW"</string>
 
     <!-- Fuzzy -->
     <string name="settings_show_avatar_on_the_right">"Hiện ảnh đại diện ở bên trái"</string>
@@ -980,6 +968,8 @@ Thông báo: %2$s"</string>
     <string name="theme_item_current_user_color_detail">"Đã áp dụng vào: Người dùng hiện tại trong bình luận"</string>
     <string name="exclude_domains_hint">"Loại trừ các miền"</string>
     <string name="anonymous_front_page_no_subscriptions">"Hãy bắt đầu bằng cách tham gia một subreddit!"</string>
+
+    <!-- Fuzzy -->
     <string name="backup_settings_success">"Xuất cài đặt ra thư mục đích thành công. Mật khẩu của tệp zip được tạo ra là 123321. Vui lòng đừng sửa đổi tệp zip đó."</string>
     <string name="create_zip_in_destination_directory_failed">"Không thể tạo tệp zip sao lưu trong thư mục đích"</string>
     <string name="backup_some_settings_failed">"Không thể sao lưu một số cài đặt nhưng các cài đặt khác đã được xuất ra thư mục đích thành công"</string>
@@ -1015,6 +1005,8 @@ Thông báo: %2$s"</string>
     <string name="suggest_title">"Đề xuất tiêu đề"</string>
     <string name="suggest_title_failed">"Đề xuất tiêu đề thất bại"</string>
     <string name="action_delete_logs">"Xoá nhật ký"</string>
+
+    <!-- Fuzzy -->
     <string name="inbox_with_count">"Hộp thư đến (%1$d)"</string>
     <string name="comment_continue_thread">"Tiếp tục thread"</string>
 
@@ -1023,21 +1015,17 @@ Thông báo: %2$s"</string>
     <string name="settings_hide_post_flair">"Ẩn tư cách bài đăng"</string>
     <string name="settings_crash_reports_title">"Báo cáo dừng đột ngột"</string>
     <string name="settings_nsfw_and_spoiler_dangerous_group_title">"Nguy hiểm"</string>
-    <string name="settings_disable_nsfw_forever_title">"Tắt NSFW mãi mãi"</string>
     <string name="settings_show_only_one_comment_level_indicator">"Hiện chỉ một dấu chỉ thị cấp bình luận"</string>
     <string name="save_comment">"Lưu"</string>
     <string name="unsave_comment">"Huỷ lưu"</string>
     <string name="copy_multi_reddit_path">"Sao chép đường dẫn của multireddit"</string>
     <string name="copy_multi_reddit_path_failed">"Không thể sao chép đường dẫn của multireddit"</string>
-    <string name="crash_reports_deleted">"Các báo cáo lỗi đã bị xoá"</string>
-    <string name="disable_nsfw_forever_message">"Khi được bật, NSFW sẽ bị tắt vĩnh viễn, không kể là cài đặt NSFW có được bật hay không. Và tuỳ chọn này là không thể hoàn tác, cách duy nhất để bật lại NSFW là xoá dữ liệu ứng dụng.
 
-Bạn có vẫn muốn bật tuỳ chọn này không?"</string>
+    <!-- Fuzzy -->
+    <string name="crash_reports_deleted">"Các báo cáo lỗi đã bị xoá"</string>
     <string name="reply">"Trả lời"</string>
     <string name="post_gallery_activity_label">"Bài đăng bộ sưu tập"</string>
-    <string name="trending_activity_label">"Trending"</string>
     <string name="action_share_post_link">"Chia sẻ đường link bài đăng"</string>
-    <string name="trending">"Trending"</string>
     <string name="receive_post_reply_notifications">"Nhận thông báo trả lời trong bài đăng"</string>
     <string name="bottom_sheet_post_gallery">"Bộ sưu tập"</string>
     <string name="posting_gallery">"Đăng bộ sưu tập"</string>
@@ -1057,7 +1045,6 @@ Nếu không thì thay tên chúng trước khi Bật Material You."</string>
     <string name="settings_more_tabs_show_multireddits_title">"Show Multireddits"</string>
     <string name="settings_collapse_reddit_section_title">"Thu gọn khu vực Reddit"</string>
     <string name="settings_video_player_automatic_landscape_orientation">"Tự động chuyển sang màn hình ngang trong trình phát video"</string>
-    <string name="settings_remember_muting_option_in_post_feed">"Ghi nhớ tuỳ chọn tắt tiếng trong nguồn dữ liệu bài đăng"</string>
     <string name="link_post_layout_auto">"Tự động"</string>
     <string name="uploaded_images">"Đã tải hình ảnh"</string>
     <string name="select_image">"Chọn một hình ảnh"</string>
@@ -1102,6 +1089,8 @@ Nhấn để thử lại."</string>
     <string name="settings_app_lock_timeout_title">"Khoá ứng dụng sau"</string>
     <string name="settings_enable_fold_support_title">"Bật chế độ hỗ trợ thiết bị màn hình gập"</string>
     <string name="settings_default_playback_speed_title">"Tốc độ phát mặc định"</string>
+
+    <!-- Fuzzy -->
     <string name="settings_link_handler_value_external_browser">"Trình duyệt ngoài"</string>
     <string name="settings_link_handler_value_custom_tab">"Thẻ tùy chọn"</string>
     <string name="settings_link_handler_value_internal_browser">"Trình duyệt nội bộ"</string>
@@ -1138,8 +1127,6 @@ Nhấn để thử lại."</string>
     <string name="app_lock_timeout_24_hours">"24 tiếng"</string>
     <string name="edit_profile_activity_label">"Chỉnh sửa Hồ sơ"</string>
     <string name="action_contact_mods">"Liên hệ Quản trị viên"</string>
-    <string name="settings_save_nsfw_media_in_different_folder_title">"Lưu Phương tiện NSFW trong thư mục khác"</string>
-    <string name="settings_nsfw_download_location_title">"Vị trí tải xuống nội dung NSFW"</string>
     <string name="fetch_streamable_video_failed">"Lấy video Streamable thất bại"</string>
 
     <!-- EditProfileService Notification -->
@@ -1165,5 +1152,5 @@ Nhấn để thử lại."</string>
     <string name="message_change_banner_success">"Thay đổi banner thành công"</string>
     <string name="message_change_banner_failed">Thay đổi banner thất bại %s</string>
     <string name="message_save_profile_success">"Lưu Hồ sơ thành công"</string>
-    <string name="message_save_profile_failed">"Lưu hồ sơ %s thất bại"</string>
+    <string name="message_save_profile_failed">Lưu hồ sơ %s thất bại</string>
 </resources>

@@ -12,17 +12,16 @@ import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewGroupCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
-
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
-import com.google.android.material.tabs.TabLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -30,36 +29,25 @@ import org.greenrobot.eventbus.Subscribe;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostLayoutBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
+import ml.docilealligator.infinityforreddit.databinding.ActivityHistoryBinding;
 import ml.docilealligator.infinityforreddit.events.ChangeNSFWEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.fragments.CommentsListingFragment;
 import ml.docilealligator.infinityforreddit.fragments.HistoryPostFragment;
 import ml.docilealligator.infinityforreddit.fragments.PostFragment;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class HistoryActivity extends BaseActivity implements ActivityToolbarInterface,
         PostLayoutBottomSheetFragment.PostLayoutSelectionCallback {
 
-    @BindView(R.id.coordinator_layout_history_activity)
-    CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.appbar_layout_history_activity)
-    AppBarLayout appBarLayout;
-    @BindView(R.id.collapsing_toolbar_layout_history_activity)
-    CollapsingToolbarLayout collapsingToolbarLayout;
-    @BindView(R.id.toolbar_history_activity)
-    Toolbar toolbar;
-    @BindView(R.id.tab_layout_tab_layout_history_activity_activity)
-    TabLayout tabLayout;
-    @BindView(R.id.view_pager_history_activity)
-    ViewPager2 viewPager2;
+    public static final String EXTRA_READ_POST_TYPE = "EHT";
+
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
@@ -71,10 +59,11 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
     SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
+    @ReadPostType
+    private int readPostType;
     private FragmentManager fragmentManager;
     private SectionsPagerAdapter sectionsPagerAdapter;
-    private String mAccessToken;
-    private String mAccountName;
+    private ActivityHistoryBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,45 +71,78 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
 
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_history);
-
-        ButterKnife.bind(this);
+        binding = ActivityHistoryBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         EventBus.getDefault().register(this);
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
-        //mViewPager2 = viewPager2;
+        mViewPager2 = binding.viewPagerHistoryActivity;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
 
             if (isChangeStatusBarIconColor()) {
-                addOnOffsetChangedListener(appBarLayout);
+                addOnOffsetChangedListener(binding.appbarLayoutHistoryActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(toolbar);
+
+                ViewGroupCompat.installCompatInsetsDispatch(binding.getRoot());
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
+
+                        setMargins(binding.toolbarHistoryActivity,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.viewPagerHistoryActivity.setPadding(allInsets.left, 0, allInsets.right, 0);
+
+                        return insets;
+                    }
+                });
+                //adjustToolbar(binding.toolbarHistoryActivity);
             }
         }
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbarHistoryActivity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setToolbarGoToTop(toolbar);
+        setToolbarGoToTop(binding.toolbarHistoryActivity);
+
+        readPostType = getIntent().getIntExtra(EXTRA_READ_POST_TYPE, ReadPostType.READ_POSTS);
+        switch (readPostType) {
+            case ReadPostType.READ_POSTS:
+                setTitle(R.string.history_activity_read_posts_label);
+                break;
+            case ReadPostType.ANONYMOUS_UPVOTED_POSTS:
+                setTitle(R.string.upvoted);
+                break;
+            case ReadPostType.ANONYMOUS_DOWNVOTED_POSTS:
+                setTitle(R.string.downvoted);
+                break;
+            case ReadPostType.ANONYMOUS_HIDDEN_POSTS:
+                setTitle(R.string.hidden);
+                break;
+            case ReadPostType.ANONYMOUS_SAVED_POSTS:
+                setTitle(R.string.saved);
+                break;
+        }
+        binding.toolbarHistoryActivity.setSubtitle(R.string.history_activity_subtitle);
 
         fragmentManager = getSupportFragmentManager();
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
 
         initializeViewPager();
     }
@@ -140,24 +162,30 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
     @Override
     protected void applyCustomTheme() {
-        coordinatorLayout.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(appBarLayout, collapsingToolbarLayout, toolbar);
-        applyTabLayoutTheme(tabLayout);
+        binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutHistoryActivity,
+                binding.collapsingToolbarLayoutHistoryActivity, binding.toolbarHistoryActivity);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutHistoryActivity);
+        applyTabLayoutTheme(binding.tabLayoutTabLayoutHistoryActivityActivity);
     }
 
     private void initializeViewPager() {
         sectionsPagerAdapter = new SectionsPagerAdapter(this);
-        tabLayout.setVisibility(View.GONE);
-        viewPager2.setAdapter(sectionsPagerAdapter);
-        viewPager2.setOffscreenPageLimit(2);
+        binding.tabLayoutTabLayoutHistoryActivityActivity.setVisibility(View.GONE);
+        binding.viewPagerHistoryActivity.setAdapter(sectionsPagerAdapter);
         //viewPager2.setUserInputEnabled(!mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_SWIPING_BETWEEN_TABS, false));
-        viewPager2.setUserInputEnabled(false);
+        binding.viewPagerHistoryActivity.setUserInputEnabled(false);
         /*new TabLayoutMediator(tabLayout, viewPager2, (tab, position) -> {
             switch (position) {
                 case 0:
@@ -166,7 +194,7 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
             }
         }).attach();*/
 
-        viewPager2.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        binding.viewPagerHistoryActivity.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 if (position == 0) {
@@ -177,7 +205,7 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
             }
         });
 
-        fixViewPager2Sensitivity(viewPager2);
+        fixViewPager2Sensitivity(binding.viewPagerHistoryActivity);
     }
 
     @Override
@@ -258,35 +286,23 @@ public class HistoryActivity extends BaseActivity implements ActivityToolbarInte
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            if (position == 0) {
-                HistoryPostFragment fragment = new HistoryPostFragment();
-                Bundle bundle = new Bundle();
-                bundle.putInt(HistoryPostFragment.EXTRA_HISTORY_TYPE, HistoryPostFragment.HISTORY_TYPE_READ_POSTS);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
-                fragment.setArguments(bundle);
-                return fragment;
-            } else {
-                HistoryPostFragment fragment = new HistoryPostFragment();
-                Bundle bundle = new Bundle();
-                bundle.putInt(HistoryPostFragment.EXTRA_HISTORY_TYPE, HistoryPostFragment.HISTORY_TYPE_READ_POSTS);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(HistoryPostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
-                fragment.setArguments(bundle);
-                return fragment;
-            }
+            HistoryPostFragment fragment = new HistoryPostFragment();
+            Bundle bundle = new Bundle();
+            bundle.putInt(HistoryPostFragment.EXTRA_READ_POST_TYPE, readPostType);
+            fragment.setArguments(bundle);
+            return fragment;
         }
 
         @Nullable
         private Fragment getCurrentFragment() {
-            if (viewPager2 == null || fragmentManager == null) {
+            if (fragmentManager == null) {
                 return null;
             }
-            return fragmentManager.findFragmentByTag("f" + viewPager2.getCurrentItem());
+            return fragmentManager.findFragmentByTag("f" + binding.viewPagerHistoryActivity.getCurrentItem());
         }
 
         public boolean handleKeyDown(int keyCode) {
-            if (viewPager2.getCurrentItem() == 0) {
+            if (binding.viewPagerHistoryActivity.getCurrentItem() == 0) {
                 Fragment fragment = getCurrentFragment();
                 if (fragment instanceof PostFragment) {
                     return ((PostFragment) fragment).handleKeyDown(keyCode);

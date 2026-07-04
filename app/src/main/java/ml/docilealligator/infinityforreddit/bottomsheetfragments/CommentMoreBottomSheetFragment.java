@@ -10,25 +10,29 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import java.util.ArrayList;
+
 import ml.docilealligator.infinityforreddit.R;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.activities.CommentActivity;
+import ml.docilealligator.infinityforreddit.activities.CommentFilterPreferenceActivity;
 import ml.docilealligator.infinityforreddit.activities.EditCommentActivity;
-import ml.docilealligator.infinityforreddit.activities.GiveAwardActivity;
 import ml.docilealligator.infinityforreddit.activities.ReportActivity;
+import ml.docilealligator.infinityforreddit.activities.SetReminderActivity;
 import ml.docilealligator.infinityforreddit.activities.ViewPostDetailActivity;
 import ml.docilealligator.infinityforreddit.activities.ViewUserDetailActivity;
 import ml.docilealligator.infinityforreddit.comment.Comment;
 import ml.docilealligator.infinityforreddit.customviews.LandscapeExpandedRoundedBottomSheetDialogFragment;
+import ml.docilealligator.infinityforreddit.databinding.FragmentCommentMoreBottomSheetBinding;
+import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
+import ml.docilealligator.infinityforreddit.utils.ShareScreenshotUtilsKt;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 
@@ -38,29 +42,11 @@ import ml.docilealligator.infinityforreddit.utils.Utils;
 public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBottomSheetDialogFragment {
 
     public static final String EXTRA_COMMENT = "ECF";
-    public static final String EXTRA_ACCESS_TOKEN = "EAT";
     public static final String EXTRA_EDIT_AND_DELETE_AVAILABLE = "EEADA";
     public static final String EXTRA_POSITION = "EP";
     public static final String EXTRA_SHOW_REPLY_AND_SAVE_OPTION = "ESSARO";
     public static final String EXTRA_IS_NSFW = "EIN";
-    @BindView(R.id.edit_text_view_comment_more_bottom_sheet_fragment)
-    TextView editTextView;
-    @BindView(R.id.delete_text_view_comment_more_bottom_sheet_fragment)
-    TextView deleteTextView;
-    @BindView(R.id.reply_text_view_comment_more_bottom_sheet_fragment)
-    TextView replyTextView;
-    @BindView(R.id.save_text_view_comment_more_bottom_sheet_fragment)
-    TextView saveTextView;
-    @BindView(R.id.share_text_view_comment_more_bottom_sheet_fragment)
-    TextView shareTextView;
-    @BindView(R.id.copy_text_view_comment_more_bottom_sheet_fragment)
-    TextView copyTextView;
-    @BindView(R.id.give_award_text_view_comment_more_bottom_sheet_fragment)
-    TextView giveAwardTextView;
-    @BindView(R.id.report_view_comment_more_bottom_sheet_fragment)
-    TextView reportTextView;
-    @BindView(R.id.see_removed_view_comment_more_bottom_sheet_fragment)
-    TextView seeRemovedTextView;
+
     private BaseActivity activity;
 
     public CommentMoreBottomSheetFragment() {
@@ -70,50 +56,39 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_comment_more_bottom_sheet, container, false);
-        ButterKnife.bind(this, rootView);
+        FragmentCommentMoreBottomSheetBinding binding = FragmentCommentMoreBottomSheetBinding.inflate(inflater, container, false);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 && (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) != Configuration.UI_MODE_NIGHT_YES) {
-            rootView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            binding.getRoot().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         }
 
         Bundle bundle = getArguments();
         if (bundle == null) {
             dismiss();
-            return rootView;
+            return binding.getRoot();
         }
         Comment comment = bundle.getParcelable(EXTRA_COMMENT);
         if (comment == null) {
             dismiss();
-            return rootView;
+            return binding.getRoot();
         }
-        String accessToken = bundle.getString(EXTRA_ACCESS_TOKEN);
         boolean editAndDeleteAvailable = bundle.getBoolean(EXTRA_EDIT_AND_DELETE_AVAILABLE, false);
         boolean showReplyAndSaveOption = bundle.getBoolean(EXTRA_SHOW_REPLY_AND_SAVE_OPTION, false);
 
-        if (accessToken != null && !accessToken.equals("")) {
-            giveAwardTextView.setVisibility(View.VISIBLE);
-            giveAwardTextView.setOnClickListener(view -> {
-                Intent intent = new Intent(activity, GiveAwardActivity.class);
-                intent.putExtra(GiveAwardActivity.EXTRA_THING_FULLNAME, comment.getFullName());
-                intent.putExtra(GiveAwardActivity.EXTRA_ITEM_POSITION, bundle.getInt(EXTRA_POSITION));
-                if (activity instanceof ViewPostDetailActivity) {
-                    activity.startActivityForResult(intent, ViewPostDetailActivity.GIVE_AWARD_REQUEST_CODE);
-                } else if (activity instanceof ViewUserDetailActivity) {
-                    activity.startActivityForResult(intent, ViewUserDetailActivity.GIVE_AWARD_REQUEST_CODE);
-                }
-                dismiss();
-            });
-
+        if (!activity.accountName.equals(Account.ANONYMOUS_ACCOUNT) && !"".equals(activity.accessToken)) {
             if (editAndDeleteAvailable) {
-                editTextView.setVisibility(View.VISIBLE);
-                deleteTextView.setVisibility(View.VISIBLE);
+                binding.editTextViewCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+                binding.deleteTextViewCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
 
-                editTextView.setOnClickListener(view -> {
+                binding.editTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
                     Intent intent = new Intent(activity, EditCommentActivity.class);
                     intent.putExtra(EditCommentActivity.EXTRA_FULLNAME, comment.getFullName());
                     intent.putExtra(EditCommentActivity.EXTRA_CONTENT, comment.getCommentMarkdown());
+                    if (comment.getMediaMetadataMap() != null) {
+                        ArrayList<MediaMetadata> mediaMetadataList = new ArrayList<>(comment.getMediaMetadataMap().values());
+                        intent.putParcelableArrayListExtra(EditCommentActivity.EXTRA_MEDIA_METADATA_LIST, mediaMetadataList);
+                    }
                     intent.putExtra(EditCommentActivity.EXTRA_POSITION, bundle.getInt(EXTRA_POSITION));
                     if (activity instanceof ViewPostDetailActivity) {
                         activity.startActivityForResult(intent, ViewPostDetailActivity.EDIT_COMMENT_REQUEST_CODE);
@@ -124,7 +99,7 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
                     dismiss();
                 });
 
-                deleteTextView.setOnClickListener(view -> {
+                binding.deleteTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
                     dismiss();
                     if (activity instanceof ViewPostDetailActivity) {
                         ((ViewPostDetailActivity) activity).deleteComment(comment.getFullName(), bundle.getInt(EXTRA_POSITION));
@@ -133,33 +108,53 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
                     }
                 });
             }
+
+            if (comment.getAuthor().equals(activity.accountName)) {
+                binding.notificationViewCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+                binding.notificationViewCommentMoreBottomSheetFragment.setText(comment.isSendReplies() ? R.string.disable_reply_notifications : R.string.enable_reply_notifications);
+                binding.notificationViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+                    dismiss();
+                    if (activity instanceof ViewPostDetailActivity) {
+                        ((ViewPostDetailActivity) activity).toggleReplyNotifications(comment, bundle.getInt(EXTRA_POSITION));
+                    } else if (activity instanceof ViewUserDetailActivity) {
+                        ((ViewUserDetailActivity) activity).toggleReplyNotifications(comment, bundle.getInt(EXTRA_POSITION));
+                    }
+                });
+            }
+
+            binding.setReminderCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+                SetReminderActivity.Companion.startReminderActivity(activity, comment.getLinkId(), comment);
+                dismiss();
+            });
         }
 
         if (showReplyAndSaveOption) {
-            replyTextView.setVisibility(View.VISIBLE);
-            saveTextView.setVisibility(View.VISIBLE);
-            if (comment.isSaved()) {
-                saveTextView.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(activity, R.drawable.ic_bookmark_24dp), null, null, null);
-                saveTextView.setText(R.string.unsave_comment);
-            } else {
-                saveTextView.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(activity, R.drawable.ic_bookmark_border_24dp), null, null, null);
-                saveTextView.setText(R.string.save_comment);
+            if (!comment.isLocked()) {
+                binding.replyTextViewCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+                binding.replyTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+                    Intent intent = new Intent(activity, CommentActivity.class);
+                    intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, comment.getDepth() + 1);
+                    intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, comment.getCommentMarkdown());
+                    intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, comment.getCommentRawText());
+                    intent.putExtra(CommentActivity.EXTRA_PARENT_FULLNAME_KEY, comment.getFullName());
+                    intent.putExtra(CommentActivity.EXTRA_IS_REPLYING_KEY, true);
+
+                    intent.putExtra(CommentActivity.EXTRA_PARENT_POSITION_KEY, bundle.getInt(EXTRA_POSITION));
+                    activity.startActivityForResult(intent, CommentActivity.WRITE_COMMENT_REQUEST_CODE);
+
+                    dismiss();
+                });
             }
-            replyTextView.setOnClickListener(view -> {
-                Intent intent = new Intent(activity, CommentActivity.class);
-                intent.putExtra(CommentActivity.EXTRA_PARENT_DEPTH_KEY, comment.getDepth() + 1);
-                intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_MARKDOWN_KEY, comment.getCommentMarkdown());
-                intent.putExtra(CommentActivity.EXTRA_COMMENT_PARENT_BODY_KEY, comment.getCommentRawText());
-                intent.putExtra(CommentActivity.EXTRA_PARENT_FULLNAME_KEY, comment.getFullName());
-                intent.putExtra(CommentActivity.EXTRA_IS_REPLYING_KEY, true);
+            binding.saveTextViewCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+            if (comment.isSaved()) {
+                binding.saveTextViewCommentMoreBottomSheetFragment.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(activity, R.drawable.ic_bookmark_day_night_24dp), null, null, null);
+                binding.saveTextViewCommentMoreBottomSheetFragment.setText(R.string.unsave_comment);
+            } else {
+                binding.saveTextViewCommentMoreBottomSheetFragment.setCompoundDrawablesWithIntrinsicBounds(ContextCompat.getDrawable(activity, R.drawable.ic_bookmark_border_day_night_24dp), null, null, null);
+                binding.saveTextViewCommentMoreBottomSheetFragment.setText(R.string.save_comment);
+            }
 
-                intent.putExtra(CommentActivity.EXTRA_PARENT_POSITION_KEY, bundle.getInt(EXTRA_POSITION));
-                activity.startActivityForResult(intent, CommentActivity.WRITE_COMMENT_REQUEST_CODE);
-
-                dismiss();
-            });
-
-            saveTextView.setOnClickListener(view -> {
+            binding.saveTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
                 if (activity instanceof ViewPostDetailActivity) {
                     ((ViewPostDetailActivity) activity).saveComment(comment, bundle.getInt(EXTRA_POSITION));
                 }
@@ -167,7 +162,7 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
             });
         }
 
-        shareTextView.setOnClickListener(view -> {
+        binding.shareTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
             dismiss();
             try {
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -179,19 +174,24 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
             }
         });
 
-        shareTextView.setOnLongClickListener(view -> {
+        binding.shareTextViewCommentMoreBottomSheetFragment.setOnLongClickListener(view -> {
             dismiss();
             activity.copyLink(comment.getPermalink());
             return true;
         });
 
-        copyTextView.setOnClickListener(view -> {
+        binding.shareAsImageTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+            dismiss();
+            ShareScreenshotUtilsKt.shareCommentAsScreenshot(activity, comment);
+        });
+
+        binding.copyTextViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
             dismiss();
             CopyTextBottomSheetFragment.show(activity.getSupportFragmentManager(),
                     comment.getCommentRawText(), comment.getCommentMarkdown());
         });
 
-        reportTextView.setOnClickListener(view -> {
+        binding.reportViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
             Intent intent = new Intent(activity, ReportActivity.class);
             intent.putExtra(ReportActivity.EXTRA_SUBREDDIT_NAME, comment.getSubredditName());
             intent.putExtra(ReportActivity.EXTRA_THING_FULLNAME, comment.getFullName());
@@ -200,25 +200,56 @@ public class CommentMoreBottomSheetFragment extends LandscapeExpandedRoundedBott
             dismiss();
         });
 
-        if ("[deleted]".equals(comment.getAuthor()) ||
-                "[deleted]".equals(comment.getCommentRawText()) ||
-                "[removed]".equals(comment.getCommentRawText())
-        ) {
-            seeRemovedTextView.setVisibility(View.VISIBLE);
+        binding.addToCommentFilterViewCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+            Intent intent = new Intent(activity, CommentFilterPreferenceActivity.class);
+            intent.putExtra(CommentFilterPreferenceActivity.EXTRA_COMMENT, comment);
+            activity.startActivity(intent);
 
-            seeRemovedTextView.setOnClickListener(view -> {
-                dismiss();
+            dismiss();
+        });
+
+        if (comment.getDepth() > 0 && activity instanceof ViewPostDetailActivity) {
+            binding.jumpToParentCommentCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+            binding.jumpToParentCommentCommentMoreBottomSheetFragment.setOnClickListener(view -> {
                 if (activity instanceof ViewPostDetailActivity) {
-                    ((ViewPostDetailActivity) activity).showRemovedComment(comment, bundle.getInt(EXTRA_POSITION));
+                    ((ViewPostDetailActivity) activity).scrollToParentComment(bundle.getInt(EXTRA_POSITION), comment.getDepth());
                 }
+
+                dismiss();
             });
         }
 
-        if (activity.typeface != null) {
-            Utils.setFontToAllTextViews(rootView, activity.typeface);
+        if (comment.isCanModComment()) {
+            binding.modCommentMoreBottomSheetFragment.setVisibility(View.VISIBLE);
+            binding.modCommentMoreBottomSheetFragment.setOnClickListener(view -> {
+                CommentModerationActionBottomSheetFragment commentModerationActionBottomSheetFragment = CommentModerationActionBottomSheetFragment.newInstance(comment, bundle.getInt(EXTRA_POSITION));
+                Fragment parentFragment = getParentFragment();
+                if (parentFragment != null) {
+                    commentModerationActionBottomSheetFragment.show(parentFragment.getChildFragmentManager(), commentModerationActionBottomSheetFragment.getTag());
+                } else {
+                    commentModerationActionBottomSheetFragment.show(activity.getSupportFragmentManager(), commentModerationActionBottomSheetFragment.getTag());
+                }
+                dismiss();
+            });
         }
 
-        return rootView;
+        if (comment.isApproved()) {
+            binding.statusCommentMoreBottomSheetFragment.setText(getString(R.string.approved_status, comment.getApprovedBy()));
+        } else if (comment.isRemoved()) {
+            if (comment.isSpam()) {
+                binding.statusCommentMoreBottomSheetFragment.setText(R.string.comment_spam_status);
+            } else {
+                binding.statusCommentMoreBottomSheetFragment.setText(R.string.comment_removed_status);
+            }
+        } else {
+            binding.statusCommentMoreBottomSheetFragment.setVisibility(View.GONE);
+        }
+
+        if (activity.typeface != null) {
+            Utils.setFontToAllTextViews(binding.getRoot(), activity.typeface);
+        }
+
+        return binding.getRoot();
     }
 
     @Override

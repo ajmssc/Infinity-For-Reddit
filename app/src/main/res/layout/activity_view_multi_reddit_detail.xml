@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/coordinator_layout_view_multi_reddit_detail_activity"
     tools:context=".activities.ViewMultiRedditDetailActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -50,6 +49,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
-        app:layout_anchor="@id/bottom_app_bar_bottom_app_bar" />
+        app:layout_anchor="@id/bottom_app_bar_bottom_app_bar"
+        android:contentDescription="@null" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

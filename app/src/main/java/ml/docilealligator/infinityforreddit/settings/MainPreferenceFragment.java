@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
 import androidx.preference.Preference;
 
@@ -17,9 +18,11 @@ import javax.inject.Named;
 
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
+import ml.docilealligator.infinityforreddit.activities.CommentFilterPreferenceActivity;
 import ml.docilealligator.infinityforreddit.activities.LinkResolverActivity;
 import ml.docilealligator.infinityforreddit.activities.PostFilterPreferenceActivity;
-import ml.docilealligator.infinityforreddit.customviews.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceWithBackground;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 
 public class MainPreferenceFragment extends CustomFontPreferenceFragmentCompat {
@@ -31,25 +34,42 @@ public class MainPreferenceFragment extends CustomFontPreferenceFragmentCompat {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.main_preferences, rootKey);
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
         Preference securityPreference = findPreference(SharedPreferencesUtils.SECURITY);
+        CustomFontPreferenceWithBackground dataSavingModePreference = findPreference(SharedPreferencesUtils.DATA_SAVING_MODE_PREFERENCE);
         Preference postFilterPreference = findPreference(SharedPreferencesUtils.POST_FILTER);
+        Preference commentFilterPreference = findPreference(SharedPreferencesUtils.COMMENT_FILTER);
         Preference privacyPolicyPreference = findPreference(SharedPreferencesUtils.PRIVACY_POLICY_KEY);
         Preference redditUserAgreementPreference = findPreference(SharedPreferencesUtils.REDDIT_USER_AGREEMENT_KEY);
 
-        BiometricManager biometricManager = BiometricManager.from(activity);
+        BiometricManager biometricManager = BiometricManager.from(mActivity);
         if (biometricManager.canAuthenticate(BIOMETRIC_STRONG | DEVICE_CREDENTIAL) != BiometricManager.BIOMETRIC_SUCCESS) {
             if (securityPreference != null) {
                 securityPreference.setVisible(false);
+
+                if (dataSavingModePreference != null) {
+                    dataSavingModePreference.setTop(true);
+                }
             }
         }
 
         if (postFilterPreference != null) {
             postFilterPreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, PostFilterPreferenceActivity.class);
-                activity.startActivity(intent);
+                Intent intent = new Intent(mActivity, PostFilterPreferenceActivity.class);
+                mActivity.startActivity(intent);
                 return true;
+            });
+        }
+
+        if (commentFilterPreference != null) {
+            commentFilterPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(@NonNull Preference preference) {
+                    Intent intent = new Intent(mActivity, CommentFilterPreferenceActivity.class);
+                    mActivity.startActivity(intent);
+                    return true;
+                }
             });
         }
 
@@ -57,9 +77,9 @@ public class MainPreferenceFragment extends CustomFontPreferenceFragmentCompat {
             privacyPolicyPreference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    Intent intent = new Intent(activity, LinkResolverActivity.class);
+                    Intent intent = new Intent(mActivity, LinkResolverActivity.class);
                     intent.setData(Uri.parse("https://docile-alligator.github.io/"));
-                    activity.startActivity(intent);
+                    mActivity.startActivity(intent);
                     return true;
                 }
             });
@@ -67,9 +87,9 @@ public class MainPreferenceFragment extends CustomFontPreferenceFragmentCompat {
 
         if (redditUserAgreementPreference != null) {
             redditUserAgreementPreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, LinkResolverActivity.class);
-                intent.setData(Uri.parse("https://www.redditinc.com/policies/user-agreement-september-12-2021"));
-                activity.startActivity(intent);
+                Intent intent = new Intent(mActivity, LinkResolverActivity.class);
+                intent.setData(Uri.parse("https://www.redditinc.com/policies/user-agreement"));
+                mActivity.startActivity(intent);
                 return true;
             });
         }

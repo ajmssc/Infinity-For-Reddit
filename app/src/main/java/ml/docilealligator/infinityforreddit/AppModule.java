@@ -1,14 +1,19 @@
 package ml.docilealligator.infinityforreddit;
 
+import android.app.AlarmManager;
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.database.StandaloneDatabaseProvider;
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
+import androidx.media3.datasource.cache.SimpleCache;
+import androidx.media3.datasource.okhttp.OkHttpDataSource;
 import androidx.preference.PreferenceManager;
-
-import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
-import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 
 import java.io.File;
 import java.util.concurrent.Executor;
@@ -22,12 +27,18 @@ import dagger.Module;
 import dagger.Provides;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.LoopAvailableExoCreator;
+import ml.docilealligator.infinityforreddit.managers.VideoMuteManager;
+import ml.docilealligator.infinityforreddit.reminder.ReminderManager;
+import ml.docilealligator.infinityforreddit.user.UserProfileImagesBatchLoader;
+import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.CustomThemeSharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.videoautoplay.Config;
 import ml.docilealligator.infinityforreddit.videoautoplay.ExoCreator;
 import ml.docilealligator.infinityforreddit.videoautoplay.MediaSourceBuilder;
 import ml.docilealligator.infinityforreddit.videoautoplay.ToroExo;
+import okhttp3.OkHttpClient;
+import retrofit2.Retrofit;
 
 @Module
 abstract class AppModule {
@@ -144,6 +155,20 @@ abstract class AppModule {
     }
 
     @Provides
+    @Named("cookies")
+    @Singleton
+    static SharedPreferences provideCookieSharedPreferences(Application application) {
+        return application.getSharedPreferences(SharedPreferencesUtils.COOKIE_SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE);
+    }
+
+    @Provides
+    @Named("proxy")
+    @Singleton
+    static SharedPreferences provideProxySharedPreferences(Application application) {
+        return application.getSharedPreferences(SharedPreferencesUtils.PROXY_SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE);
+    }
+
+    @Provides
     @Singleton
     static CustomThemeWrapper provideCustomThemeWrapper(@Named("light_theme") SharedPreferences lightThemeSharedPreferences,
                                                  @Named("dark_theme") SharedPreferences darkThemeSharedPreferences,
@@ -162,11 +187,13 @@ abstract class AppModule {
         return new File(appCache, "/exoplayer");
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Provides
     static StandaloneDatabaseProvider provideExoDatabaseProvider(Application application) {
         return new StandaloneDatabaseProvider(application);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Provides
     @Singleton
     static SimpleCache provideSimpleCache(StandaloneDatabaseProvider standaloneDatabaseProvider,
@@ -176,19 +203,23 @@ abstract class AppModule {
                 standaloneDatabaseProvider);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Provides
-    static Config providesMediaConfig(Application application, SimpleCache simpleCache) {
+    static Config providesMediaConfig(Application application, SimpleCache simpleCache, @Named("media3")OkHttpClient okHttpClient) {
         return new Config.Builder(application)
+                .setDataSourceFactory(new OkHttpDataSource.Factory(okHttpClient).setUserAgent(APIUtils.USER_AGENT))
                 .setMediaSourceBuilder(MediaSourceBuilder.DEFAULT)
                 .setCache(simpleCache)
                 .build();
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Provides
     static ToroExo providesToroExo(Application application) {
         return ToroExo.with(application);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Provides
     @Singleton
     static ExoCreator provideExoCreator(Config config,
@@ -201,5 +232,50 @@ abstract class AppModule {
     @Singleton
     static Executor provideExecutor() {
         return Executors.newFixedThreadPool(4);
+    }
+
+    @Provides
+    @Singleton
+    static UserProfileImagesBatchLoader provideUserProfileImagesBatchLoader(
+            Executor executor,
+            RedditDataRoomDatabase redditDataRoomDatabase,
+            @Named("no_oauth") Retrofit retrofit,
+            @Named("oauth") Retrofit oauthRetrofit
+    ) {
+        return new UserProfileImagesBatchLoader(executor, new Handler(Looper.getMainLooper()),
+                redditDataRoomDatabase, retrofit, oauthRetrofit);
+    }
+
+    @Provides
+    @Singleton
+    static PostDetailCommentsCacheManager providePostDetailCommentsCacheManager(@Named("post_details") SharedPreferences postDetailsSharedPreferences) {
+        try {
+            int capacity = Integer.parseInt(postDetailsSharedPreferences.getString(SharedPreferencesUtils.COMMENT_THREAD_CONTINUITY_CAPACITY, "10"));
+            return new PostDetailCommentsCacheManager(new AutoRemovalLinkedHashMap<>(capacity));
+        } catch (NumberFormatException ignore) {
+            return new PostDetailCommentsCacheManager(new AutoRemovalLinkedHashMap<>(10));
+        }
+    }
+
+    @Provides
+    @Singleton
+    static VideoMuteManager provideVideoMuteManager(@Named("default") SharedPreferences sharedPreferences) {
+        return new VideoMuteManager(
+                sharedPreferences.getBoolean(SharedPreferencesUtils.MUTE_AUTOPLAYING_VIDEOS, true),
+                sharedPreferences.getBoolean(SharedPreferencesUtils.REMEMBER_MUTING_OPTION_IN_POST_FEED, false)
+        );
+    }
+
+    @Provides
+    @Singleton
+    static ReminderManager provideReminderManager(
+            Application application, RedditDataRoomDatabase redditDataRoomDatabase, CustomThemeWrapper customThemeWrapper
+    ) {
+        return new ReminderManager(
+                application,
+                redditDataRoomDatabase,
+                (AlarmManager) application.getSystemService(Context.ALARM_SERVICE),
+                customThemeWrapper
+        );
     }
 }

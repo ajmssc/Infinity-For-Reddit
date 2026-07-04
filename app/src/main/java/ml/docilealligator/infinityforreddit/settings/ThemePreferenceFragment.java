@@ -11,6 +11,7 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
@@ -34,7 +35,7 @@ import ml.docilealligator.infinityforreddit.activities.CustomThemeListingActivit
 import ml.docilealligator.infinityforreddit.activities.CustomizeThemeActivity;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeViewModel;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceFragmentCompat;
 import ml.docilealligator.infinityforreddit.events.RecreateActivityEvent;
 import ml.docilealligator.infinityforreddit.utils.CustomThemeSharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.MaterialYouUtils;
@@ -60,6 +61,9 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
     @Inject
     RedditDataRoomDatabase redditDataRoomDatabase;
     @Inject
+    @Named("internal")
+    SharedPreferences mInternalSharedPreferences;
+    @Inject
     CustomThemeWrapper customThemeWrapper;
     @Inject
     Executor executor;
@@ -69,7 +73,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.theme_preferences, rootKey);
 
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
         ListPreference themePreference = findPreference(SharedPreferencesUtils.THEME_KEY);
         SwitchPreference amoledDarkSwitch = findPreference(SharedPreferencesUtils.AMOLED_DARK_KEY);
@@ -128,7 +132,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
             amoledDarkSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
                 if ((getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) != Configuration.UI_MODE_NIGHT_NO) {
                     EventBus.getDefault().post(new RecreateActivityEvent());
-                    ActivityCompat.recreate(activity);
+                    ActivityCompat.recreate(mActivity);
                 }
                 return true;
             });
@@ -136,7 +140,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
 
         if (customizeLightThemePreference != null) {
             customizeLightThemePreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, CustomizeThemeActivity.class);
+                Intent intent = new Intent(mActivity, CustomizeThemeActivity.class);
                 intent.putExtra(CustomizeThemeActivity.EXTRA_THEME_TYPE, CustomizeThemeActivity.EXTRA_LIGHT_THEME);
                 startActivity(intent);
                 return true;
@@ -145,7 +149,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
 
         if (customizeDarkThemePreference != null) {
             customizeDarkThemePreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, CustomizeThemeActivity.class);
+                Intent intent = new Intent(mActivity, CustomizeThemeActivity.class);
                 intent.putExtra(CustomizeThemeActivity.EXTRA_THEME_TYPE, CustomizeThemeActivity.EXTRA_DARK_THEME);
                 startActivity(intent);
                 return true;
@@ -154,7 +158,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
 
         if (customizeAmoledThemePreference != null) {
             customizeAmoledThemePreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, CustomizeThemeActivity.class);
+                Intent intent = new Intent(mActivity, CustomizeThemeActivity.class);
                 intent.putExtra(CustomizeThemeActivity.EXTRA_THEME_TYPE, CustomizeThemeActivity.EXTRA_AMOLED_THEME);
                 startActivity(intent);
                 return true;
@@ -163,7 +167,7 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
 
         if (selectAndCustomizeThemePreference != null) {
             selectAndCustomizeThemePreference.setOnPreferenceClickListener(preference -> {
-                Intent intent = new Intent(activity, CustomThemeListingActivity.class);
+                Intent intent = new Intent(mActivity, CustomThemeListingActivity.class);
                 startActivity(intent);
                 return true;
             });
@@ -175,10 +179,10 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
 
             enableMaterialYouSwitchPreference.setOnPreferenceChangeListener((preference, newValue) -> {
                 if ((Boolean) newValue) {
-                    MaterialYouUtils.changeThemeASync(activity, executor, new Handler(),
+                    MaterialYouUtils.changeThemeASync(mActivity, executor, new Handler(Looper.getMainLooper()),
                             redditDataRoomDatabase, customThemeWrapper,
                             lightThemeSharedPreferences, darkThemeSharedPreferences,
-                            amoledThemeSharedPreferences, null);
+                            amoledThemeSharedPreferences, mInternalSharedPreferences, null);
                     applyMaterialYouPreference.setVisible(true);
                 } else {
                     applyMaterialYouPreference.setVisible(false);
@@ -187,10 +191,10 @@ public class ThemePreferenceFragment extends CustomFontPreferenceFragmentCompat 
             });
 
             applyMaterialYouPreference.setOnPreferenceClickListener(preference -> {
-                MaterialYouUtils.changeThemeASync(activity, executor, new Handler(),
+                MaterialYouUtils.changeThemeASync(mActivity, executor, new Handler(Looper.getMainLooper()),
                         redditDataRoomDatabase, customThemeWrapper,
                         lightThemeSharedPreferences, darkThemeSharedPreferences,
-                        amoledThemeSharedPreferences, null);
+                        amoledThemeSharedPreferences, mInternalSharedPreferences, null);
                 return true;
             });
         }

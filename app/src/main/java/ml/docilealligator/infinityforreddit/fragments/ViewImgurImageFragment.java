@@ -1,6 +1,8 @@
 package ml.docilealligator.infinityforreddit.fragments;
 
 import android.Manifest;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,10 +18,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -27,6 +25,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestManager;
@@ -37,26 +36,24 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
 import com.davemorrissey.labs.subscaleview.ImageSource;
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-import com.google.android.material.bottomappbar.BottomAppBar;
 
 import java.io.File;
 import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.BuildConfig;
-import ml.docilealligator.infinityforreddit.ImgurMedia;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.SetAsWallpaperCallback;
 import ml.docilealligator.infinityforreddit.activities.ViewImgurMediaActivity;
 import ml.docilealligator.infinityforreddit.asynctasks.SaveBitmapImageToFile;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.SetAsWallpaperBottomSheetFragment;
+import ml.docilealligator.infinityforreddit.databinding.FragmentViewImgurImageBinding;
+import ml.docilealligator.infinityforreddit.post.ImgurMedia;
 import ml.docilealligator.infinityforreddit.services.DownloadMediaService;
 import ml.docilealligator.infinityforreddit.utils.Utils;
+import ml.docilealligator.infinityforreddit.viewmodels.ViewGalleryViewModel;
 
 public class ViewImgurImageFragment extends Fragment {
 
@@ -65,22 +62,6 @@ public class ViewImgurImageFragment extends Fragment {
     public static final String EXTRA_MEDIA_COUNT = "EMC";
     private static final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 0;
 
-    @BindView(R.id.progress_bar_view_imgur_image_fragment)
-    ProgressBar progressBar;
-    @BindView(R.id.image_view_view_imgur_image_fragment)
-    SubsamplingScaleImageView imageView;
-    @BindView(R.id.load_image_error_linear_layout_view_imgur_image_fragment)
-    LinearLayout errorLinearLayout;
-    @BindView(R.id.bottom_navigation_view_imgur_image_fragment)
-    BottomAppBar bottomAppBar;
-    @BindView(R.id.title_text_view_view_imgur_image_fragment)
-    TextView titleTextView;
-    @BindView(R.id.download_image_view_view_imgur_image_fragment)
-    ImageView downloadImageView;
-    @BindView(R.id.share_image_view_view_imgur_image_fragment)
-    ImageView shareImageView;
-    @BindView(R.id.wallpaper_image_view_view_imgur_image_fragment)
-    ImageView wallpaperImageView;
     @Inject
     Executor mExecutor;
 
@@ -88,20 +69,19 @@ public class ViewImgurImageFragment extends Fragment {
     private RequestManager glide;
     private ImgurMedia imgurMedia;
     private boolean isDownloading = false;
-    private boolean isActionBarHidden = false;
+    private FragmentViewImgurImageBinding binding;
+    ViewGalleryViewModel viewGalleryViewModel;
 
     public ViewImgurImageFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_view_imgur_image, container, false);
+        binding = FragmentViewImgurImageBinding.inflate(inflater, container, false);
 
         ((Infinity) activity.getApplication()).getAppComponent().inject(this);
-
-        ButterKnife.bind(this, rootView);
 
         setHasOptionsMenu(true);
 
@@ -109,15 +89,15 @@ public class ViewImgurImageFragment extends Fragment {
         glide = Glide.with(activity);
         loadImage();
 
-        imageView.setOnClickListener(view -> {
-            if (isActionBarHidden) {
+        binding.imageViewViewImgurImageFragment.setOnClickListener(view -> {
+            if (activity.isActionBarHidden()) {
                 activity.getWindow().getDecorView().setSystemUiVisibility(
                         View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-                isActionBarHidden = false;
+                activity.setActionBarHidden(false);
                 if (activity.isUseBottomAppBar()) {
-                    bottomAppBar.setVisibility(View.VISIBLE);
+                    binding.bottomNavigationViewImgurImageFragment.setVisibility(View.VISIBLE);
                 }
             } else {
                 activity.getWindow().getDecorView().setSystemUiVisibility(
@@ -127,62 +107,76 @@ public class ViewImgurImageFragment extends Fragment {
                                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                                 | View.SYSTEM_UI_FLAG_IMMERSIVE);
-                isActionBarHidden = true;
+                activity.setActionBarHidden(true);
                 if (activity.isUseBottomAppBar()) {
-                    bottomAppBar.setVisibility(View.GONE);
+                    binding.bottomNavigationViewImgurImageFragment.setVisibility(View.GONE);
                 }
             }
         });
-        imageView.setMinimumDpi(80);
-        imageView.setDoubleTapZoomDpi(240);
-        imageView.resetScaleAndCenter();
+        binding.imageViewViewImgurImageFragment.setMinimumDpi(80);
+        binding.imageViewViewImgurImageFragment.setDoubleTapZoomDpi(240);
+        binding.imageViewViewImgurImageFragment.resetScaleAndCenter();
 
-        errorLinearLayout.setOnClickListener(view -> {
-            progressBar.setVisibility(View.VISIBLE);
-            errorLinearLayout.setVisibility(View.GONE);
+        binding.loadImageErrorLinearLayoutViewImgurImageFragment.setOnClickListener(view -> {
+            binding.progressBarViewImgurImageFragment.setVisibility(View.VISIBLE);
+            binding.loadImageErrorLinearLayoutViewImgurImageFragment.setVisibility(View.GONE);
             loadImage();
         });
 
         if (activity.isUseBottomAppBar()) {
-            bottomAppBar.setVisibility(View.VISIBLE);
-            titleTextView.setText(getString(R.string.view_imgur_media_activity_image_label,
+            binding.bottomNavigationViewImgurImageFragment.setVisibility(View.VISIBLE);
+            binding.titleTextViewViewImgurImageFragment.setText(getString(R.string.view_imgur_media_activity_image_label,
                     getArguments().getInt(EXTRA_INDEX) + 1, getArguments().getInt(EXTRA_MEDIA_COUNT)));
-            downloadImageView.setOnClickListener(view -> {
+            binding.downloadImageViewViewImgurImageFragment.setOnClickListener(view -> {
                 if (isDownloading) {
                     return;
                 }
                 isDownloading = true;
                 requestPermissionAndDownload();
             });
-            shareImageView.setOnClickListener(view -> {
+            binding.shareImageViewViewImgurImageFragment.setOnClickListener(view -> {
                 shareImage();
             });
-            wallpaperImageView.setOnClickListener(view -> {
+            binding.wallpaperImageViewViewImgurImageFragment.setOnClickListener(view -> {
                 setWallpaper();
             });
         }
 
-        return rootView;
+        viewGalleryViewModel = new ViewModelProvider(requireActivity()).get(ViewGalleryViewModel.class);
+        viewGalleryViewModel.getInsets().observe(getViewLifecycleOwner(), insets -> {
+            ViewGroup.LayoutParams lp = binding.bottomNavigationViewImgurImageFragment.getLayoutParams();
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) lp;
+
+                marginParams.bottomMargin = insets.bottom;
+                marginParams.setMarginStart(insets.left);
+                marginParams.setMarginEnd(insets.right);
+
+                binding.bottomNavigationViewImgurImageFragment.setLayoutParams(marginParams);
+            }
+        });
+
+        return binding.getRoot();
     }
 
     private void loadImage() {
         glide.asBitmap().load(imgurMedia.getLink()).listener(new RequestListener<Bitmap>() {
             @Override
             public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Bitmap> target, boolean isFirstResource) {
-                progressBar.setVisibility(View.GONE);
-                errorLinearLayout.setVisibility(View.VISIBLE);
+                binding.progressBarViewImgurImageFragment.setVisibility(View.GONE);
+                binding.loadImageErrorLinearLayoutViewImgurImageFragment.setVisibility(View.VISIBLE);
                 return false;
             }
 
             @Override
             public boolean onResourceReady(Bitmap resource, Object model, Target<Bitmap> target, DataSource dataSource, boolean isFirstResource) {
-                progressBar.setVisibility(View.GONE);
+                binding.progressBarViewImgurImageFragment.setVisibility(View.GONE);
                 return false;
             }
         }).into(new CustomTarget<Bitmap>() {
             @Override
             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                imageView.setImage(ImageSource.bitmap(resource));
+                binding.imageViewViewImgurImageFragment.setImage(ImageSource.bitmap(resource));
             }
 
             @Override
@@ -245,11 +239,10 @@ public class ViewImgurImageFragment extends Fragment {
     private void download() {
         isDownloading = false;
 
-        Intent intent = new Intent(activity, DownloadMediaService.class);
-        intent.putExtra(DownloadMediaService.EXTRA_URL, imgurMedia.getLink());
-        intent.putExtra(DownloadMediaService.EXTRA_MEDIA_TYPE, DownloadMediaService.EXTRA_MEDIA_TYPE_IMAGE);
-        intent.putExtra(DownloadMediaService.EXTRA_FILE_NAME, imgurMedia.getFileName());
-        ContextCompat.startForegroundService(activity, intent);
+        //TODO: contentEstimatedBytes
+        JobInfo jobInfo = DownloadMediaService.constructJobInfo(activity, 5000000, imgurMedia);
+        ((JobScheduler) activity.getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
+
         Toast.makeText(activity, R.string.download_started, Toast.LENGTH_SHORT).show();
     }
 
@@ -258,9 +251,10 @@ public class ViewImgurImageFragment extends Fragment {
 
             @Override
             public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                if (activity.getExternalCacheDir() != null) {
+                File cacheDir = Utils.getCacheDir(activity);
+                if (cacheDir != null) {
                     Toast.makeText(activity, R.string.save_image_first, Toast.LENGTH_SHORT).show();
-                    SaveBitmapImageToFile.SaveBitmapImageToFile(mExecutor, new Handler(), resource, activity.getExternalCacheDir().getPath(),
+                    SaveBitmapImageToFile.SaveBitmapImageToFile(mExecutor, new Handler(), resource, cacheDir.getPath(),
                             imgurMedia.getFileName(),
                             new SaveBitmapImageToFile.SaveBitmapImageToFileListener() {
                                 @Override
@@ -327,6 +321,6 @@ public class ViewImgurImageFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        glide.clear(imageView);
+        glide.clear(binding.imageViewViewImgurImageFragment);
     }
 }

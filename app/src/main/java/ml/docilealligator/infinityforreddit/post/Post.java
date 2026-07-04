@@ -3,10 +3,14 @@ package ml.docilealligator.infinityforreddit.post;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
 
+import ml.docilealligator.infinityforreddit.thing.MediaMetadata;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 
 /**
@@ -22,27 +26,18 @@ public class Post implements Parcelable {
     public static final int GIF_TYPE = 4;
     public static final int NO_PREVIEW_LINK_TYPE = 5;
     public static final int GALLERY_TYPE = 6;
-    public static final Creator<Post> CREATOR = new Creator<Post>() {
-        @Override
-        public Post createFromParcel(Parcel in) {
-            return new Post(in);
-        }
 
-        @Override
-        public Post[] newArray(int size) {
-            return new Post[size];
-        }
-    };
-    private String id;
-    private String fullName;
-    private String subredditName;
-    private String subredditNamePrefixed;
+    private final String id;
+    private final String fullName;
+    private final String subredditName;
+    private final String subredditNamePrefixed;
     private String subredditIconUrl;
     private String author;
+    private String authorFullname;
     private String authorNamePrefixed;
     private String authorIconUrl;
-    private String authorFlair;
-    private String authorFlairHTML;
+    private final String authorFlair;
+    private final String authorFlairHTML;
     private String title;
     private String selfText;
     private String selfTextPlain;
@@ -50,18 +45,17 @@ public class Post implements Parcelable {
     private String url;
     private String videoUrl;
     private String videoDownloadUrl;
-    private String gfycatId;
+    @Nullable
+    private String videoFallBackDirectUrl;
+    private String redgifsId;
     private String streamableShortCode;
     private boolean isImgur;
-    private boolean isGfycat;
     private boolean isRedgifs;
     private boolean isStreamable;
-    private boolean loadGfyOrStreamableVideoSuccess;
-    private String permalink;
+    private boolean loadedStreamableVideoAlready;
+    private final String permalink;
     private String flair;
-    private String awards;
-    private int nAwards;
-    private long postTimeMillis;
+    private final long postTimeMillis;
     private int score;
     private int postType;
     private int voteType;
@@ -71,28 +65,41 @@ public class Post implements Parcelable {
     private boolean spoiler;
     private boolean nsfw;
     private boolean stickied;
-    private boolean archived;
+    private final boolean archived;
     private boolean locked;
     private boolean saved;
-    private boolean isCrosspost;
+    private boolean sendReplies;
+    private final boolean isCrosspost;
     private boolean isRead;
     private String crosspostParentId;
     private String distinguished;
-    private String suggestedSort;
+    private final String suggestedSort;
+    private String mp4Variant;
     private ArrayList<Preview> previews = new ArrayList<>();
+    @Nullable
+    private Map<String, MediaMetadata> mediaMetadataMap;
     private ArrayList<Gallery> gallery = new ArrayList<>();
+    private boolean canModPost;
+    private boolean approved;
+    private long approvedAtUTC;
+    private String approvedBy;
+    private boolean removed;
+    private boolean spam;
 
+    //Text and video posts
     public Post(String id, String fullName, String subredditName, String subredditNamePrefixed,
-                String author, String authorFlair, String authorFlairHTML, long postTimeMillis,
+                String author, String authorFullname, String authorFlair, String authorFlairHTML, long postTimeMillis,
                 String title, String permalink, int score, int postType, int voteType, int nComments,
-                int upvoteRatio, String flair, String awards, int nAwards, boolean hidden, boolean spoiler,
-                boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved,
-                boolean isCrosspost, String distinguished, String suggestedSort) {
+                int upvoteRatio, String flair, boolean hidden, boolean spoiler,
+                boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved, boolean sendReplies,
+                boolean isCrosspost, boolean canModPost, boolean approved, long approvedAtUTC, String approvedBy,
+                boolean removed, boolean spam, String distinguished, String suggestedSort) {
         this.id = id;
         this.fullName = fullName;
         this.subredditName = subredditName;
         this.subredditNamePrefixed = subredditNamePrefixed;
         this.author = author;
+        this.authorFullname = authorFullname;
         this.authorNamePrefixed = "u/" + author;
         this.authorFlair = authorFlair;
         this.authorFlairHTML = authorFlairHTML;
@@ -105,8 +112,6 @@ public class Post implements Parcelable {
         this.nComments = nComments;
         this.upvoteRatio = upvoteRatio;
         this.flair = flair;
-        this.awards = awards;
-        this.nAwards = nAwards;
         this.hidden = hidden;
         this.spoiler = spoiler;
         this.nsfw = nsfw;
@@ -114,23 +119,32 @@ public class Post implements Parcelable {
         this.archived = archived;
         this.locked = locked;
         this.saved = saved;
+        this.sendReplies = sendReplies;
         this.isCrosspost = isCrosspost;
+        this.canModPost = canModPost;
+        this.approved = approved;
+        this.approvedAtUTC = approvedAtUTC;
+        this.approvedBy = approvedBy;
+        this.removed = removed;
+        this.spam = spam;
         this.distinguished = distinguished;
         this.suggestedSort = suggestedSort;
         isRead = false;
     }
 
     public Post(String id, String fullName, String subredditName, String subredditNamePrefixed,
-                String author, String authorFlair, String authorFlairHTML, long postTimeMillis, String title,
+                String author, String authorFullname, String authorFlair, String authorFlairHTML, long postTimeMillis, String title,
                 String url, String permalink, int score, int postType, int voteType, int nComments,
-                int upvoteRatio, String flair, String awards, int nAwards, boolean hidden, boolean spoiler,
-                boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved,
-                boolean isCrosspost, String distinguished, String suggestedSort) {
+                int upvoteRatio, String flair, boolean hidden, boolean spoiler,
+                boolean nsfw, boolean stickied, boolean archived, boolean locked, boolean saved, boolean sendReplies,
+                boolean isCrosspost, boolean canModPost, boolean approved, long approvedAtUTC, String approvedBy,
+                boolean removed, boolean spam, String distinguished, String suggestedSort) {
         this.id = id;
         this.fullName = fullName;
         this.subredditName = subredditName;
         this.subredditNamePrefixed = subredditNamePrefixed;
         this.author = author;
+        this.authorFullname = authorFullname;
         this.authorNamePrefixed = "u/" + author;
         this.authorFlair = authorFlair;
         this.authorFlairHTML = authorFlairHTML;
@@ -144,8 +158,6 @@ public class Post implements Parcelable {
         this.nComments = nComments;
         this.upvoteRatio = upvoteRatio;
         this.flair = flair;
-        this.awards = awards;
-        this.nAwards = nAwards;
         this.hidden = hidden;
         this.spoiler = spoiler;
         this.nsfw = nsfw;
@@ -153,10 +165,76 @@ public class Post implements Parcelable {
         this.archived = archived;
         this.locked = locked;
         this.saved = saved;
+        this.sendReplies = sendReplies;
         this.isCrosspost = isCrosspost;
+        this.canModPost = canModPost;
+        this.approved = approved;
+        this.approvedAtUTC = approvedAtUTC;
+        this.approvedBy = approvedBy;
+        this.removed = removed;
+        this.spam = spam;
         this.distinguished = distinguished;
         this.suggestedSort = suggestedSort;
         isRead = false;
+    }
+
+    public Post(@NonNull Post postToBeCopied) {
+        this.id = postToBeCopied.id;
+        this.fullName = postToBeCopied.fullName;
+        this.subredditName = postToBeCopied.subredditName;
+        this.subredditNamePrefixed = postToBeCopied.subredditNamePrefixed;
+        this.subredditIconUrl = postToBeCopied.subredditIconUrl;
+        this.author = postToBeCopied.author;
+        this.authorFullname = postToBeCopied.authorFullname;
+        this.authorNamePrefixed = postToBeCopied.authorNamePrefixed;
+        this.authorIconUrl = postToBeCopied.authorIconUrl;
+        this.authorFlair = postToBeCopied.authorFlair;
+        this.authorFlairHTML = postToBeCopied.authorFlairHTML;
+        this.title = postToBeCopied.title;
+        this.selfText = postToBeCopied.selfText;
+        this.selfTextPlain = postToBeCopied.selfTextPlain;
+        this.selfTextPlainTrimmed = postToBeCopied.selfTextPlainTrimmed;
+        this.url = postToBeCopied.url;
+        this.videoUrl = postToBeCopied.videoUrl;
+        this.videoDownloadUrl = postToBeCopied.videoDownloadUrl;
+        this.videoFallBackDirectUrl = postToBeCopied.videoFallBackDirectUrl;
+        this.redgifsId = postToBeCopied.redgifsId;
+        this.streamableShortCode = postToBeCopied.streamableShortCode;
+        this.isImgur = postToBeCopied.isImgur;
+        this.isRedgifs = postToBeCopied.isRedgifs;
+        this.isStreamable = postToBeCopied.isStreamable;
+        this.loadedStreamableVideoAlready = postToBeCopied.loadedStreamableVideoAlready;
+        this.permalink = postToBeCopied.permalink;
+        this.flair = postToBeCopied.flair;
+        this.postTimeMillis = postToBeCopied.postTimeMillis;
+        this.score = postToBeCopied.score;
+        this.postType = postToBeCopied.postType;
+        this.voteType = postToBeCopied.voteType;
+        this.nComments = postToBeCopied.nComments;
+        this.upvoteRatio = postToBeCopied.upvoteRatio;
+        this.hidden = postToBeCopied.hidden;
+        this.spoiler = postToBeCopied.spoiler;
+        this.nsfw = postToBeCopied.nsfw;
+        this.stickied = postToBeCopied.stickied;
+        this.archived = postToBeCopied.archived;
+        this.locked = postToBeCopied.locked;
+        this.saved = postToBeCopied.saved;
+        this.sendReplies = postToBeCopied.sendReplies;
+        this.isCrosspost = postToBeCopied.isCrosspost;
+        this.isRead = postToBeCopied.isRead;
+        this.crosspostParentId = postToBeCopied.crosspostParentId;
+        this.distinguished = postToBeCopied.distinguished;
+        this.suggestedSort = postToBeCopied.suggestedSort;
+        this.mp4Variant = postToBeCopied.mp4Variant;
+        this.previews = postToBeCopied.previews;
+        this.mediaMetadataMap = postToBeCopied.mediaMetadataMap;
+        this.gallery = postToBeCopied.gallery;
+        this.canModPost = postToBeCopied.canModPost;
+        this.approved = postToBeCopied.approved;
+        this.approvedAtUTC = postToBeCopied.approvedAtUTC;
+        this.approvedBy = postToBeCopied.approvedBy;
+        this.removed = postToBeCopied.removed;
+        this.spam = postToBeCopied.spam;
     }
 
     protected Post(Parcel in) {
@@ -166,11 +244,11 @@ public class Post implements Parcelable {
         subredditNamePrefixed = in.readString();
         subredditIconUrl = in.readString();
         author = in.readString();
+        authorFullname = in.readString();
         authorNamePrefixed = in.readString();
+        authorIconUrl = in.readString();
         authorFlair = in.readString();
         authorFlairHTML = in.readString();
-        authorIconUrl = in.readString();
-        postTimeMillis = in.readLong();
         title = in.readString();
         selfText = in.readString();
         selfTextPlain = in.readString();
@@ -178,17 +256,16 @@ public class Post implements Parcelable {
         url = in.readString();
         videoUrl = in.readString();
         videoDownloadUrl = in.readString();
-        gfycatId = in.readString();
+        videoFallBackDirectUrl = in.readString();
+        redgifsId = in.readString();
         streamableShortCode = in.readString();
         isImgur = in.readByte() != 0;
-        isGfycat = in.readByte() != 0;
         isRedgifs = in.readByte() != 0;
         isStreamable = in.readByte() != 0;
-        loadGfyOrStreamableVideoSuccess = in.readByte() != 0;
+        loadedStreamableVideoAlready = in.readByte() != 0;
         permalink = in.readString();
         flair = in.readString();
-        awards = in.readString();
-        nAwards = in.readInt();
+        postTimeMillis = in.readLong();
         score = in.readInt();
         postType = in.readInt();
         voteType = in.readInt();
@@ -201,14 +278,35 @@ public class Post implements Parcelable {
         archived = in.readByte() != 0;
         locked = in.readByte() != 0;
         saved = in.readByte() != 0;
+        sendReplies = in.readByte() != 0;
         isCrosspost = in.readByte() != 0;
+        canModPost = in.readByte() != 0;
+        approved = in.readByte() != 0;
+        approvedAtUTC = in.readLong();
+        approvedBy = in.readString();
+        removed = in.readByte() != 0;
+        spam = in.readByte() != 0;
         isRead = in.readByte() != 0;
         crosspostParentId = in.readString();
         distinguished = in.readString();
         suggestedSort = in.readString();
-        in.readTypedList(previews, Preview.CREATOR);
-        in.readTypedList(gallery, Gallery.CREATOR);
+        mp4Variant = in.readString();
+        previews = in.createTypedArrayList(Preview.CREATOR);
+        mediaMetadataMap = (Map<String, MediaMetadata>) in.readValue(getClass().getClassLoader());
+        gallery = in.createTypedArrayList(Gallery.CREATOR);
     }
+
+    public static final Creator<Post> CREATOR = new Creator<Post>() {
+        @Override
+        public Post createFromParcel(Parcel in) {
+            return new Post(in);
+        }
+
+        @Override
+        public Post[] newArray(int size) {
+            return new Post[size];
+        }
+    };
 
     public String getId() {
         return id;
@@ -236,6 +334,11 @@ public class Post implements Parcelable {
 
     public String getAuthor() {
         return author;
+    }
+
+    // Will be empty if the post is deleted
+    public String getAuthorFullname() {
+        return authorFullname;
     }
 
     public boolean isAuthorDeleted() {
@@ -327,12 +430,21 @@ public class Post implements Parcelable {
         this.videoDownloadUrl = videoDownloadUrl;
     }
 
-    public String getGfycatId() {
-        return gfycatId;
+    @Nullable
+    public String getVideoFallBackDirectUrl() {
+        return videoFallBackDirectUrl;
     }
 
-    public void setGfycatId(String gfycatId) {
-        this.gfycatId = gfycatId;
+    public void setVideoFallBackDirectUrl(@Nullable String videoFallBackDirectUrl) {
+        this.videoFallBackDirectUrl = videoFallBackDirectUrl;
+    }
+
+    public String getRedgifsId() {
+        return redgifsId;
+    }
+
+    public void setRedgifsId(String redgifsId) {
+        this.redgifsId = redgifsId;
     }
 
     public String getStreamableShortCode() {
@@ -351,14 +463,6 @@ public class Post implements Parcelable {
         return isImgur;
     }
 
-    public boolean isGfycat() {
-        return isGfycat;
-    }
-
-    public void setIsGfycat(boolean isGfycat) {
-        this.isGfycat = isGfycat;
-    }
-
     public boolean isRedgifs() {
         return isRedgifs;
     }
@@ -375,12 +479,16 @@ public class Post implements Parcelable {
         this.isStreamable = isStreamable;
     }
 
-    public boolean isLoadGfycatOrStreamableVideoSuccess() {
-        return loadGfyOrStreamableVideoSuccess;
+    public boolean isNormalVideo() {
+        return postType == Post.VIDEO_TYPE && !isImgur && !isRedgifs && !isStreamable;
     }
 
-    public void setLoadGfyOrStreamableVideoSuccess(boolean loadGfyOrStreamableVideoSuccess) {
-        this.loadGfyOrStreamableVideoSuccess = loadGfyOrStreamableVideoSuccess;
+    public boolean isLoadedStreamableVideoAlready() {
+        return loadedStreamableVideoAlready;
+    }
+
+    public void setLoadedStreamableVideoAlready(boolean loadedStreamableVideoAlready) {
+        this.loadedStreamableVideoAlready = loadedStreamableVideoAlready;
     }
 
     public String getPermalink() {
@@ -399,28 +507,16 @@ public class Post implements Parcelable {
         return distinguished != null && distinguished.equals("moderator");
     }
 
+    public void setIsModerator(boolean value) {
+        distinguished = value ? "moderator" : null;
+    }
+
     public boolean isAdmin() {
         return distinguished != null && distinguished.equals("admin");
     }
 
     public String getSuggestedSort() {
         return suggestedSort;
-    }
-
-    public String getAwards() {
-        return awards;
-    }
-
-    public void addAwards(String newAwardsHTML) {
-        awards += newAwardsHTML;
-    }
-
-    public int getNAwards() {
-        return nAwards;
-    }
-
-    public void addAwards(int newNAwards) {
-        nAwards += newNAwards;
     }
 
     public int getScore() {
@@ -492,8 +588,72 @@ public class Post implements Parcelable {
         return 0;
     }
 
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(fullName);
+        dest.writeString(subredditName);
+        dest.writeString(subredditNamePrefixed);
+        dest.writeString(subredditIconUrl);
+        dest.writeString(author);
+        dest.writeString(authorFullname);
+        dest.writeString(authorNamePrefixed);
+        dest.writeString(authorIconUrl);
+        dest.writeString(authorFlair);
+        dest.writeString(authorFlairHTML);
+        dest.writeString(title);
+        dest.writeString(selfText);
+        dest.writeString(selfTextPlain);
+        dest.writeString(selfTextPlainTrimmed);
+        dest.writeString(url);
+        dest.writeString(videoUrl);
+        dest.writeString(videoDownloadUrl);
+        dest.writeString(videoFallBackDirectUrl);
+        dest.writeString(redgifsId);
+        dest.writeString(streamableShortCode);
+        dest.writeByte((byte) (isImgur ? 1 : 0));
+        dest.writeByte((byte) (isRedgifs ? 1 : 0));
+        dest.writeByte((byte) (isStreamable ? 1 : 0));
+        dest.writeByte((byte) (loadedStreamableVideoAlready ? 1 : 0));
+        dest.writeString(permalink);
+        dest.writeString(flair);
+        dest.writeLong(postTimeMillis);
+        dest.writeInt(score);
+        dest.writeInt(postType);
+        dest.writeInt(voteType);
+        dest.writeInt(nComments);
+        dest.writeInt(upvoteRatio);
+        dest.writeByte((byte) (hidden ? 1 : 0));
+        dest.writeByte((byte) (spoiler ? 1 : 0));
+        dest.writeByte((byte) (nsfw ? 1 : 0));
+        dest.writeByte((byte) (stickied ? 1 : 0));
+        dest.writeByte((byte) (archived ? 1 : 0));
+        dest.writeByte((byte) (locked ? 1 : 0));
+        dest.writeByte((byte) (saved ? 1 : 0));
+        dest.writeByte((byte) (sendReplies ? 1 : 0));
+        dest.writeByte((byte) (isCrosspost ? 1 : 0));
+        dest.writeByte((byte) (canModPost ? 1 : 0));
+        dest.writeByte((byte) (approved ? 1 : 0));
+        dest.writeLong(approvedAtUTC);
+        dest.writeString(approvedBy);
+        dest.writeByte((byte) (removed ? 1 : 0));
+        dest.writeByte((byte) (spam ? 1 : 0));
+        dest.writeByte((byte) (isRead ? 1 : 0));
+        dest.writeString(crosspostParentId);
+        dest.writeString(distinguished);
+        dest.writeString(suggestedSort);
+        dest.writeString(mp4Variant);
+        dest.writeTypedList(previews);
+        dest.writeValue(mediaMetadataMap);
+        dest.writeTypedList(gallery);
+    }
+
     public boolean isStickied() {
         return stickied;
+    }
+
+    public void setIsStickied(boolean value) {
+        stickied = value;
     }
 
     public boolean isArchived() {
@@ -504,6 +664,10 @@ public class Post implements Parcelable {
         return locked;
     }
 
+    public void setIsLocked(boolean value) {
+        locked = value;
+    }
+
     public boolean isSaved() {
         return saved;
     }
@@ -512,8 +676,57 @@ public class Post implements Parcelable {
         this.saved = saved;
     }
 
+    public boolean isSendReplies() {
+        return sendReplies;
+    }
+
+    public void setSendReplies(boolean sendReplies) {
+        this.sendReplies = sendReplies;
+    }
+
     public boolean isCrosspost() {
         return isCrosspost;
+    }
+
+    public boolean isCanModPost() {
+        return canModPost;
+    }
+
+    public boolean isApproved() {
+        return approved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
+
+    public long getApprovedAtUTC() {
+        return approvedAtUTC;
+    }
+
+    public void setApprovedAtUTC(long approvedAtUTC) {
+        this.approvedAtUTC = approvedAtUTC;
+    }
+
+    public String getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(String approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    public void setRemoved(boolean removed, boolean spam) {
+        this.removed = removed;
+        this.spam = spam;
+    }
+
+    public boolean isSpam() {
+        return spam;
     }
 
     public void markAsRead() {
@@ -540,6 +753,15 @@ public class Post implements Parcelable {
         this.previews = previews;
     }
 
+    @Nullable
+    public Map<String, MediaMetadata> getMediaMetadataMap() {
+        return mediaMetadataMap;
+    }
+
+    public void setMediaMetadataMap(@Nullable Map<String, MediaMetadata> mediaMetadataMap) {
+        this.mediaMetadataMap = mediaMetadataMap;
+    }
+
     public ArrayList<Gallery> getGallery() {
         return gallery;
     }
@@ -548,56 +770,12 @@ public class Post implements Parcelable {
         this.gallery = gallery;
     }
 
-    @Override
-    public void writeToParcel(Parcel parcel, int i) {
-        parcel.writeString(id);
-        parcel.writeString(fullName);
-        parcel.writeString(subredditName);
-        parcel.writeString(subredditNamePrefixed);
-        parcel.writeString(subredditIconUrl);
-        parcel.writeString(author);
-        parcel.writeString(authorNamePrefixed);
-        parcel.writeString(authorFlair);
-        parcel.writeString(authorFlairHTML);
-        parcel.writeString(authorIconUrl);
-        parcel.writeLong(postTimeMillis);
-        parcel.writeString(title);
-        parcel.writeString(selfText);
-        parcel.writeString(selfTextPlain);
-        parcel.writeString(selfTextPlainTrimmed);
-        parcel.writeString(url);
-        parcel.writeString(videoUrl);
-        parcel.writeString(videoDownloadUrl);
-        parcel.writeString(gfycatId);
-        parcel.writeString(streamableShortCode);
-        parcel.writeByte((byte) (isImgur ? 1 : 0));
-        parcel.writeByte((byte) (isGfycat ? 1 : 0));
-        parcel.writeByte((byte) (isRedgifs ? 1 : 0));
-        parcel.writeByte((byte) (isStreamable ? 1 : 0));
-        parcel.writeByte((byte) (loadGfyOrStreamableVideoSuccess ? 1 : 0));
-        parcel.writeString(permalink);
-        parcel.writeString(flair);
-        parcel.writeString(awards);
-        parcel.writeInt(nAwards);
-        parcel.writeInt(score);
-        parcel.writeInt(postType);
-        parcel.writeInt(voteType);
-        parcel.writeInt(nComments);
-        parcel.writeInt(upvoteRatio);
-        parcel.writeByte((byte) (hidden ? 1 : 0));
-        parcel.writeByte((byte) (spoiler ? 1 : 0));
-        parcel.writeByte((byte) (nsfw ? 1 : 0));
-        parcel.writeByte((byte) (stickied ? 1 : 0));
-        parcel.writeByte((byte) (archived ? 1 : 0));
-        parcel.writeByte((byte) (locked ? 1 : 0));
-        parcel.writeByte((byte) (saved ? 1 : 0));
-        parcel.writeByte((byte) (isCrosspost ? 1 : 0));
-        parcel.writeByte((byte) (isRead ? 1 : 0));
-        parcel.writeString(crosspostParentId);
-        parcel.writeString(distinguished);
-        parcel.writeString(suggestedSort);
-        parcel.writeTypedList(previews);
-        parcel.writeTypedList(gallery);
+    public String getMp4Variant() {
+        return mp4Variant;
+    }
+
+    public void setMp4Variant(String mp4Variant) {
+        this.mp4Variant = mp4Variant;
     }
 
     @Override
@@ -605,12 +783,31 @@ public class Post implements Parcelable {
         if (!(obj instanceof Post)) {
             return false;
         }
-        return ((Post) obj).id.equals(id);
+        return ((Post) obj).id.equals(id)
+                && nsfw == ((Post) obj).nsfw
+                && spoiler == ((Post) obj).spoiler
+                && isRead == ((Post) obj).isRead
+                && saved == ((Post) obj).saved
+                && hidden == ((Post) obj).hidden
+                && voteType == ((Post) obj).voteType
+                && stickied == ((Post) obj).stickied
+                && approved == ((Post) obj).approved
+                && approvedAtUTC == ((Post) obj).approvedAtUTC
+                && Objects.equals(approvedBy, ((Post) obj).approvedBy)
+                && removed == ((Post) obj).removed
+                && spam == ((Post) obj).spam
+                && locked == ((Post) obj).locked
+                && Objects.equals(distinguished, ((Post) obj).distinguished)
+                && Objects.equals(selfText, ((Post) obj).selfText);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return Objects.hash(
+                id, nsfw, spoiler, isRead, saved, hidden, voteType,
+                stickied, approved, approvedAtUTC, approvedBy, removed,
+                spam, locked, distinguished
+        );
     }
 
     public static class Gallery implements Parcelable {

@@ -1,12 +1,13 @@
 package ml.docilealligator.infinityforreddit.multireddit;
 
-import android.os.AsyncTask;
+import android.os.Handler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.utils.JSONUtils;
@@ -22,13 +23,41 @@ public class ParseMultiReddit {
         void failed();
     }
 
-    public static void parseMultiRedditsList(String response, ParseMultiRedditsListListener parseMultiRedditsListListener) {
-        new ParseMultiRedditsListAsyncTask(response, parseMultiRedditsListListener).execute();
+    public static void parseMultiRedditsList(Executor executor, Handler handler, String response,
+                                             ParseMultiRedditsListListener parseMultiRedditsListListener) {
+        executor.execute(() -> {
+            try {
+                JSONArray arrayResponse = new JSONArray(response);
+                ArrayList<MultiReddit> multiReddits = new ArrayList<>();
+                for (int i = 0; i < arrayResponse.length(); i++) {
+                    try {
+                        multiReddits.add(parseMultiReddit(arrayResponse.getJSONObject(i).getJSONObject(JSONUtils.DATA_KEY)));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                handler.post(() -> parseMultiRedditsListListener.success(multiReddits));
+            } catch (JSONException e) {
+                e.printStackTrace();
+                handler.post(parseMultiRedditsListListener::failed);
+            }
+        });
     }
 
-    public static void parseAndSaveMultiReddit(String response, RedditDataRoomDatabase redditDataRoomDatabase,
+    public static void parseAndSaveMultiReddit(Executor executor, Handler handler, String response, RedditDataRoomDatabase redditDataRoomDatabase,
                                                ParseMultiRedditListener parseMultiRedditListener) {
-        new ParseAndSaveMultiRedditAsyncTask(response, redditDataRoomDatabase, parseMultiRedditListener).execute();
+        executor.execute(() -> {
+            try {
+                MultiReddit multiReddit = parseMultiReddit(new JSONObject(response).getJSONObject(JSONUtils.DATA_KEY));
+                redditDataRoomDatabase.multiRedditDao().insert(multiReddit);
+
+                handler.post(parseMultiRedditListener::success);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                handler.post(parseMultiRedditListener::failed);
+            }
+        });
     }
 
     private static MultiReddit parseMultiReddit(JSONObject singleMultiRedditJSON) throws JSONException {
@@ -47,92 +76,19 @@ public class ParseMultiReddit {
         boolean isFavorited = singleMultiRedditJSON.getBoolean(JSONUtils.IS_FAVORITED_KEY);
 
         JSONArray subredditsArray = singleMultiRedditJSON.getJSONArray(JSONUtils.SUBREDDITS_KEY);
-        ArrayList<String> subreddits = new ArrayList<>();
-        for (int j = 0; j < subredditsArray.length(); j++) {
-            subreddits.add(subredditsArray.getJSONObject(j).getString(JSONUtils.NAME_KEY));
+        ArrayList<ExpandedSubredditInMultiReddit> subreddits = new ArrayList<>();
+        for (int i = 0; i < subredditsArray.length(); i++) {
+            JSONObject subredditData = subredditsArray.getJSONObject(i).getJSONObject(JSONUtils.DATA_KEY);
+            subreddits.add(
+                    new ExpandedSubredditInMultiReddit(
+                            subredditsArray.getJSONObject(i).getString(JSONUtils.NAME_KEY),
+                            subredditData.isNull(JSONUtils.COMMUNITY_ICON_KEY) ? subredditData.getString(JSONUtils.NAME_KEY) : subredditData.getString(JSONUtils.COMMUNITY_ICON_KEY)
+                    )
+            );
         }
 
         return new MultiReddit(path, displayName, name, description, copiedFrom,
                 iconUrl, visibility, owner, nSubscribers, createdUTC, over18, isSubscriber,
                 isFavorited, subreddits);
-    }
-
-    private static class ParseMultiRedditsListAsyncTask extends AsyncTask<Void, Void, Void> {
-        private JSONArray arrayResponse;
-        private boolean parseFailed;
-        private ArrayList<MultiReddit> multiReddits;
-        private ParseMultiRedditsListListener parseMultiRedditsListListener;
-
-        ParseMultiRedditsListAsyncTask(String response,
-                                       ParseMultiRedditsListListener parseMultiRedditsListListener) {
-            this.parseMultiRedditsListListener = parseMultiRedditsListListener;
-            try {
-                arrayResponse = new JSONArray(response);
-                multiReddits = new ArrayList<>();
-                parseFailed = false;
-            } catch (JSONException e) {
-                e.printStackTrace();
-                parseFailed = true;
-            }
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            if (!parseFailed) {
-                for (int i = 0; i < arrayResponse.length(); i++) {
-                    try {
-                        multiReddits.add(parseMultiReddit(arrayResponse.getJSONObject(i).getJSONObject(JSONUtils.DATA_KEY)));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if (!parseFailed) {
-                parseMultiRedditsListListener.success(multiReddits);
-            } else {
-                parseMultiRedditsListListener.failed();
-            }
-        }
-    }
-
-    private static class ParseAndSaveMultiRedditAsyncTask extends AsyncTask<Void, Void, Void> {
-        private String response;
-        private RedditDataRoomDatabase redditDataRoomDatabase;
-        private MultiReddit multiReddit;
-        private ParseMultiRedditListener parseMultiRedditListener;
-
-        ParseAndSaveMultiRedditAsyncTask(String response, RedditDataRoomDatabase redditDataRoomDatabase,
-                                         ParseMultiRedditListener parseMultiRedditListener) {
-            this.redditDataRoomDatabase = redditDataRoomDatabase;
-            this.parseMultiRedditListener = parseMultiRedditListener;
-            this.response = response;
-        }
-
-        @Override
-        protected Void doInBackground(Void... voids) {
-            try {
-                multiReddit = parseMultiReddit(new JSONObject(response).getJSONObject(JSONUtils.DATA_KEY));
-                redditDataRoomDatabase.multiRedditDao().insert(multiReddit);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            if (multiReddit != null) {
-                parseMultiRedditListener.success();
-            } else {
-                parseMultiRedditListener.failed();
-            }
-        }
     }
 }

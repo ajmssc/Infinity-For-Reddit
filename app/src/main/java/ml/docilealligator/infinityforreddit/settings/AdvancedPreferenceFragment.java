@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -34,8 +35,10 @@ import ml.docilealligator.infinityforreddit.asynctasks.DeleteAllSubreddits;
 import ml.docilealligator.infinityforreddit.asynctasks.DeleteAllThemes;
 import ml.docilealligator.infinityforreddit.asynctasks.DeleteAllUsers;
 import ml.docilealligator.infinityforreddit.asynctasks.RestoreSettings;
-import ml.docilealligator.infinityforreddit.customviews.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceFragmentCompat;
 import ml.docilealligator.infinityforreddit.events.RecreateActivityEvent;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostDao;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 
 /**
@@ -50,6 +53,9 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
+    @Inject
+    @Named("current_account")
+    SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     @Named("sort_type")
     SharedPreferences mSortTypeSharedPreferences;
@@ -82,12 +88,13 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
     SharedPreferences postHistorySharedPreferences;
     @Inject
     Executor executor;
+    private Handler handler;
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.advanced_preferences, rootKey);
 
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
         Preference deleteSubredditsPreference = findPreference(SharedPreferencesUtils.DELETE_ALL_SUBREDDITS_DATA_IN_DATABASE);
         Preference deleteUsersPreference = findPreference(SharedPreferencesUtils.DELETE_ALL_USERS_DATA_IN_DATABASE);
@@ -101,13 +108,15 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
         Preference backupSettingsPreference = findPreference(SharedPreferencesUtils.BACKUP_SETTINGS);
         Preference restoreSettingsPreference = findPreference(SharedPreferencesUtils.RESTORE_SETTINGS);
 
+        handler = new Handler(Looper.getMainLooper());
+
         if (deleteSubredditsPreference != null) {
             deleteSubredditsPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllSubreddits.deleteAllSubreddits(executor, new Handler(), mRedditDataRoomDatabase,
-                                        () -> Toast.makeText(activity, R.string.delete_all_subreddits_success, Toast.LENGTH_SHORT).show()))
+                                -> DeleteAllSubreddits.deleteAllSubreddits(executor, handler, mRedditDataRoomDatabase,
+                                        () -> Toast.makeText(mActivity, R.string.delete_all_subreddits_success, Toast.LENGTH_SHORT).show()))
                         .setNegativeButton(R.string.no, null)
                         .show();
                 return true;
@@ -116,11 +125,11 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deleteUsersPreference != null) {
             deleteUsersPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllUsers.deleteAllUsers(executor, new Handler(), mRedditDataRoomDatabase,
-                                        () -> Toast.makeText(activity, R.string.delete_all_users_success, Toast.LENGTH_SHORT).show()))
+                                -> DeleteAllUsers.deleteAllUsers(executor, handler, mRedditDataRoomDatabase,
+                                        () -> Toast.makeText(mActivity, R.string.delete_all_users_success, Toast.LENGTH_SHORT).show()))
                         .setNegativeButton(R.string.no, null)
                         .show();
                 return true;
@@ -129,12 +138,12 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deleteSortTypePreference != null) {
             deleteSortTypePreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllSortTypes.deleteAllSortTypes(executor, new Handler(),
+                                -> DeleteAllSortTypes.deleteAllSortTypes(executor, handler,
                                 mSharedPreferences, mSortTypeSharedPreferences, () -> {
-                                    Toast.makeText(activity, R.string.delete_all_sort_types_success, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(mActivity, R.string.delete_all_sort_types_success, Toast.LENGTH_SHORT).show();
                                     EventBus.getDefault().post(new RecreateActivityEvent());
                                 }))
                         .setNegativeButton(R.string.no, null)
@@ -145,12 +154,12 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deletePostLaoutPreference != null) {
             deletePostLaoutPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllPostLayouts.deleteAllPostLayouts(executor, new Handler(),
+                                -> DeleteAllPostLayouts.deleteAllPostLayouts(executor, handler,
                                 mSharedPreferences, mPostLayoutSharedPreferences, () -> {
-                                    Toast.makeText(activity, R.string.delete_all_post_layouts_success, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(mActivity, R.string.delete_all_post_layouts_success, Toast.LENGTH_SHORT).show();
                                     EventBus.getDefault().post(new RecreateActivityEvent());
                                 }))
                         .setNegativeButton(R.string.no, null)
@@ -161,13 +170,13 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deleteAllThemesPreference != null) {
             deleteAllThemesPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllThemes.deleteAllThemes(executor, new Handler(),
+                                -> DeleteAllThemes.deleteAllThemes(executor, handler,
                                 mRedditDataRoomDatabase, lightThemeSharedPreferences,
                                         darkThemeSharedPreferences, amoledThemeSharedPreferences, () -> {
-                                    Toast.makeText(activity, R.string.delete_all_themes_success, Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(mActivity, R.string.delete_all_themes_success, Toast.LENGTH_SHORT).show();
                                     EventBus.getDefault().post(new RecreateActivityEvent());
                                 }))
                         .setNegativeButton(R.string.no, null)
@@ -178,12 +187,12 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deletePostFeedScrolledPositionsPreference != null) {
             deletePostFeedScrolledPositionsPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
                                 -> {
                             postFeedScrolledPositionSharedPreferences.edit().clear().apply();
-                            Toast.makeText(activity, R.string.delete_all_front_page_scrolled_positions_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mActivity, R.string.delete_all_front_page_scrolled_positions_success, Toast.LENGTH_SHORT).show();
                         })
                         .setNegativeButton(R.string.no, null)
                         .show();
@@ -192,13 +201,20 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
         }
 
         if (deleteReadPostsPreference != null) {
+            executor.execute(() -> {
+                ReadPostDao readPostDao = mRedditDataRoomDatabase.readPostDao();
+                int tableCount = readPostDao.getReadPostsCount(mActivity.accountName, ReadPostType.READ_POSTS);
+                long tableEntrySize = readPostDao.getMaxReadPostEntrySize();
+                long tableSize = tableEntrySize * tableCount / 1024;
+                handler.post(() -> deleteReadPostsPreference.setSummary(getString(R.string.settings_read_posts_db_summary, tableSize, tableCount)));
+            });
             deleteReadPostsPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
-                                -> DeleteAllReadPosts.deleteAllReadPosts(executor, new Handler(),
+                                -> DeleteAllReadPosts.deleteAllReadPosts(executor, handler,
                                 mRedditDataRoomDatabase, () -> {
-                            Toast.makeText(activity, R.string.delete_all_read_posts_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mActivity, R.string.delete_all_read_posts_success, Toast.LENGTH_SHORT).show();
                         }))
                         .setNegativeButton(R.string.no, null)
                         .show();
@@ -208,7 +224,7 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (deleteAllLegacySettingsPreference != null) {
             deleteAllLegacySettingsPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
                                 -> {
@@ -227,6 +243,11 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
                             editor.remove(SharedPreferencesUtils.BLUR_SPOILER_KEY_LEGACY);
                             editor.remove(SharedPreferencesUtils.CONFIRM_TO_EXIT_LEGACY);
                             editor.remove(SharedPreferencesUtils.OPEN_LINK_IN_APP_LEGACY);
+                            editor.remove(SharedPreferencesUtils.AUTOMATICALLY_TRY_REDGIFS_LEGACY);
+                            editor.remove(SharedPreferencesUtils.DO_NOT_SHOW_REDDIT_API_INFO_AGAIN_LEGACY);
+                            editor.remove(SharedPreferencesUtils.HIDE_THE_NUMBER_OF_AWARDS_LEGACY);
+                            editor.remove(SharedPreferencesUtils.HIDE_COMMENT_AWARDS_LEGACY);
+                            editor.remove(SharedPreferencesUtils.IMMERSIVE_INTERFACE_IGNORE_NAV_BAR_KEY_LEGACY);
 
                             SharedPreferences.Editor sortTypeEditor = mSortTypeSharedPreferences.edit();
                             sortTypeEditor.remove(SharedPreferencesUtils.SORT_TYPE_ALL_POST_LEGACY);
@@ -238,10 +259,14 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
                             postLayoutEditor.remove(SharedPreferencesUtils.POST_LAYOUT_ALL_POST_LEGACY);
                             postLayoutEditor.remove(SharedPreferencesUtils.POST_LAYOUT_POPULAR_POST_LEGACY);
 
+                            SharedPreferences.Editor currentAccountEditor = mCurrentAccountSharedPreferences.edit();
+                            currentAccountEditor.remove(SharedPreferencesUtils.APPLICATION_ONLY_ACCESS_TOKEN_LEGACY);
+
                             editor.apply();
                             sortTypeEditor.apply();
                             postLayoutEditor.apply();
-                            Toast.makeText(activity, R.string.delete_all_legacy_settings_success, Toast.LENGTH_SHORT).show();
+                            currentAccountEditor.apply();
+                            Toast.makeText(mActivity, R.string.delete_all_legacy_settings_success, Toast.LENGTH_SHORT).show();
                         })
                         .setNegativeButton(R.string.no, null)
                         .show();
@@ -251,7 +276,7 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
 
         if (resetAllSettingsPreference != null) {
             resetAllSettingsPreference.setOnPreferenceClickListener(preference -> {
-                new MaterialAlertDialogBuilder(activity, R.style.MaterialAlertDialogTheme)
+                new MaterialAlertDialogBuilder(mActivity, R.style.MaterialAlertDialogTheme)
                         .setTitle(R.string.are_you_sure)
                         .setPositiveButton(R.string.yes, (dialogInterface, i)
                                 -> {
@@ -264,7 +289,7 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
                                 mSharedPreferences.edit().putBoolean(SharedPreferencesUtils.DISABLE_NSFW_FOREVER, true).apply();
                             }
 
-                            Toast.makeText(activity, R.string.reset_all_settings_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(mActivity, R.string.reset_all_settings_success, Toast.LENGTH_SHORT).show();
                             EventBus.getDefault().post(new RecreateActivityEvent());
                         })
                         .setNegativeButton(R.string.no, null)
@@ -297,7 +322,7 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
         if (resultCode == RESULT_OK) {
             if (requestCode == SELECT_BACKUP_SETTINGS_DIRECTORY_REQUEST_CODE) {
                 Uri uri = data.getData();
-                BackupSettings.backupSettings(activity, executor, new Handler(), activity.getContentResolver(), uri,
+                BackupSettings.backupSettings(mActivity, executor, handler, mActivity.getContentResolver(), uri,
                         mRedditDataRoomDatabase, mSharedPreferences, lightThemeSharedPreferences, darkThemeSharedPreferences,
                         amoledThemeSharedPreferences, mSortTypeSharedPreferences, mPostLayoutSharedPreferences,
                         postFeedScrolledPositionSharedPreferences, mainActivityTabsSharedPreferences,
@@ -305,17 +330,17 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
                         new BackupSettings.BackupSettingsListener() {
                             @Override
                             public void success() {
-                                Toast.makeText(activity, R.string.backup_settings_success, Toast.LENGTH_LONG).show();
+                                Toast.makeText(mActivity, R.string.backup_settings_success, Toast.LENGTH_LONG).show();
                             }
 
                             @Override
                             public void failed(String errorMessage) {
-                                Toast.makeText(activity, errorMessage, Toast.LENGTH_LONG).show();
+                                Toast.makeText(mActivity, errorMessage, Toast.LENGTH_LONG).show();
                             }
                         });
             } else if (requestCode == SELECT_RESTORE_SETTINGS_DIRECTORY_REQUEST_CODE) {
                 Uri uri = data.getData();
-                RestoreSettings.restoreSettings(activity, executor, new Handler(), activity.getContentResolver(), uri,
+                RestoreSettings.restoreSettings(mActivity, executor, handler, mActivity.getContentResolver(), uri,
                         mRedditDataRoomDatabase, mSharedPreferences, lightThemeSharedPreferences, darkThemeSharedPreferences,
                         amoledThemeSharedPreferences, mSortTypeSharedPreferences, mPostLayoutSharedPreferences,
                         postFeedScrolledPositionSharedPreferences, mainActivityTabsSharedPreferences,
@@ -323,12 +348,12 @@ public class AdvancedPreferenceFragment extends CustomFontPreferenceFragmentComp
                         new RestoreSettings.RestoreSettingsListener() {
                             @Override
                             public void success() {
-                                Toast.makeText(activity, R.string.restore_settings_success, Toast.LENGTH_LONG).show();
+                                Toast.makeText(mActivity, R.string.restore_settings_success, Toast.LENGTH_LONG).show();
                             }
 
                             @Override
                             public void failed(String errorMessage) {
-                                Toast.makeText(activity, errorMessage, Toast.LENGTH_LONG).show();
+                                Toast.makeText(mActivity, errorMessage, Toast.LENGTH_LONG).show();
                             }
                         });
             }

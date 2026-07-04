@@ -2,6 +2,7 @@ package ml.docilealligator.infinityforreddit.adapters.navigationdrawer;
 
 import android.content.SharedPreferences;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ConcatAdapter;
 
 import com.bumptech.glide.Glide;
@@ -15,22 +16,22 @@ import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.subscribedsubreddit.SubscribedSubredditData;
 
 public class NavigationDrawerRecyclerViewMergedAdapter {
-    private HeaderSectionRecyclerViewAdapter headerSectionRecyclerViewAdapter;
-    private AccountSectionRecyclerViewAdapter accountSectionRecyclerViewAdapter;
-    private RedditSectionRecyclerViewAdapter redditSectionRecyclerViewAdapter;
-    private PostSectionRecyclerViewAdapter postSectionRecyclerViewAdapter;
-    private PreferenceSectionRecyclerViewAdapter preferenceSectionRecyclerViewAdapter;
-    private FavoriteSubscribedSubredditsSectionRecyclerViewAdapter favoriteSubscribedSubredditsSectionRecyclerViewAdapter;
-    private SubscribedSubredditsRecyclerViewAdapter subscribedSubredditsRecyclerViewAdapter;
-    private AccountManagementSectionRecyclerViewAdapter accountManagementSectionRecyclerViewAdapter;
-    private ConcatAdapter mainPageConcatAdapter;
+    private final HeaderSectionRecyclerViewAdapter headerSectionRecyclerViewAdapter;
+    private final AccountSectionRecyclerViewAdapter accountSectionRecyclerViewAdapter;
+    private final RedditSectionRecyclerViewAdapter redditSectionRecyclerViewAdapter;
+    private final PostSectionRecyclerViewAdapter postSectionRecyclerViewAdapter;
+    private final PreferenceSectionRecyclerViewAdapter preferenceSectionRecyclerViewAdapter;
+    private final FavoriteSubscribedSubredditsSectionRecyclerViewAdapter favoriteSubscribedSubredditsSectionRecyclerViewAdapter;
+    private final SubscribedSubredditsRecyclerViewAdapter subscribedSubredditsRecyclerViewAdapter;
+    private final AccountManagementSectionRecyclerViewAdapter accountManagementSectionRecyclerViewAdapter;
+    private final ConcatAdapter mainPageConcatAdapter;
 
     public NavigationDrawerRecyclerViewMergedAdapter(BaseActivity baseActivity, SharedPreferences sharedPreferences,
                                                      SharedPreferences nsfwAndSpoilerSharedPreferences,
                                                      SharedPreferences navigationDrawerSharedPreferences,
                                                      SharedPreferences securitySharedPreferences,
                                                      CustomThemeWrapper customThemeWrapper,
-                                                     String accountName,
+                                                     @NonNull String accountName,
                                                      ItemClickListener itemClickListener) {
         RequestManager glide = Glide.with(baseActivity);
 
@@ -38,29 +39,29 @@ public class NavigationDrawerRecyclerViewMergedAdapter {
                 glide, accountName, sharedPreferences, navigationDrawerSharedPreferences, securitySharedPreferences,
                 new HeaderSectionRecyclerViewAdapter.PageToggle() {
                     @Override
-                    public void openAccountSection() {
+                    public void openAccountManagement() {
                         NavigationDrawerRecyclerViewMergedAdapter.this.openAccountSection();
                     }
 
                     @Override
-                    public void closeAccountSectionWithoutChangeIconResource() {
-                        NavigationDrawerRecyclerViewMergedAdapter.this.closeAccountSectionWithoutChangeIconResource();
+                    public void closeAccountManagement() {
+                        NavigationDrawerRecyclerViewMergedAdapter.this.closeAccountManagement(false);
                     }
                 });
         accountSectionRecyclerViewAdapter = new AccountSectionRecyclerViewAdapter(baseActivity, customThemeWrapper,
-                navigationDrawerSharedPreferences, accountName != null, itemClickListener);
+                navigationDrawerSharedPreferences, !accountName.equals(Account.ANONYMOUS_ACCOUNT), itemClickListener);
         redditSectionRecyclerViewAdapter = new RedditSectionRecyclerViewAdapter(baseActivity, customThemeWrapper,
                 navigationDrawerSharedPreferences, itemClickListener);
         postSectionRecyclerViewAdapter = new PostSectionRecyclerViewAdapter(baseActivity, customThemeWrapper,
-                navigationDrawerSharedPreferences, accountName != null, itemClickListener);
+                navigationDrawerSharedPreferences, itemClickListener);
         preferenceSectionRecyclerViewAdapter = new PreferenceSectionRecyclerViewAdapter(baseActivity, customThemeWrapper,
-                accountName, nsfwAndSpoilerSharedPreferences, navigationDrawerSharedPreferences, itemClickListener);
+                navigationDrawerSharedPreferences, itemClickListener);
         favoriteSubscribedSubredditsSectionRecyclerViewAdapter = new FavoriteSubscribedSubredditsSectionRecyclerViewAdapter(
                 baseActivity, glide, customThemeWrapper, navigationDrawerSharedPreferences, itemClickListener);
         subscribedSubredditsRecyclerViewAdapter = new SubscribedSubredditsRecyclerViewAdapter(baseActivity, glide,
                 customThemeWrapper, navigationDrawerSharedPreferences, itemClickListener);
         accountManagementSectionRecyclerViewAdapter = new AccountManagementSectionRecyclerViewAdapter(baseActivity,
-                customThemeWrapper, glide, accountName != null, itemClickListener);
+                customThemeWrapper, glide, !accountName.equals(Account.ANONYMOUS_ACCOUNT), itemClickListener);
 
         mainPageConcatAdapter = new ConcatAdapter(
                 headerSectionRecyclerViewAdapter,
@@ -87,7 +88,7 @@ public class NavigationDrawerRecyclerViewMergedAdapter {
         mainPageConcatAdapter.addAdapter(accountManagementSectionRecyclerViewAdapter);
     }
 
-    public void closeAccountSectionWithoutChangeIconResource() {
+    public void closeAccountManagement(boolean refreshHeader) {
         mainPageConcatAdapter.removeAdapter(accountManagementSectionRecyclerViewAdapter);
 
         mainPageConcatAdapter.addAdapter(accountSectionRecyclerViewAdapter);
@@ -96,11 +97,10 @@ public class NavigationDrawerRecyclerViewMergedAdapter {
         mainPageConcatAdapter.addAdapter(preferenceSectionRecyclerViewAdapter);
         mainPageConcatAdapter.addAdapter(favoriteSubscribedSubredditsSectionRecyclerViewAdapter);
         mainPageConcatAdapter.addAdapter(subscribedSubredditsRecyclerViewAdapter);
-    }
 
-    public void closeAccountSectionWithoutChangeIconResource(boolean checkIsInMainPage) {
-        closeAccountSectionWithoutChangeIconResource();
-        headerSectionRecyclerViewAdapter.closeAccountSectionWithoutChangeIconResource(checkIsInMainPage);
+        if (refreshHeader) {
+            headerSectionRecyclerViewAdapter.closeAccountManagement(true);
+        }
     }
 
     public void updateAccountInfo(String profileImageUrl, String bannerImageUrl, int karma) {
@@ -123,10 +123,6 @@ public class NavigationDrawerRecyclerViewMergedAdapter {
         accountSectionRecyclerViewAdapter.setInboxCount(inboxCount);
     }
 
-    public void setNSFWEnabled(boolean isNSFWEnabled) {
-        preferenceSectionRecyclerViewAdapter.setNSFWEnabled(isNSFWEnabled);
-    }
-
     public void setFavoriteSubscribedSubreddits(List<SubscribedSubredditData> favoriteSubscribedSubreddits) {
         favoriteSubscribedSubredditsSectionRecyclerViewAdapter.setFavoriteSubscribedSubreddits(favoriteSubscribedSubreddits);
     }
@@ -142,6 +138,7 @@ public class NavigationDrawerRecyclerViewMergedAdapter {
     public interface ItemClickListener {
         void onMenuClick(int stringId);
         void onSubscribedSubredditClick(String subredditName);
-        void onAccountClick(String accountName);
+        void onAccountClick(@NonNull String accountName);
+        void onAccountLongClick(@NonNull String accountName);
     }
 }

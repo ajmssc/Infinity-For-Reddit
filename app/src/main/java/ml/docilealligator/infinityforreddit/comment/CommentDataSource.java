@@ -1,9 +1,10 @@
 package ml.docilealligator.infinityforreddit.comment;
 
-import android.os.AsyncTask;
+import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.lifecycle.MutableLiveData;
 import androidx.paging.PageKeyedDataSource;
 
@@ -12,12 +13,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Locale;
+import java.util.concurrent.Executor;
 
 import ml.docilealligator.infinityforreddit.NetworkState;
-import ml.docilealligator.infinityforreddit.SortType;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
+import ml.docilealligator.infinityforreddit.thing.SortType;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import ml.docilealligator.infinityforreddit.utils.JSONUtils;
 import retrofit2.Call;
@@ -27,26 +29,32 @@ import retrofit2.Retrofit;
 
 public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
 
-    private Retrofit retrofit;
-    private Locale locale;
+    private final Executor executor;
+    private final Handler handler;
+    private final Retrofit retrofit;
     @Nullable
-    private String accessToken;
-    private String username;
-    private SortType sortType;
-    private boolean areSavedComments;
+    private final String accessToken;
+    @NonNull
+    private final String accountName;
+    private final String username;
+    private final SortType sortType;
+    private final boolean areSavedComments;
 
-    private MutableLiveData<NetworkState> paginationNetworkStateLiveData;
-    private MutableLiveData<NetworkState> initialLoadStateLiveData;
-    private MutableLiveData<Boolean> hasPostLiveData;
+    private final MutableLiveData<NetworkState> paginationNetworkStateLiveData;
+    private final MutableLiveData<NetworkState> initialLoadStateLiveData;
+    private final MutableLiveData<Boolean> hasPostLiveData;
 
     private LoadParams<String> params;
     private LoadCallback<String, Comment> callback;
 
-    CommentDataSource(Retrofit retrofit, Locale locale, @Nullable String accessToken, String username, SortType sortType,
+    CommentDataSource(Executor executor, Handler handler, Retrofit retrofit, @Nullable String accessToken,
+                      @NonNull String accountName, String username, SortType sortType,
                       boolean areSavedComments) {
+        this.executor = executor;
+        this.handler = handler;
         this.retrofit = retrofit;
-        this.locale = locale;
         this.accessToken = accessToken;
+        this.accountName = accountName;
         this.username = username;
         this.sortType = sortType;
         this.areSavedComments = areSavedComments;
@@ -82,7 +90,7 @@ public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
                     null, sortType.getType(), sortType.getTime(),
                     APIUtils.getOAuthHeader(accessToken));
         } else {
-            if (accessToken == null) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 commentsCall = api.getUserComments(username, null, sortType.getType(),
                         sortType.getTime());
             } else {
@@ -90,32 +98,38 @@ public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
                         null, sortType.getType(), sortType.getTime());
             }
         }
-        commentsCall.enqueue(new Callback<String>() {
+        commentsCall.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
-                    new ParseCommentAsyncTask(response.body(), locale, new ParseCommentAsyncTask.ParseCommentAsyncTaskListener() {
-                        @Override
-                        public void parseSuccessful(ArrayList<Comment> comments, String after) {
-                            if (comments.size() == 0) {
-                                hasPostLiveData.postValue(false);
-                            } else {
-                                hasPostLiveData.postValue(true);
+                    executor.execute(() -> {
+                        parseComments(response.body(), new ParseCommentsAsyncTaskListener() {
+                            @Override
+                            public void parseSuccessful(ArrayList<Comment> comments, String after) {
+                                handler.post(() -> {
+                                    if (comments.isEmpty()) {
+                                        hasPostLiveData.postValue(false);
+                                    } else {
+                                        hasPostLiveData.postValue(true);
+                                    }
+
+                                    if (after == null || after.isEmpty() || after.equals("null")) {
+                                        callback.onResult(comments, null, null);
+                                    } else {
+                                        callback.onResult(comments, null, after);
+                                    }
+                                    initialLoadStateLiveData.postValue(NetworkState.LOADED);
+                                });
                             }
 
-                            if (after == null || after.equals("") || after.equals("null")) {
-                                callback.onResult(comments, null, null);
-                            } else {
-                                callback.onResult(comments, null, after);
+                            @Override
+                            public void parseFailed() {
+                                handler.post(() -> {
+                                    initialLoadStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error parsing data"));
+                                });
                             }
-                            initialLoadStateLiveData.postValue(NetworkState.LOADED);
-                        }
-
-                        @Override
-                        public void parseFailed() {
-                            initialLoadStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error parsing data"));
-                        }
-                    }).execute();
+                        });
+                    });
                 } else {
                     initialLoadStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error parsing data"));
                 }
@@ -146,7 +160,7 @@ public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
             commentsCall = api.getUserSavedCommentsOauth(username, PostPagingSource.USER_WHERE_SAVED, params.key,
                     sortType.getType(), sortType.getTime(), APIUtils.getOAuthHeader(accessToken));
         } else {
-            if (accessToken == null) {
+            if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
                 commentsCall = api.getUserComments(username, params.key, sortType.getType(),
                         sortType.getTime());
             } else {
@@ -154,26 +168,30 @@ public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
                         username, params.key, sortType.getType(), sortType.getTime());
             }
         }
-        commentsCall.enqueue(new Callback<String>() {
+        commentsCall.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
-                    new ParseCommentAsyncTask(response.body(), locale, new ParseCommentAsyncTask.ParseCommentAsyncTaskListener() {
-                        @Override
-                        public void parseSuccessful(ArrayList<Comment> comments, String after) {
-                            if (after == null || after.equals("") || after.equals("null")) {
-                                callback.onResult(comments, null);
-                            } else {
-                                callback.onResult(comments, after);
+                    executor.execute(() -> {
+                        parseComments(response.body(), new ParseCommentsAsyncTaskListener() {
+                            @Override
+                            public void parseSuccessful(ArrayList<Comment> comments, String after) {
+                                handler.post(() -> {
+                                    if (after == null || after.isEmpty() || after.equals("null")) {
+                                        callback.onResult(comments, null);
+                                    } else {
+                                        callback.onResult(comments, after);
+                                    }
+                                    paginationNetworkStateLiveData.postValue(NetworkState.LOADED);
+                                });
                             }
-                            paginationNetworkStateLiveData.postValue(NetworkState.LOADED);
-                        }
 
-                        @Override
-                        public void parseFailed() {
-                            paginationNetworkStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error parsing data"));
-                        }
-                    }).execute();
+                            @Override
+                            public void parseFailed() {
+                                handler.post(() -> paginationNetworkStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error parsing data")));
+                            }
+                        });
+                    });
                 } else {
                     paginationNetworkStateLiveData.postValue(new NetworkState(NetworkState.Status.FAILED, "Error fetching data"));
                 }
@@ -186,58 +204,31 @@ public class CommentDataSource extends PageKeyedDataSource<String, Comment> {
         });
     }
 
-    private static class ParseCommentAsyncTask extends AsyncTask<Void, ArrayList<Comment>, ArrayList<Comment>> {
-        private String after;
-        private Locale locale;
-        private JSONArray commentsJSONArray;
-        private boolean parseFailed;
-        private ParseCommentAsyncTaskListener parseCommentAsyncTaskListener;
-
-        ParseCommentAsyncTask(String response, Locale locale, ParseCommentAsyncTaskListener parseCommentAsyncTaskListener) {
-            this.locale = locale;
-            this.parseCommentAsyncTaskListener = parseCommentAsyncTaskListener;
-            try {
-                JSONObject data = new JSONObject(response).getJSONObject(JSONUtils.DATA_KEY);
-                commentsJSONArray = data.getJSONArray(JSONUtils.CHILDREN_KEY);
-                after = data.getString(JSONUtils.AFTER_KEY);
-                parseFailed = false;
-            } catch (JSONException e) {
-                parseFailed = true;
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        protected ArrayList<Comment> doInBackground(Void... voids) {
-            if (parseFailed) {
-                return null;
-            }
-
+    @WorkerThread
+    private static void parseComments(String response, ParseCommentsAsyncTaskListener parseCommentsAsyncTaskListener) {
+        try {
+            JSONObject data = new JSONObject(response).getJSONObject(JSONUtils.DATA_KEY);
+            JSONArray commentsJSONArray = data.getJSONArray(JSONUtils.CHILDREN_KEY);
+            String after = data.getString(JSONUtils.AFTER_KEY);
             ArrayList<Comment> comments = new ArrayList<>();
             for (int i = 0; i < commentsJSONArray.length(); i++) {
                 try {
                     JSONObject commentJSON = commentsJSONArray.getJSONObject(i).getJSONObject(JSONUtils.DATA_KEY);
                     comments.add(ParseComment.parseSingleComment(commentJSON, 0));
-                } catch (JSONException ignored) {
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
             }
-            return comments;
+            parseCommentsAsyncTaskListener.parseSuccessful(comments, after);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            parseCommentsAsyncTaskListener.parseFailed();
         }
+    }
 
-        @Override
-        protected void onPostExecute(ArrayList<Comment> commentData) {
-            super.onPostExecute(commentData);
-            if (commentData != null) {
-                parseCommentAsyncTaskListener.parseSuccessful(commentData, after);
-            } else {
-                parseCommentAsyncTaskListener.parseFailed();
-            }
-        }
+    interface ParseCommentsAsyncTaskListener {
+        void parseSuccessful(ArrayList<Comment> comments, String after);
 
-        interface ParseCommentAsyncTaskListener {
-            void parseSuccessful(ArrayList<Comment> comments, String after);
-
-            void parseFailed();
-        }
+        void parseFailed();
     }
 }

@@ -24,6 +24,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
+        android:id="@+id/linear_layout_post_text_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -67,6 +68,7 @@
                 </LinearLayout>
 
                 <RelativeLayout
+                    android:id="@+id/subreddit_relative_layout_post_text_activity"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingTop="8dp"
@@ -151,6 +153,7 @@
                         android:text="@string/nsfw"
                         android:textSize="?attr/font_default"
                         android:fontFamily="?attr/font_family"
+                        android:visibility="gone"
                         app:lib_setRadius="6dp"
                         app:lib_setRoundedView="true"
                         app:lib_setShape="rectangle" />
@@ -178,7 +181,7 @@
                         android:textSize="?attr/font_default"
                         android:fontFamily="?attr/font_family" />
 
-                    <com.google.android.material.materialswitch.MaterialSwitch
+                    <ml.docilealligator.infinityforreddit.customviews.ThemedMaterialSwitch
                         android:id="@+id/receive_post_reply_notifications_switch_material_post_text_activity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -202,6 +205,7 @@
                     android:inputType="textCapSentences|textMultiLine"
                     android:padding="16dp"
                     android:textSize="?attr/title_font_18"
+                    android:textStyle="bold"
                     android:fontFamily="?attr/title_font_family" />
 
                 <EditText

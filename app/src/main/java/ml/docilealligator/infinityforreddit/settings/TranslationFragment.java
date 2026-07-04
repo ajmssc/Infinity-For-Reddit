@@ -7,52 +7,62 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.RecyclerView;
 
 import javax.inject.Inject;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.Infinity;
-import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.adapters.TranslationFragmentRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
+import ml.docilealligator.infinityforreddit.databinding.FragmentTranslationBinding;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class TranslationFragment extends Fragment {
 
-    @BindView(R.id.recycler_view_translation_fragment)
-    RecyclerView recyclerView;
     @Inject
     CustomThemeWrapper customThemeWrapper;
-    private BaseActivity activity;
+    private BaseActivity mActivity;
 
     public TranslationFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_translation, container, false);
+        FragmentTranslationBinding binding = FragmentTranslationBinding.inflate(inflater, container, false);
 
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
-        ButterKnife.bind(this, rootView);
+        TranslationFragmentRecyclerViewAdapter adapter = new TranslationFragmentRecyclerViewAdapter(mActivity, customThemeWrapper);
+        binding.getRoot().setAdapter(adapter);
 
-        TranslationFragmentRecyclerViewAdapter adapter = new TranslationFragmentRecyclerViewAdapter(activity, customThemeWrapper);
-        recyclerView.setAdapter(adapter);
+        binding.getRoot().setBackgroundColor(customThemeWrapper.getBackgroundColor());
 
-        rootView.setBackgroundColor(customThemeWrapper.getBackgroundColor());
+        if (mActivity.isImmersiveInterfaceRespectForcedEdgeToEdge()) {
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = Utils.getInsets(insets, false, mActivity.isForcedImmersiveInterface());
+                    binding.getRoot().setPadding(allInsets.left, 0, allInsets.right, allInsets.bottom);
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
+        }
 
-        return rootView;
+        return binding.getRoot();
     }
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        activity = (BaseActivity) context;
+        mActivity = (BaseActivity) context;
     }
 }

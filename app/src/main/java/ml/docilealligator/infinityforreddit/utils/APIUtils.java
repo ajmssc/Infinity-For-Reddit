@@ -1,10 +1,15 @@
 package ml.docilealligator.infinityforreddit.utils;
 
-import android.util.Base64;
+import android.os.SystemClock;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
+import ml.docilealligator.infinityforreddit.account.Account;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
@@ -13,41 +18,36 @@ import okhttp3.RequestBody;
  */
 
 public class APIUtils {
-    public static final String OAUTH_URL = "https://www.reddit.com/api/v1/authorize.compact";
-    public static final String OAUTH_API_BASE_URI = "https://oauth.reddit.com";
     public static final String API_BASE_URI = "https://www.reddit.com";
     public static final String API_UPLOAD_MEDIA_URI = "https://reddit-uploaded-media.s3-accelerate.amazonaws.com";
     public static final String API_UPLOAD_VIDEO_URI = "https://reddit-uploaded-video.s3-accelerate.amazonaws.com";
-    public static final String GFYCAT_API_BASE_URI = "https://api.gfycat.com/v1/gfycats/";
     public static final String REDGIFS_API_BASE_URI = "https://api.redgifs.com";
+    public static final String OH_MY_DL_BASE_URI = "https://ohmydl.com";
     public static final String IMGUR_API_BASE_URI = "https://api.imgur.com/3/";
-    public static final String PUSHSHIFT_API_BASE_URI = "https://api.pushshift.io/";
-    public static final String REVEDDIT_API_BASE_URI = "https://api.reveddit.com/";
-    public static final String STRAPI_BASE_URI = "https://strapi.reddit.com";
     public static final String STREAMABLE_API_BASE_URI = "https://api.streamable.com";
+    public static final String SERVER_API_BASE_URI = "http://127.0.0.1";
 
     public static final String CLIENT_ID_KEY = "client_id";
     public static final String CLIENT_SECRET_KEY = "client_secret";
-    public static final String CLIENT_ID = "NOe2iKrPPzwscA";
     public static final String IMGUR_CLIENT_ID = "Client-ID cc671794e0ab397";
     public static final String REDGIFS_CLIENT_ID = "1828d0bcc93-15ac-bde6-0005-d2ecbe8daab3";
     public static final String REDGIFS_CLIENT_SECRET = "TJBlw7jRXW65NAGgFBtgZHu97WlzRXHYybK81sZ9dLM=";
-    public static final String RESPONSE_TYPE_KEY = "response_type";
-    public static final String RESPONSE_TYPE = "code";
-    public static final String STATE_KEY = "state";
-    public static final String STATE = "23ro8xlxvzp4asqd";
-    public static final String REDIRECT_URI_KEY = "redirect_uri";
-    public static final String REDIRECT_URI = "infinity://localhost";
-    public static final String DURATION_KEY = "duration";
-    public static final String DURATION = "permanent";
-    public static final String SCOPE_KEY = "scope";
-    public static final String SCOPE = "identity edit flair history modconfig modflair modlog modposts modwiki mysubreddits privatemessages read report save submit subscribe vote wikiedit wikiread creddits modcontributors modmail modothers livemanage account modself";
+    public static final String GIPHY_GIF_API_KEY = "";
     public static final String ACCESS_TOKEN_KEY = "access_token";
 
     public static final String AUTHORIZATION_KEY = "Authorization";
     public static final String AUTHORIZATION_BASE = "bearer ";
     public static final String USER_AGENT_KEY = "User-Agent";
-    public static final String USER_AGENT = "android:ml.docilealligator.infinityforreddit:v5.3.0 (by /u/Hostilenemy)";
+    // A real Chrome-on-Android UA so Reddit's web endpoints treat us like a browser instead of an API client.
+    public static final String USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36";
+    public static final String ANONYMOUS_USER_AGENT = USER_AGENT;
+    public static final String USERNAME_KEY = "username";
+
+    public static final String MODHASH_KEY = "X-Modhash";
+
+    // Generic "state" form field name -- used by Reddit's toggle-sticky/toggle-notifications
+    // endpoints (unrelated to the now-removed OAuth authorize-URL "state" CSRF nonce).
+    public static final String STATE_KEY = "state";
 
     public static final String GRANT_TYPE_KEY = "grant_type";
     public static final String GRANT_TYPE_REFRESH_TOKEN = "refresh_token";
@@ -87,6 +87,7 @@ public class APIUtils {
     public static final String KIND_VIDEO = "video";
     public static final String KIND_VIDEOGIF = "videogif";
     public static final String KIND_CROSSPOST = "crosspost";
+    public static final String RICHTEXT_JSON_KEY = "richtext_json";
 
     public static final String FILEPATH_KEY = "filepath";
     public static final String MIMETYPE_KEY = "mimetype";
@@ -99,6 +100,9 @@ public class APIUtils {
 
     public static final String MULTIPATH_KEY = "multipath";
     public static final String MODEL_KEY = "model";
+    public static final String FROM_KEY = "from";
+    public static final String DISPLAY_NAME_KEY = "display_name";
+    public static final String DESCRIPTION_MD_KEY = "description_md";
 
     public static final String REASON_KEY = "reason";
 
@@ -107,31 +111,48 @@ public class APIUtils {
 
     public static final String NAME_KEY = "name";
 
-    public static final String GILD_TYPE = "gild_type";
-    public static final String IS_ANONYMOUS = "is_anonymous";
-
     public static final String ORIGIN_KEY = "Origin";
     public static final String REVEDDIT_ORIGIN = "https://www.reveddit.com";
     public static final String REFERER_KEY = "Referer";
     public static final String REVEDDIT_REFERER = "https://www.reveddit.com/";
 
-    /*public static final String HOST_KEY = "Host";
-    public static final String REDGIFS_HOST = "api.redgifs.com";
-    public static final String CONTENT_TYPE_KEY = "Content-Type";
-    public static final String */
+    public static final String SPAM_KEY = "spam";
+    public static final String HOW_KEY = "how";
+    public static final String HOW_YES = "yes";
+    public static final String HOW_NO = "no";
 
-    public static Map<String, String> getHttpBasicAuthHeader() {
+    public static final String PLATFORM_KEY = "platform";
+
+    // Mimics a real browser request to www.reddit.com/old.reddit.com instead of Reddit's OAuth API.
+    public static Map<String, String> getBrowserHeaders() {
         Map<String, String> params = new HashMap<>();
-        String credentials = String.format("%s:%s", APIUtils.CLIENT_ID, "");
-        String auth = "Basic " + Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-        params.put(APIUtils.AUTHORIZATION_KEY, auth);
+        params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
+        params.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/json;q=0.8,*/*;q=0.7");
+        params.put("Accept-Language", "en-US,en;q=0.9");
+        params.put(APIUtils.REFERER_KEY, "https://www.reddit.com/");
+        params.put(APIUtils.ORIGIN_KEY, "https://www.reddit.com");
         return params;
     }
 
-    public static Map<String, String> getOAuthHeader(String accessToken) {
+    // Kept as the single call site pattern used throughout the codebase (`getOAuthHeader(account.getAccessToken())`).
+    // `accessToken` is now the account's modhash (see Account#getModhash); the returned headers carry it via
+    // X-Modhash instead of an OAuth bearer token. Session auth itself is handled by the account's CookieJar.
+    public static Map<String, String> getOAuthHeader(String modhash) {
+        Map<String, String> params = getBrowserHeaders();
+        if (modhash != null && !modhash.isEmpty()) {
+            params.put(APIUtils.MODHASH_KEY, modhash);
+        }
+        return params;
+    }
+
+    public static Map<String, String> getServerHeader(String serverAccessToken, String accountName, boolean anonymous) {
+        if (accountName.equals(Account.ANONYMOUS_ACCOUNT) || anonymous) {
+            return new HashMap<>();
+        }
+
         Map<String, String> params = new HashMap<>();
-        params.put(APIUtils.AUTHORIZATION_KEY, APIUtils.AUTHORIZATION_BASE + accessToken);
-        params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
+        params.put(APIUtils.AUTHORIZATION_KEY, APIUtils.AUTHORIZATION_BASE + serverAccessToken);
+        params.put(APIUtils.USERNAME_KEY, accountName);
         return params;
     }
 
@@ -151,5 +172,34 @@ public class APIUtils {
         params.put(APIUtils.REFERER_KEY, APIUtils.REVEDDIT_REFERER);
         params.put(APIUtils.USER_AGENT_KEY, APIUtils.USER_AGENT);
         return params;
+    }
+
+    // Concatenated subreddit name works too
+    public static int subredditAPICallLimit(@Nullable String subredditName) {
+        return subredditName != null && subredditName.toLowerCase().contains("stablediffusion") ? 55 : 100;
+    }
+
+    // RedGifs token management
+    public static final AtomicReference<RedgifsAuthToken> REDGIFS_TOKEN = new AtomicReference<>(new RedgifsAuthToken("", 0));
+
+    public static class RedgifsAuthToken {
+        @NonNull
+        public final String token;
+        private final long expireAt;
+
+        private RedgifsAuthToken(@NonNull String token, final long expireAt) {
+            this.token = token;
+            this.expireAt = expireAt;
+        }
+
+        public static RedgifsAuthToken expireIn1day(@NonNull String token) {
+            // 23 not 24 to give an hour leeway
+            long expireTime = 1000 * 60 * 60 * 23;
+            return new RedgifsAuthToken(token, SystemClock.uptimeMillis() + expireTime);
+        }
+
+        public boolean isValid() {
+            return !token.isEmpty() && expireAt > SystemClock.uptimeMillis();
+        }
     }
 }

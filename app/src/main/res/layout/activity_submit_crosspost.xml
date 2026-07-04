@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/coordinator_layout_submit_crosspost_activity"
     tools:context=".activities.SubmitCrosspostActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -24,8 +23,10 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nested_scroll_view_submit_crosspost_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
@@ -182,7 +183,7 @@
                     android:textSize="?attr/font_default"
                     android:fontFamily="?attr/font_family" />
 
-                <com.google.android.material.materialswitch.MaterialSwitch
+                <ml.docilealligator.infinityforreddit.customviews.ThemedMaterialSwitch
                     android:id="@+id/receive_post_reply_notifications_switch_material_submit_crosspost_activity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -243,7 +244,8 @@
                     android:layout_margin="16dp"
                     android:layout_gravity="start"
                     android:background="@drawable/play_button_round_background"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    android:contentDescription="@string/content_description_video_indicator" />
 
             </FrameLayout>
 

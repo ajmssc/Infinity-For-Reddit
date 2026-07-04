@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/coordinator_layout_selected_subreddits_and_users_activity"
     tools:context=".activities.AccountPostsActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -37,6 +36,7 @@
         android:id="@+id/recycler_view_selected_subreddits_and_users_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -45,6 +45,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
         android:layout_gravity="bottom|end"
-        android:src="@drawable/ic_add_24dp" />
+        android:src="@drawable/ic_add_24dp"
+        android:contentDescription="@string/content_description_add_subreddit_or_user" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

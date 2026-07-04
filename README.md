@@ -1,5 +1,5 @@
 <h1 align="center">
-  Infinity For Reddit <a href="https://www.patreon.com/docile_alligator"><img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon"></a>
+  Infinity For Reddit+ <a href="https://www.patreon.com/docile_alligator"><img src="https://img.shields.io/badge/Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white" alt="Patreon"></a>
   
 </h1>
 
@@ -13,17 +13,15 @@ A Reddit client on Android written in Java. It does not have any ads and it feat
 
 <br>
 
+<div>
+
+Infinity for Reddit+ is available on Google Play and GitHub. There’s also a Patreon version that works without Google Play Services. You can find it on the <a href="https://github.com/Docile-Alligator/Infinity-For-Reddit/releases">GitHub releases page</a>. Just look for the APK file that contains <strong><i>Infinity-Patreon</i></strong> in its name.
+
 <div align="center">
-
-Infinity for Reddit is available on Google Play and F-Droid
-
-  <a href="https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforreddit">
+  <a href="https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforreddit.plus">
       <img alt="Get it on Google Play" height="80" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" />
-      </a>  
-      <a href="https://f-droid.org/packages/ml.docilealligator.infinityforreddit/">
-          <img alt="Get it on F-Droid" height="80" src="https://f-droid.org/badge/get-it-on.png" />
   </a>
-
+</div>
 </div>
 
 <div align="center">
@@ -50,10 +48,17 @@ Infinity for Reddit is available on Google Play and F-Droid
 
 </div>
 
+### 📱 Also available on iOS
+Infinity for Reddit is finally on iOS! Check it out here: [Infinity for Reddit](https://github.com/foxanastudio/Infinity-For-Reddit-iOS)
+
+<a href="https://apps.apple.com/us/app/infinity-for-reddit/id6759064642">
+  <img alt="Download on the App Store" height="80" src="fastlane/metadata/android/en-US/images/app_store_badge.svg" />
+</a>
+
 ## Donation
-<p>Infinity for Reddit+:</p>
-<a href="https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforreddit.plus">
-    <img alt="Get it on Google Play" height="80" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" />
+<p>Infinity for Reddit++:</p>
+<a href="https://play.google.com/store/apps/details?id=ml.docilealligator.infinityforreddit.plus2">
+    <img alt="Get it on Google Play" height="100" src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" />
 </a> 
 
 Patreon: https://www.patreon.com/docile_alligator
@@ -149,10 +154,10 @@ It's better to also open an issue describing the issue you want to fix. But it i
 Don't forget to give the project a star! Thanks again!
 
 1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+2. Create your Feature Branch from `master` (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+5. Open a Pull Request to the `master` Branch
 
 Here are other ways you can help:
 

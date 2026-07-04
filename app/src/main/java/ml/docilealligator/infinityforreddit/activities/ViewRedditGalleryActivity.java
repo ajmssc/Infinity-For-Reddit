@@ -5,27 +5,39 @@ import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager.widget.ViewPager;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
@@ -34,15 +46,13 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import app.futured.hauler.DragDirection;
-import app.futured.hauler.HaulerView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.CustomFontReceiver;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.SetAsWallpaperCallback;
 import ml.docilealligator.infinityforreddit.WallpaperSetter;
-import ml.docilealligator.infinityforreddit.customviews.ViewPagerBugFixed;
+import ml.docilealligator.infinityforreddit.databinding.ActivityViewRedditGalleryBinding;
+import ml.docilealligator.infinityforreddit.events.FinishViewMediaActivityEvent;
 import ml.docilealligator.infinityforreddit.font.ContentFontFamily;
 import ml.docilealligator.infinityforreddit.font.ContentFontStyle;
 import ml.docilealligator.infinityforreddit.font.FontFamily;
@@ -52,20 +62,16 @@ import ml.docilealligator.infinityforreddit.font.TitleFontStyle;
 import ml.docilealligator.infinityforreddit.fragments.ViewRedditGalleryImageOrGifFragment;
 import ml.docilealligator.infinityforreddit.fragments.ViewRedditGalleryVideoFragment;
 import ml.docilealligator.infinityforreddit.post.Post;
+import ml.docilealligator.infinityforreddit.services.DownloadMediaService;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
+import ml.docilealligator.infinityforreddit.viewmodels.ViewGalleryViewModel;
 
 public class ViewRedditGalleryActivity extends AppCompatActivity implements SetAsWallpaperCallback, CustomFontReceiver {
 
-    public static final String EXTRA_REDDIT_GALLERY = "ERG";
-    public static final String EXTRA_SUBREDDIT_NAME = "ESN";
-    public static final String EXTRA_IS_NSFW = "EIN";
+    public static final String EXTRA_POST = "EP";
     public static final String EXTRA_GALLERY_ITEM_INDEX = "EGII";
 
-    @BindView(R.id.hauler_view_view_reddit_gallery_activity)
-    HaulerView haulerView;
-    @BindView(R.id.view_pager_view_reddit_gallery_activity)
-    ViewPagerBugFixed viewPager;
     @Inject
     @Named("default")
     SharedPreferences sharedPreferences;
@@ -73,17 +79,26 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
     Executor executor;
     public Typeface typeface;
     private SectionsPagerAdapter sectionsPagerAdapter;
+    private Post post;
     private ArrayList<Post.Gallery> gallery;
     private String subredditName;
     private boolean isNsfw;
     private boolean useBottomAppBar;
     private boolean isActionBarHidden = false;
+    private ActivityViewRedditGalleryBinding binding;
+    ViewGalleryViewModel viewGalleryViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         ((Infinity) getApplication()).getAppComponent().inject(this);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+        } else {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        }
 
         boolean systemDefault = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
         int systemThemeType = Integer.parseInt(sharedPreferences.getString(SharedPreferencesUtils.THEME_KEY, "2"));
@@ -135,38 +150,65 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
         getTheme().applyStyle(ContentFontFamily.valueOf(sharedPreferences
                 .getString(SharedPreferencesUtils.CONTENT_FONT_FAMILY_KEY, ContentFontFamily.Default.name())).getResId(), true);
 
-        setContentView(R.layout.activity_view_reddit_gallery);
+        binding = ActivityViewRedditGalleryBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        ButterKnife.bind(this);
+        EventBus.getDefault().register(this);
 
         useBottomAppBar = sharedPreferences.getBoolean(SharedPreferencesUtils.USE_BOTTOM_TOOLBAR_IN_MEDIA_VIEWER, false);
 
         if (!useBottomAppBar) {
-            ActionBar actionBar = getSupportActionBar();
-            Drawable upArrow = getResources().getDrawable(R.drawable.ic_arrow_back_white_24dp);
-            actionBar.setHomeAsUpIndicator(upArrow);
-            actionBar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.transparentActionBarAndExoPlayerControllerColor)));
+            if (binding.toolbarViewRedditGalleryActivity.getNavigationIcon() != null) {
+                binding.toolbarViewRedditGalleryActivity.getNavigationIcon().setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+            if (binding.toolbarViewRedditGalleryActivity.getOverflowIcon() != null) {
+                binding.toolbarViewRedditGalleryActivity.getOverflowIcon().setColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN);
+            }
+
+            setSupportActionBar(binding.toolbarViewRedditGalleryActivity);
             setTitle(" ");
         } else {
-            getSupportActionBar().hide();
+            binding.toolbarViewRedditGalleryActivity.setVisibility(View.GONE);
         }
 
-        gallery = getIntent().getParcelableArrayListExtra(EXTRA_REDDIT_GALLERY);
+        viewGalleryViewModel = new ViewModelProvider(this).get(ViewGalleryViewModel.class);
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+            @NonNull
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                Insets allInsets = Utils.getInsets(insets, false, false);
+
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) binding.toolbarViewRedditGalleryActivity.getLayoutParams();
+                params.topMargin = allInsets.top;
+                binding.toolbarViewRedditGalleryActivity.setLayoutParams(params);
+
+                viewGalleryViewModel.setInsets(allInsets);
+                return WindowInsetsCompat.CONSUMED;
+            }
+        });
+
+        post = getIntent().getParcelableExtra(EXTRA_POST);
+        if (post == null) {
+            finish();
+            return;
+        }
+        gallery = post.getGallery();
         if (gallery == null || gallery.isEmpty()) {
             finish();
             return;
         }
-        subredditName = getIntent().getStringExtra(EXTRA_SUBREDDIT_NAME);
-        isNsfw = getIntent().getBooleanExtra(EXTRA_IS_NSFW, false);
+        subredditName = post.getSubredditName();
+        isNsfw = post.isNSFW();
 
         if (sharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_VERTICALLY_TO_GO_BACK_FROM_MEDIA, true)) {
-            haulerView.setOnDragDismissedListener(dragDirection -> {
+            binding.haulerViewViewRedditGalleryActivity.setOnDragDismissedListener(dragDirection -> {
                 int slide = dragDirection == DragDirection.UP ? R.anim.slide_out_up : R.anim.slide_out_down;
                 finish();
                 overridePendingTransition(0, slide);
             });
         } else {
-            haulerView.setDragEnabled(false);
+            binding.haulerViewViewRedditGalleryActivity.setDragEnabled(false);
         }
 
         setupViewPager(savedInstanceState);
@@ -179,7 +221,7 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
     private void setupViewPager(Bundle savedInstanceState) {
         if (!useBottomAppBar) {
             setToolbarTitle(0);
-            viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            binding.viewPagerViewRedditGalleryActivity.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
                 @Override
                 public void onPageSelected(int position) {
                     setToolbarTitle(position);
@@ -187,10 +229,10 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
             });
         }
         sectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-        viewPager.setAdapter(sectionsPagerAdapter);
-        viewPager.setOffscreenPageLimit(3);
+        binding.viewPagerViewRedditGalleryActivity.setAdapter(sectionsPagerAdapter);
+        binding.viewPagerViewRedditGalleryActivity.setOffscreenPageLimit(3);
         if (savedInstanceState == null) {
-            viewPager.setCurrentItem(getIntent().getIntExtra(EXTRA_GALLERY_ITEM_INDEX, 0), false);
+            binding.viewPagerViewRedditGalleryActivity.setCurrentItem(getIntent().getIntExtra(EXTRA_GALLERY_ITEM_INDEX, 0), false);
         }
     }
 
@@ -208,6 +250,10 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.view_reddit_gallery_activity, menu);
+        for (int i = 0; i < menu.size(); i++) {
+            Utils.setTitleWithCustomFontToMenuItem(typeface, menu.getItem(i), null);
+        }
         return true;
     }
 
@@ -215,6 +261,13 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             finish();
+            return true;
+        } else if (item.getItemId() == R.id.action_download_all_gallery_media_view_reddit_gallery_activity) {
+            //TODO: contentEstimatedBytes
+            JobInfo jobInfo = DownloadMediaService.constructGalleryDownloadAllMediaJobInfo(this, 5000000L * gallery.size(), post);
+            ((JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE)).schedule(jobInfo);
+
+            Toast.makeText(this, R.string.download_started, Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -276,7 +329,7 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
     }
 
     public int getCurrentPagePosition() {
-        return viewPager.getCurrentItem();
+        return binding.viewPagerViewRedditGalleryActivity.getCurrentItem();
     }
 
     @Override
@@ -290,6 +343,14 @@ public class ViewRedditGalleryActivity extends AppCompatActivity implements SetA
 
     public void setActionBarHidden(boolean isActionBarHidden) {
         this.isActionBarHidden = isActionBarHidden;
+        if (!useBottomAppBar) {
+            binding.toolbarViewRedditGalleryActivity.setVisibility(isActionBarHidden ? View.GONE : View.VISIBLE);
+        }
+    }
+
+    @Subscribe
+    public void onFinishViewMediaActivityEvent(FinishViewMediaActivityEvent e) {
+        finish();
     }
 
     private class SectionsPagerAdapter extends FragmentStatePagerAdapter {

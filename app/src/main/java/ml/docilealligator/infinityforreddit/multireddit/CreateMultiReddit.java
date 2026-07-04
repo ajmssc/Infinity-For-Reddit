@@ -25,29 +25,30 @@ public class CreateMultiReddit {
         void failed(int errorType);
     }
 
-    public static void createMultiReddit(Retrofit oauthRetrofit, RedditDataRoomDatabase redditDataRoomDatabase,
+    public static void createMultiReddit(Executor executor, Handler handler, Retrofit oauthRetrofit,
+                                         RedditDataRoomDatabase redditDataRoomDatabase,
                                          String accessToken, String multipath, String model,
                                          CreateMultiRedditListener createMultiRedditListener) {
         Map<String, String> params = new HashMap<>();
         params.put(APIUtils.MULTIPATH_KEY, multipath);
         params.put(APIUtils.MODEL_KEY, model);
         oauthRetrofit.create(RedditAPI.class).createMultiReddit(APIUtils.getOAuthHeader(accessToken),
-                params).enqueue(new Callback<String>() {
+                params).enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {
-                    ParseMultiReddit.parseAndSaveMultiReddit(response.body(), redditDataRoomDatabase,
-                            new ParseMultiReddit.ParseMultiRedditListener() {
-                        @Override
-                        public void success() {
-                            createMultiRedditListener.success();
-                        }
+                    ParseMultiReddit.parseAndSaveMultiReddit(executor, handler, response.body(),
+                            redditDataRoomDatabase, new ParseMultiReddit.ParseMultiRedditListener() {
+                                @Override
+                                public void success() {
+                                    createMultiRedditListener.success();
+                                }
 
-                        @Override
-                        public void failed() {
-                            createMultiRedditListener.failed(1);
-                        }
-                    });
+                                @Override
+                                public void failed() {
+                                    createMultiRedditListener.failed(1);
+                                }
+                            });
                 } else {
                     createMultiRedditListener.failed(response.code());
                 }
@@ -63,21 +64,25 @@ public class CreateMultiReddit {
     public static void anonymousCreateMultiReddit(Executor executor, Handler handler,
                                                   RedditDataRoomDatabase redditDataRoomDatabase,
                                                   String multipath, String name, String description,
-                                                  List<String> subreddits,
+                                                  List<ExpandedSubredditInMultiReddit> subreddits,
                                                   CreateMultiRedditListener createMultiRedditListener) {
         executor.execute(() -> {
             if (!redditDataRoomDatabase.accountDao().isAnonymousAccountInserted()) {
                 redditDataRoomDatabase.accountDao().insert(Account.getAnonymousAccount());
             }
-            redditDataRoomDatabase.multiRedditDao().insert(new MultiReddit(multipath, name, name, description,
-                    null, null, "private", "-", 0, System.currentTimeMillis(), true, false, false));
-            List<AnonymousMultiredditSubreddit> anonymousMultiredditSubreddits = new ArrayList<>();
-            for (String s : subreddits) {
-                anonymousMultiredditSubreddits.add(new AnonymousMultiredditSubreddit(multipath, s));
-            }
-            redditDataRoomDatabase.anonymousMultiredditSubredditDao().insertAll(anonymousMultiredditSubreddits);
+            if (redditDataRoomDatabase.multiRedditDao().getMultiReddit(multipath, Account.ANONYMOUS_ACCOUNT) == null) {
+                redditDataRoomDatabase.multiRedditDao().insert(new MultiReddit(multipath, name, name, description,
+                        null, null, "private", Account.ANONYMOUS_ACCOUNT, 0, System.currentTimeMillis(), true, false, false));
+                List<AnonymousMultiredditSubreddit> anonymousMultiredditSubreddits = new ArrayList<>();
+                for (ExpandedSubredditInMultiReddit s : subreddits) {
+                    anonymousMultiredditSubreddits.add(new AnonymousMultiredditSubreddit(multipath, s.getName(), s.getIconUrl()));
+                }
+                redditDataRoomDatabase.anonymousMultiredditSubredditDao().insertAll(anonymousMultiredditSubreddits);
 
-            handler.post(createMultiRedditListener::success);
+                handler.post(createMultiRedditListener::success);
+            } else {
+                handler.post(() -> createMultiRedditListener.failed(0));
+            }
         });
     }
 }

@@ -6,10 +6,15 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import org.greenrobot.eventbus.EventBus;
@@ -18,21 +23,22 @@ import org.greenrobot.eventbus.Subscribe;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
-import ml.docilealligator.infinityforreddit.FragmentCommunicator;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.SortType;
-import ml.docilealligator.infinityforreddit.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostLayoutBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityAccountPostsBinding;
 import ml.docilealligator.infinityforreddit.events.ChangeNSFWEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
+import ml.docilealligator.infinityforreddit.fragments.FragmentCommunicator;
 import ml.docilealligator.infinityforreddit.fragments.PostFragment;
+import ml.docilealligator.infinityforreddit.fragments.PostFragmentBase;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
+import ml.docilealligator.infinityforreddit.post.PostType;
+import ml.docilealligator.infinityforreddit.thing.SortType;
+import ml.docilealligator.infinityforreddit.thing.SortTypeSelectionCallback;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class AccountPostsActivity extends BaseActivity implements SortTypeSelectionCallback,
         PostLayoutBottomSheetFragment.PostLayoutSelectionCallback, ActivityToolbarInterface {
@@ -52,8 +58,6 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
     SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
-    private String mAccessToken;
-    private String mAccountName;
     private String mUserWhere;
     private Fragment mFragment;
     private PostLayoutBottomSheetFragment postLayoutBottomSheetFragment;
@@ -72,9 +76,7 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
@@ -83,13 +85,30 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
                 addOnOffsetChangedListener(binding.accountPostsAppbarLayout);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(binding.accountPostsToolbar);
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
+
+                        setMargins(binding.accountPostsToolbar,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.accountPostsFrameLayout.setPadding(allInsets.left, 0, allInsets.right, 0);
+
+                        return insets;
+                    }
+                });
+                //adjustToolbar(binding.accountPostsToolbar);
             }
         }
 
@@ -100,8 +119,6 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
             binding.accountPostsToolbar.setTitle(R.string.downvoted);
         } else if (mUserWhere.equals(PostPagingSource.USER_WHERE_HIDDEN)) {
             binding.accountPostsToolbar.setTitle(R.string.hidden);
-        } else if (mUserWhere.equals(PostPagingSource.USER_WHERE_GILDED)) {
-            binding.accountPostsToolbar.setTitle(R.string.gilded);
         }
 
         setSupportActionBar(binding.accountPostsToolbar);
@@ -109,9 +126,6 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
         setToolbarGoToTop(binding.accountPostsToolbar);
 
         postLayoutBottomSheetFragment = new PostLayoutBottomSheetFragment();
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
 
         if (savedInstanceState != null) {
             mFragment = getSupportFragmentManager().getFragment(savedInstanceState, FRAGMENT_OUT_STATE);
@@ -126,7 +140,7 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (mFragment != null) {
-            return ((FragmentCommunicator) mFragment).handleKeyDown(keyCode) || super.onKeyDown(keyCode, event);
+            return ((PostFragmentBase) mFragment).handleKeyDown(keyCode) || super.onKeyDown(keyCode, event);
         }
 
         return super.onKeyDown(keyCode, event);
@@ -138,7 +152,12 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
@@ -148,16 +167,15 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
         applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(
                 binding.accountPostsAppbarLayout, binding.accountPostsCollapsingToolbarLayout,
                 binding.accountPostsToolbar);
+        applyAppBarScrollFlagsIfApplicable(binding.accountPostsCollapsingToolbarLayout);
     }
 
     private void initializeFragment() {
         mFragment = new PostFragment();
         Bundle bundle = new Bundle();
-        bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
-        bundle.putString(PostFragment.EXTRA_USER_NAME, mAccountName);
+        bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
+        bundle.putString(PostFragment.EXTRA_USER_NAME, accountName);
         bundle.putString(PostFragment.EXTRA_USER_WHERE, mUserWhere);
-        bundle.putString(PostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-        bundle.putString(PostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
         bundle.putBoolean(PostFragment.EXTRA_DISABLE_READ_POSTS, true);
         mFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
@@ -227,8 +245,8 @@ public class AccountPostsActivity extends BaseActivity implements SortTypeSelect
     @Override
     public void postLayoutSelected(int postLayout) {
         if (mFragment != null) {
-            mPostLayoutSharedPreferences.edit().putInt(SharedPreferencesUtils.POST_LAYOUT_USER_POST_BASE + mAccountName, postLayout).apply();
-            ((FragmentCommunicator) mFragment).changePostLayout(postLayout);
+            mPostLayoutSharedPreferences.edit().putInt(SharedPreferencesUtils.POST_LAYOUT_USER_POST_BASE + accountName, postLayout).apply();
+            ((PostFragmentBase) mFragment).changePostLayout(postLayout);
         }
     }
 

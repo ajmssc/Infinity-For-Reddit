@@ -10,12 +10,13 @@ import ml.docilealligator.infinityforreddit.account.AccountDao;
 public class ParseAndInsertNewAccount {
 
     public static void parseAndInsertNewAccount(Executor executor, Handler handler, String username,
-                                                String accessToken, String refreshToken, String profileImageUrl,
-                                                String bannerImageUrl, int karma, String code, AccountDao accountDao,
+                                                String modhash, String sessionCookiesJson, String profileImageUrl,
+                                                String bannerImageUrl, int karma, boolean isMod, AccountDao accountDao,
                                                 ParseAndInsertAccountListener parseAndInsertAccountListener) {
         executor.execute(() -> {
-            Account account = new Account(username, accessToken, refreshToken, code, profileImageUrl,
-                    bannerImageUrl, karma, true);
+            Account account = new Account(username, modhash, null, null, profileImageUrl,
+                    bannerImageUrl, karma, true, isMod);
+            account.setSessionCookies(sessionCookiesJson);
             accountDao.markAllAccountsNonCurrent();
             accountDao.insert(account);
 

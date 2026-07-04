@@ -7,15 +7,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
-
-import com.google.android.material.appbar.AppBarLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -25,33 +26,22 @@ import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
+import ml.docilealligator.infinityforreddit.databinding.ActivitySearchUsersResultBinding;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.fragments.UserListingFragment;
-import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class SearchUsersResultActivity extends BaseActivity implements ActivityToolbarInterface {
 
     static final String EXTRA_QUERY = "EQ";
     static final String EXTRA_IS_MULTI_SELECTION = "EIMS";
-    static final String EXTRA_RETURN_USER_NAME = "ERUN";
-    static final String EXTRA_RETURN_USER_ICON_URL = "ERUIU";
     static final String RETURN_EXTRA_SELECTED_USERNAMES = "RESU";
 
     private static final String FRAGMENT_OUT_STATE = "FOS";
 
-    @BindView(R.id.coordinator_layout_search_users_result_activity)
-    CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.appbar_layout_search_users_result_activity)
-    AppBarLayout appBarLayout;
-    @BindView(R.id.toolbar_search_users_result_activity)
-    Toolbar toolbar;
     Fragment mFragment;
     @Inject
     @Named("default")
@@ -61,59 +51,69 @@ public class SearchUsersResultActivity extends BaseActivity implements ActivityT
     SharedPreferences mCurrentAccountSharedPreferences;
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
-    private String mAccessToken;
-    private String mAccountName;
+    private ActivitySearchUsersResultBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search_users_result);
 
-        ButterKnife.bind(this);
+        binding = ActivitySearchUsersResultBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         EventBus.getDefault().register(this);
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
 
             if (isChangeStatusBarIconColor()) {
-                addOnOffsetChangedListener(appBarLayout);
+                addOnOffsetChangedListener(binding.appbarLayoutSearchUsersResultActivity);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(toolbar);
+
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
+
+                        setMargins(binding.toolbarSearchUsersResultActivity,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.frameLayoutSearchUsersResultActivity.setPadding(allInsets.left, 0, allInsets.right, allInsets.bottom);
+
+                        return insets;
+                    }
+                });
+                //adjustToolbar(binding.toolbarSearchUsersResultActivity);
             }
         }
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbarSearchUsersResultActivity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setToolbarGoToTop(toolbar);
+        setToolbarGoToTop(binding.toolbarSearchUsersResultActivity);
 
         String query = getIntent().getExtras().getString(EXTRA_QUERY);
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
 
         if (savedInstanceState == null) {
             mFragment = new UserListingFragment();
             Bundle bundle = new Bundle();
             bundle.putString(UserListingFragment.EXTRA_QUERY, query);
             bundle.putBoolean(UserListingFragment.EXTRA_IS_GETTING_USER_INFO, true);
-            bundle.putString(UserListingFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-            bundle.putString(UserListingFragment.EXTRA_ACCOUNT_NAME, mAccountName);
             bundle.putBoolean(UserListingFragment.EXTRA_IS_MULTI_SELECTION, getIntent().getBooleanExtra(EXTRA_IS_MULTI_SELECTION, false));
             mFragment.setArguments(bundle);
         } else {
@@ -125,27 +125,25 @@ public class SearchUsersResultActivity extends BaseActivity implements ActivityT
     }
 
     @Override
-    protected SharedPreferences getDefaultSharedPreferences() {
+    public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
     @Override
     protected void applyCustomTheme() {
-        coordinatorLayout.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(appBarLayout, null, toolbar);
-    }
-
-    public void getSelectedUser(String name, String iconUrl) {
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra(EXTRA_RETURN_USER_NAME, name);
-        returnIntent.putExtra(EXTRA_RETURN_USER_ICON_URL, iconUrl);
-        setResult(Activity.RESULT_OK, returnIntent);
-        finish();
+        binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutSearchUsersResultActivity,
+                null, binding.toolbarSearchUsersResultActivity);
     }
 
     @Override

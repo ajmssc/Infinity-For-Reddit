@@ -9,11 +9,11 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
-import ml.docilealligator.infinityforreddit.MaterialYouWorker;
+import ml.docilealligator.infinityforreddit.worker.MaterialYouWorker;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 
 public class WallpaperChangeReceiver extends BroadcastReceiver {
-    private SharedPreferences sharedPreferences;
+    private final SharedPreferences sharedPreferences;
 
     public WallpaperChangeReceiver(SharedPreferences sharedPreferences) {
         this.sharedPreferences = sharedPreferences;

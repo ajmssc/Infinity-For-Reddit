@@ -5,29 +5,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.util.ArrayList;
+import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import ml.docilealligator.infinityforreddit.Flair;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.activities.BaseActivity;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
+import ml.docilealligator.infinityforreddit.databinding.ItemFlairBinding;
+import ml.docilealligator.infinityforreddit.subreddit.Flair;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class FlairBottomSheetRecyclerViewAdapter extends RecyclerView.Adapter<FlairBottomSheetRecyclerViewAdapter.FlairViewHolder> {
-    private BaseActivity activity;
-    private ArrayList<Flair> flairs;
-    private int flairTextColor;
-    private ItemClickListener itemClickListener;
+    private final BaseActivity activity;
+    private List<Flair> flairs;
+    private final int flairTextColor;
+    private final ItemClickListener itemClickListener;
 
     public FlairBottomSheetRecyclerViewAdapter(BaseActivity activity, CustomThemeWrapper customThemeWrapper,
                                                ItemClickListener itemClickListener) {
@@ -39,14 +36,14 @@ public class FlairBottomSheetRecyclerViewAdapter extends RecyclerView.Adapter<Fl
     @NonNull
     @Override
     public FlairViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return new FlairViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_flair, parent, false));
+        return new FlairViewHolder(ItemFlairBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
     }
 
     @Override
     public void onBindViewHolder(@NonNull FlairViewHolder holder, int position) {
         if (flairs.get(holder.getBindingAdapterPosition()).isEditable()) {
-            holder.editFlairImageView.setVisibility(View.VISIBLE);
-            holder.editFlairImageView.setOnClickListener(view -> {
+            holder.binding.editFlairImageViewItemFlair.setVisibility(View.VISIBLE);
+            holder.binding.editFlairImageViewItemFlair.setOnClickListener(view -> {
                 View dialogView = activity.getLayoutInflater().inflate(R.layout.dialog_edit_flair, null);
                 EditText flairEditText = dialogView.findViewById(R.id.flair_edit_text_edit_flair_dialog);
                 flairEditText.requestFocus();
@@ -65,13 +62,13 @@ public class FlairBottomSheetRecyclerViewAdapter extends RecyclerView.Adapter<Fl
             });
         }
 
-        if (flairs.get(holder.getBindingAdapterPosition()).isEditable() && flairs.get(holder.getBindingAdapterPosition()).getText().equals("")) {
-            holder.itemView.setOnClickListener(view -> holder.editFlairImageView.performClick());
+        if (flairs.get(holder.getBindingAdapterPosition()).isEditable() && flairs.get(holder.getBindingAdapterPosition()).getText().isEmpty()) {
+            holder.itemView.setOnClickListener(view -> holder.binding.editFlairImageViewItemFlair.performClick());
         } else {
             holder.itemView.setOnClickListener(view -> itemClickListener.onClick(flairs.get(holder.getBindingAdapterPosition())));
         }
 
-        holder.flairTextView.setText(flairs.get(holder.getBindingAdapterPosition()).getText());
+        holder.binding.flairTextViewItemFlair.setText(flairs.get(holder.getBindingAdapterPosition()).getText());
     }
 
     @Override
@@ -82,10 +79,10 @@ public class FlairBottomSheetRecyclerViewAdapter extends RecyclerView.Adapter<Fl
     @Override
     public void onViewRecycled(@NonNull FlairViewHolder holder) {
         super.onViewRecycled(holder);
-        holder.editFlairImageView.setVisibility(View.GONE);
+        holder.binding.editFlairImageViewItemFlair.setVisibility(View.GONE);
     }
 
-    public void changeDataset(ArrayList<Flair> flairs) {
+    public void changeDataset(List<Flair> flairs) {
         this.flairs = flairs;
         notifyDataSetChanged();
     }
@@ -95,20 +92,15 @@ public class FlairBottomSheetRecyclerViewAdapter extends RecyclerView.Adapter<Fl
     }
 
     class FlairViewHolder extends RecyclerView.ViewHolder {
-        View itemView;
-        @BindView(R.id.flair_text_view_item_flair)
-        TextView flairTextView;
-        @BindView(R.id.edit_flair_image_view_item_flair)
-        ImageView editFlairImageView;
+        ItemFlairBinding binding;
 
-        FlairViewHolder(@NonNull View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
-            this.itemView = itemView;
-            flairTextView.setTextColor(flairTextColor);
+        FlairViewHolder(@NonNull ItemFlairBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
+            binding.flairTextViewItemFlair.setTextColor(flairTextColor);
 
             if (activity.typeface != null) {
-                flairTextView.setTypeface(activity.typeface);
+                binding.flairTextViewItemFlair.setTypeface(activity.typeface);
             }
         }
     }

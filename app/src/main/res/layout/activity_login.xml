@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/coordinator_layout_login_activity"
     tools:application="ml.docilealligator.infinityforreddit.activities.LoginActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -24,6 +23,7 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
+        android:id="@+id/linear_layout_login_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -39,10 +39,41 @@
             android:textSize="?attr/font_default"
             android:fontFamily="?attr/font_family" />
 
-        <ml.docilealligator.infinityforreddit.customviews.LollipopBugFixedWebView
-            android:id="@+id/webview_login_activity"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+
+            <ml.docilealligator.infinityforreddit.customviews.LollipopBugFixedWebView
+                android:id="@+id/webview_login_activity"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:id="@+id/internet_disconnected_error_linear_layout_login_activity"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/internet_disconnected_error_text_view_login_activity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:text="@string/login_activity_internet_disconnected_error"
+                    android:textSize="?attr/font_18"
+                    android:fontFamily="?attr/font_family" />
+                
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/internet_disconnected_error_retry_button_login_activity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/retry" />
+
+            </LinearLayout>
+
+        </FrameLayout>
 
     </LinearLayout>
 
@@ -52,6 +83,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/fab_margin"
         android:layout_gravity="bottom|end"
-        android:src="@drawable/ic_help_24dp" />
+        android:contentDescription="@string/content_description_alternative_login_method"
+        android:src="@drawable/ic_login_24dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

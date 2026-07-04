@@ -8,7 +8,7 @@ import androidx.preference.SwitchPreference;
 import org.greenrobot.eventbus.EventBus;
 
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.customviews.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceFragmentCompat;
 import ml.docilealligator.infinityforreddit.events.ChangeCompactLayoutToolbarHiddenByDefaultEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeDefaultLinkPostLayoutEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeDefaultPostLayoutEvent;
@@ -17,13 +17,12 @@ import ml.docilealligator.infinityforreddit.events.ChangeHidePostFlairEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeHidePostTypeEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeHideSubredditAndUserPrefixEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeHideTextPostContent;
-import ml.docilealligator.infinityforreddit.events.ChangeHideTheNumberOfAwardsEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeHideTheNumberOfCommentsEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeHideTheNumberOfVotesEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeLongPressToHideToolbarInCompactLayoutEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeShowAbsoluteNumberOfVotesEvent;
 import ml.docilealligator.infinityforreddit.events.ShowDividerInCompactLayoutPreferenceEvent;
-import ml.docilealligator.infinityforreddit.events.ShowThumbnailOnTheRightInCompactLayoutEvent;
+import ml.docilealligator.infinityforreddit.events.ShowThumbnailOnTheLeftInCompactLayoutEvent;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 
 public class PostPreferenceFragment extends CustomFontPreferenceFragmentCompat {
@@ -35,13 +34,12 @@ public class PostPreferenceFragment extends CustomFontPreferenceFragmentCompat {
         ListPreference defaultPostLayoutList = findPreference(SharedPreferencesUtils.DEFAULT_POST_LAYOUT_KEY);
         ListPreference defaultLinkPostLayoutList = findPreference(SharedPreferencesUtils.DEFAULT_LINK_POST_LAYOUT_KEY);
         SwitchPreference showDividerInCompactLayoutSwitch = findPreference(SharedPreferencesUtils.SHOW_DIVIDER_IN_COMPACT_LAYOUT);
-        SwitchPreference showThumbnailOnTheRightInCompactLayoutSwitch = findPreference(SharedPreferencesUtils.SHOW_THUMBNAIL_ON_THE_LEFT_IN_COMPACT_LAYOUT);
+        SwitchPreference showThumbnailOnTheLeftInCompactLayoutSwitch = findPreference(SharedPreferencesUtils.SHOW_THUMBNAIL_ON_THE_LEFT_IN_COMPACT_LAYOUT);
         SwitchPreference showAbsoluteNumberOfVotesSwitch = findPreference(SharedPreferencesUtils.SHOW_ABSOLUTE_NUMBER_OF_VOTES);
         SwitchPreference longPressToHideToolbarInCompactLayoutSwitch = findPreference(SharedPreferencesUtils.LONG_PRESS_TO_HIDE_TOOLBAR_IN_COMPACT_LAYOUT);
         SwitchPreference postCompactLayoutToolbarHiddenByDefaultSwitch = findPreference(SharedPreferencesUtils.POST_COMPACT_LAYOUT_TOOLBAR_HIDDEN_BY_DEFAULT);
         SwitchPreference hidePostTypeSwitch = findPreference(SharedPreferencesUtils.HIDE_POST_TYPE);
         SwitchPreference hidePostFlairSwitch = findPreference(SharedPreferencesUtils.HIDE_POST_FLAIR);
-        SwitchPreference hideTheNumberOfAwardsSwitch = findPreference(SharedPreferencesUtils.HIDE_THE_NUMBER_OF_AWARDS);
         SwitchPreference hideSubredditAndUserPrefixSwitch = findPreference(SharedPreferencesUtils.HIDE_SUBREDDIT_AND_USER_PREFIX);
         SwitchPreference hideTheNumberOfVotesSwitch = findPreference(SharedPreferencesUtils.HIDE_THE_NUMBER_OF_VOTES);
         SwitchPreference hideTheNumberOfCommentsSwitch = findPreference(SharedPreferencesUtils.HIDE_THE_NUMBER_OF_COMMENTS);
@@ -69,9 +67,9 @@ public class PostPreferenceFragment extends CustomFontPreferenceFragmentCompat {
             });
         }
 
-        if (showThumbnailOnTheRightInCompactLayoutSwitch != null) {
-            showThumbnailOnTheRightInCompactLayoutSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
-                EventBus.getDefault().post(new ShowThumbnailOnTheRightInCompactLayoutEvent((Boolean) newValue));
+        if (showThumbnailOnTheLeftInCompactLayoutSwitch != null) {
+            showThumbnailOnTheLeftInCompactLayoutSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
+                EventBus.getDefault().post(new ShowThumbnailOnTheLeftInCompactLayoutEvent((Boolean) newValue));
                 return true;
             });
         }
@@ -107,13 +105,6 @@ public class PostPreferenceFragment extends CustomFontPreferenceFragmentCompat {
         if (hidePostFlairSwitch != null) {
             hidePostFlairSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
                 EventBus.getDefault().post(new ChangeHidePostFlairEvent((Boolean) newValue));
-                return true;
-            });
-        }
-
-        if (hideTheNumberOfAwardsSwitch != null) {
-            hideTheNumberOfAwardsSwitch.setOnPreferenceChangeListener((preference, newValue) -> {
-                EventBus.getDefault().post(new ChangeHideTheNumberOfAwardsEvent((Boolean) newValue));
                 return true;
             });
         }

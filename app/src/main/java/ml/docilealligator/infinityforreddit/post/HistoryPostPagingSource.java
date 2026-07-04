@@ -3,24 +3,28 @@ package ml.docilealligator.infinityforreddit.post;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.paging.ListenableFuturePagingSource;
 import androidx.paging.PagingState;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.postfilter.PostFilter;
+import ml.docilealligator.infinityforreddit.readpost.NullReadPostsList;
 import ml.docilealligator.infinityforreddit.readpost.ReadPost;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import retrofit2.Call;
 import retrofit2.HttpException;
@@ -28,21 +32,19 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class HistoryPostPagingSource extends ListenableFuturePagingSource<String, Post> {
-    public static final int TYPE_READ_POSTS = 100;
-
-    private Retrofit retrofit;
-    private Executor executor;
-    private RedditDataRoomDatabase redditDataRoomDatabase;
-    private String accessToken;
-    private String accountName;
-    private SharedPreferences sharedPreferences;
-    private String username;
-    private int postType;
-    private PostFilter postFilter;
+    private final Retrofit retrofit;
+    private final Executor executor;
+    private final RedditDataRoomDatabase redditDataRoomDatabase;
+    private final String accessToken;
+    private final String accountName;
+    private final SharedPreferences sharedPreferences;
+    private final String username;
+    private final int readPostType;
+    private final PostFilter postFilter;
 
     public HistoryPostPagingSource(Retrofit retrofit, Executor executor, RedditDataRoomDatabase redditDataRoomDatabase,
-                                   String accessToken, String accountName, SharedPreferences sharedPreferences,
-                                   String username, int postType, PostFilter postFilter) {
+                                   @Nullable String accessToken, @NonNull String accountName, SharedPreferences sharedPreferences,
+                                   String username, int readPostType, PostFilter postFilter) {
         this.retrofit = retrofit;
         this.executor = executor;
         this.redditDataRoomDatabase = redditDataRoomDatabase;
@@ -50,7 +52,7 @@ public class HistoryPostPagingSource extends ListenableFuturePagingSource<String
         this.accountName = accountName;
         this.sharedPreferences = sharedPreferences;
         this.username = username;
-        this.postType = postType;
+        this.readPostType = readPostType;
         this.postFilter = postFilter;
     }
 
@@ -63,11 +65,7 @@ public class HistoryPostPagingSource extends ListenableFuturePagingSource<String
     @NonNull
     @Override
     public ListenableFuture<LoadResult<String, Post>> loadFuture(@NonNull LoadParams<String> loadParams) {
-        if (postType == TYPE_READ_POSTS) {
-            return loadHomePosts(loadParams, redditDataRoomDatabase);
-        } else {
-            return loadHomePosts(loadParams, redditDataRoomDatabase);
-        }
+        return loadReadPosts(loadParams, redditDataRoomDatabase);
     }
 
     public LoadResult<String, Post> transformData(List<ReadPost> readPosts) {
@@ -82,37 +80,83 @@ public class HistoryPostPagingSource extends ListenableFuturePagingSource<String
         }
 
         Call<String> historyPosts;
-        if (accessToken != null && !accessToken.isEmpty()) {
-            historyPosts = retrofit.create(RedditAPI.class).getInfoOauth(ids.toString(), APIUtils.getOAuthHeader(accessToken));
-        } else {
+        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
             historyPosts = retrofit.create(RedditAPI.class).getInfo(ids.toString());
+        } else {
+            historyPosts = retrofit.create(RedditAPI.class).getInfoOauth(ids.toString(), APIUtils.getOAuthHeader(accessToken));
         }
 
         try {
             Response<String> response = historyPosts.execute();
             if (response.isSuccessful()) {
                 String responseString = response.body();
-                LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, null);
+                LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, NullReadPostsList.getInstance());
                 if (newPosts == null) {
-                    return new LoadResult.Error<>(new Exception("Error parsing posts"));
+                    return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(response.code(), "Error parsing posts"));
                 } else {
+                    if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                        setMetadataToAnonymousPosts(newPosts);
+                    }
+
                     if (newPosts.size() < 25) {
                         return new LoadResult.Page<>(new ArrayList<>(newPosts), null, null);
                     }
                     return new LoadResult.Page<>(new ArrayList<>(newPosts), null, Long.toString(lastItem));
                 }
             } else {
-                return new LoadResult.Error<>(new Exception("Response failed"));
+                return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(response.code(), "Error getting response"));
             }
         } catch (IOException e) {
             e.printStackTrace();
-            return new LoadResult.Error<>(new Exception("Response failed"));
+            return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(0, "Error getting response"));
         }
     }
 
-    private ListenableFuture<LoadResult<String, Post>> loadHomePosts(@NonNull LoadParams<String> loadParams, RedditDataRoomDatabase redditDataRoomDatabase) {
-        String after = loadParams.getKey();
-        ListenableFuture<List<ReadPost>> readPosts = redditDataRoomDatabase.readPostDao().getAllReadPostsListenableFuture(username, Long.parseLong(after == null ? "0" : after));
+    private void setMetadataToAnonymousPosts(LinkedHashSet<Post> posts) {
+        for (Post p : posts) {
+            switch (readPostType) {
+                case ReadPostType.ANONYMOUS_UPVOTED_POSTS:
+                    p.setVoteType(1);
+                    break;
+                case ReadPostType.ANONYMOUS_DOWNVOTED_POSTS:
+                    p.setVoteType(-1);
+                    break;
+                case ReadPostType.ANONYMOUS_HIDDEN_POSTS:
+                    p.setHidden(true);
+                    break;
+                case ReadPostType.ANONYMOUS_SAVED_POSTS:
+                    p.setSaved(true);
+                    break;
+            }
+        }
+
+        List<ReadPost> readPostsInDatabase = redditDataRoomDatabase.readPostDao().getAllReadPostsForMetadata(
+                accountName, readPostType, posts.stream().map(Post::getId).collect(Collectors.toList()));
+        Map<String, Post> existingPostsMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
+        for (ReadPost r : readPostsInDatabase) {
+            Post existingPost = existingPostsMap.get(r.getId());
+            if (existingPost != null) {
+                switch (r.getReadPostType()) {
+                    case ReadPostType.ANONYMOUS_UPVOTED_POSTS:
+                        existingPost.setVoteType(1);
+                        break;
+                    case ReadPostType.ANONYMOUS_DOWNVOTED_POSTS:
+                        existingPost.setVoteType(-1);
+                        break;
+                    case ReadPostType.ANONYMOUS_HIDDEN_POSTS:
+                        existingPost.setHidden(true);
+                        break;
+                    case ReadPostType.ANONYMOUS_SAVED_POSTS:
+                        existingPost.setSaved(true);
+                        break;
+                }
+            }
+        }
+    }
+
+    private ListenableFuture<LoadResult<String, Post>> loadReadPosts(@NonNull LoadParams<String> loadParams, RedditDataRoomDatabase redditDataRoomDatabase) {
+        Long before = loadParams.getKey() != null ? Long.parseLong(loadParams.getKey()) : null;
+        ListenableFuture<List<ReadPost>> readPosts = redditDataRoomDatabase.readPostDao().getAllReadPostsListenableFuture(username, before, readPostType);
 
         ListenableFuture<LoadResult<String, Post>> pageFuture = Futures.transform(readPosts, this::transformData, executor);
 

@@ -1,6 +1,5 @@
 package ml.docilealligator.infinityforreddit.adapters;
 
-import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -31,19 +30,19 @@ import ml.docilealligator.infinityforreddit.databinding.ItemGalleryImageInPostFe
 import ml.docilealligator.infinityforreddit.post.Post;
 
 public class PostGalleryTypeImageRecyclerViewAdapter extends RecyclerView.Adapter<PostGalleryTypeImageRecyclerViewAdapter.ImageViewHolder> {
-    private RequestManager glide;
-    private Typeface typeface;
+    private final RequestManager glide;
+    private final Typeface typeface;
     private Markwon mPostDetailMarkwon;
-    private SaveMemoryCenterInisdeDownsampleStrategy saveMemoryCenterInisdeDownsampleStrategy;
-    private int mColorAccent;
-    private int mPrimaryTextColor;
+    private final SaveMemoryCenterInisdeDownsampleStrategy saveMemoryCenterInisdeDownsampleStrategy;
+    private final int mColorAccent;
+    private final int mPrimaryTextColor;
     private int mCardViewColor;
     private int mCommentColor;
-    private float mScale;
+    private final float mScale;
     private ArrayList<Post.Gallery> galleryImages;
     private boolean blurImage;
     private float ratio;
-    private boolean showCaption;
+    private final boolean showCaption;
 
     public PostGalleryTypeImageRecyclerViewAdapter(RequestManager glide, Typeface typeface,
                                                    SaveMemoryCenterInisdeDownsampleStrategy saveMemoryCenterInisdeDownsampleStrategy,
@@ -91,13 +90,23 @@ public class PostGalleryTypeImageRecyclerViewAdapter extends RecyclerView.Adapte
         holder.binding.errorTextViewItemGalleryImageInPostFeed.setVisibility(View.GONE);
         holder.binding.progressBarItemGalleryImageInPostFeed.setVisibility(View.VISIBLE);
 
-        holder.binding.imageViewItemGalleryImageInPostFeed.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                holder.binding.imageViewItemGalleryImageInPostFeed.removeOnLayoutChangeListener(this);
-                loadImage(holder);
-            }
-        });
+        if (holder.onLayoutChangeListener != null) {
+            holder.binding.imageViewItemGalleryImageInPostFeed.removeOnLayoutChangeListener(holder.onLayoutChangeListener);
+            holder.onLayoutChangeListener = null;
+        }
+        if (holder.binding.imageViewItemGalleryImageInPostFeed.getHeight() > 0 && holder.binding.imageViewItemGalleryImageInPostFeed.getWidth() > 0) {
+            loadImage(holder);
+        } else {
+            holder.onLayoutChangeListener = new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    v.removeOnLayoutChangeListener(this);
+                    holder.onLayoutChangeListener = null;
+                    loadImage(holder);
+                }
+            };
+            holder.binding.imageViewItemGalleryImageInPostFeed.addOnLayoutChangeListener(holder.onLayoutChangeListener);
+        }
 
         if (showCaption) {
             loadCaptionPreview(holder);
@@ -116,6 +125,10 @@ public class PostGalleryTypeImageRecyclerViewAdapter extends RecyclerView.Adapte
         holder.binding.captionTextViewItemGalleryImageInPostFeed.setText("");
         holder.binding.captionUrlTextViewItemGalleryImageInPostFeed.setText("");
         holder.binding.progressBarItemGalleryImageInPostFeed.setVisibility(View.GONE);
+        if (holder.onLayoutChangeListener != null) {
+            holder.binding.imageViewItemGalleryImageInPostFeed.removeOnLayoutChangeListener(holder.onLayoutChangeListener);
+            holder.onLayoutChangeListener = null;
+        }
         glide.clear(holder.binding.imageViewItemGalleryImageInPostFeed);
     }
 
@@ -197,6 +210,7 @@ public class PostGalleryTypeImageRecyclerViewAdapter extends RecyclerView.Adapte
     class ImageViewHolder extends RecyclerView.ViewHolder {
 
         ItemGalleryImageInPostFeedBinding binding;
+        View.OnLayoutChangeListener onLayoutChangeListener;
 
         public ImageViewHolder(ItemGalleryImageInPostFeedBinding binding) {
             super(binding.getRoot());
@@ -206,7 +220,7 @@ public class PostGalleryTypeImageRecyclerViewAdapter extends RecyclerView.Adapte
             if (typeface != null) {
                 binding.errorTextViewItemGalleryImageInPostFeed.setTypeface(typeface);
             }
-            binding.progressBarItemGalleryImageInPostFeed.setIndeterminateTintList(ColorStateList.valueOf(mColorAccent));
+            binding.progressBarItemGalleryImageInPostFeed.setIndicatorColor(mColorAccent);
             binding.errorTextViewItemGalleryImageInPostFeed.setTextColor(mPrimaryTextColor);
 
             binding.errorTextViewItemGalleryImageInPostFeed.setOnClickListener(view -> {

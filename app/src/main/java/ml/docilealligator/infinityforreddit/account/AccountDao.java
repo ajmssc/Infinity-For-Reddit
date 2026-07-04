@@ -31,6 +31,9 @@ public interface AccountDao {
     @Query("DELETE FROM accounts WHERE is_current_user = 1 AND username != '-'")
     void deleteCurrentAccount();
 
+    @Query("DELETE FROM accounts WHERE username = :accountName")
+    void deleteAccount(String accountName);
+
     @Query("DELETE FROM accounts WHERE username != '-'")
     void deleteAllAccounts();
 
@@ -47,8 +50,8 @@ public interface AccountDao {
     LiveData<Account> getCurrentAccountLiveData();
 
     @Query("UPDATE accounts SET profile_image_url = :profileImageUrl, banner_image_url = :bannerImageUrl, " +
-            "karma = :karma WHERE username = :username")
-    void updateAccountInfo(String username, String profileImageUrl, String bannerImageUrl, int karma);
+            "karma = :karma, is_mod = :isMod WHERE username = :username")
+    void updateAccountInfo(String username, String profileImageUrl, String bannerImageUrl, int karma, boolean isMod);
 
     @Query("SELECT * FROM accounts WHERE is_current_user = 0 AND username != '-' ORDER BY username COLLATE NOCASE ASC")
     LiveData<List<Account>> getAccountsExceptCurrentAccountLiveData();
@@ -59,6 +62,13 @@ public interface AccountDao {
     @Query("UPDATE accounts SET access_token = :accessToken, refresh_token = :refreshToken WHERE username = :username")
     void updateAccessTokenAndRefreshToken(String username, String accessToken, String refreshToken);
 
-    @Query("UPDATE accounts SET access_token = :accessToken WHERE username = :username")
-    void updateAccessToken(String username, String accessToken);
+    // access_token now holds the browser session's modhash.
+    @Query("UPDATE accounts SET access_token = :modhash WHERE username = :username")
+    void updateAccessToken(String username, String modhash);
+
+    @Query("UPDATE accounts SET session_cookies = :sessionCookies WHERE username = :username")
+    void updateSessionCookies(String username, String sessionCookies);
+
+    @Query("SELECT session_cookies FROM accounts WHERE username = :username COLLATE NOCASE LIMIT 1")
+    String getSessionCookies(String username);
 }

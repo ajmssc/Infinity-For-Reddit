@@ -6,34 +6,37 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.android.material.appbar.CollapsingToolbarLayout;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.adapters.SelectedSubredditsRecyclerViewAdapter;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.SelectSubredditsOrUsersOptionsBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
 import ml.docilealligator.infinityforreddit.customviews.LinearLayoutManagerBugFixed;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
-import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
+import ml.docilealligator.infinityforreddit.databinding.ActivitySelectedSubredditsBinding;
+import ml.docilealligator.infinityforreddit.multireddit.ExpandedSubredditInMultiReddit;
+import ml.docilealligator.infinityforreddit.subreddit.SubredditWithSelection;
+import ml.docilealligator.infinityforreddit.thing.SelectThingReturnKey;
+import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class SelectedSubredditsAndUsersActivity extends BaseActivity implements ActivityToolbarInterface {
 
@@ -43,73 +46,98 @@ public class SelectedSubredditsAndUsersActivity extends BaseActivity implements 
     private static final int USER_SELECTION_REQUEST_CODE = 2;
     private static final String SELECTED_SUBREDDITS_STATE = "SSS";
 
-    @BindView(R.id.coordinator_layout_selected_subreddits_and_users_activity)
-    CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.appbar_layout_selected_subreddits_and_users_activity)
-    AppBarLayout appBarLayout;
-    @BindView(R.id.collapsing_toolbar_layout_selected_subreddits_and_users_activity)
-    CollapsingToolbarLayout collapsingToolbarLayout;
-    @BindView(R.id.toolbar_selected_subreddits_and_users_activity)
-    Toolbar toolbar;
-    @BindView(R.id.recycler_view_selected_subreddits_and_users_activity)
-    RecyclerView recyclerView;
-    @BindView(R.id.fab_selected_subreddits_and_users_activity)
-    FloatingActionButton fab;
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
     @Inject
+    @Named("current_account")
+    SharedPreferences mCurrentAccountSharedPreferences;
+    @Inject
     CustomThemeWrapper mCustomThemeWrapper;
     private LinearLayoutManagerBugFixed linearLayoutManager;
     private SelectedSubredditsRecyclerViewAdapter adapter;
-    private ArrayList<String> subreddits;
+    private ArrayList<ExpandedSubredditInMultiReddit> subreddits;
+    private ActivitySelectedSubredditsBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_selected_subreddits);
 
-        ButterKnife.bind(this);
+        binding = ActivitySelectedSubredditsBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            Slidr.attach(this);
+        attachSliderPanelIfApplicable();
+
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
+            if (isChangeStatusBarIconColor()) {
+                addOnOffsetChangedListener(binding.appbarLayoutSelectedSubredditsAndUsersActivity);
+            }
+
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
+
+                    setMargins(binding.toolbarSelectedSubredditsAndUsersActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.recyclerViewSelectedSubredditsAndUsersActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom);
+
+                    setMargins(binding.fabSelectedSubredditsAndUsersActivity,
+                            BaseActivity.IGNORE_MARGIN,
+                            BaseActivity.IGNORE_MARGIN,
+                            (int) Utils.convertDpToPixel(16, SelectedSubredditsAndUsersActivity.this) + allInsets.right,
+                            (int) Utils.convertDpToPixel(16, SelectedSubredditsAndUsersActivity.this) + allInsets.bottom);
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbarSelectedSubredditsAndUsersActivity);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setToolbarGoToTop(toolbar);
+        setToolbarGoToTop(binding.toolbarSelectedSubredditsAndUsersActivity);
 
         if (savedInstanceState != null) {
-            subreddits = savedInstanceState.getStringArrayList(SELECTED_SUBREDDITS_STATE);
+            subreddits = savedInstanceState.getParcelableArrayList(SELECTED_SUBREDDITS_STATE);
         } else {
-            subreddits = getIntent().getStringArrayListExtra(EXTRA_SELECTED_SUBREDDITS);
+            subreddits = getIntent().getParcelableArrayListExtra(EXTRA_SELECTED_SUBREDDITS);
         }
 
-        Collections.sort(subreddits);
+        Collections.sort(subreddits, Comparator.comparing(ExpandedSubredditInMultiReddit::getName));
 
-        adapter = new SelectedSubredditsRecyclerViewAdapter(this, mCustomThemeWrapper, subreddits);
+        adapter = new SelectedSubredditsRecyclerViewAdapter(this, mCustomThemeWrapper, Glide.with(this),
+                subreddits);
         linearLayoutManager = new LinearLayoutManagerBugFixed(this);
-        recyclerView.setLayoutManager(linearLayoutManager);
-        recyclerView.setAdapter(adapter);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        binding.recyclerViewSelectedSubredditsAndUsersActivity.setLayoutManager(linearLayoutManager);
+        binding.recyclerViewSelectedSubredditsAndUsersActivity.setAdapter(adapter);
+        binding.recyclerViewSelectedSubredditsAndUsersActivity.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (dy > 0) {
-                    fab.hide();
+                    binding.fabSelectedSubredditsAndUsersActivity.hide();
                 } else {
-                    fab.show();
+                    binding.fabSelectedSubredditsAndUsersActivity.show();
                 }
             }
         });
 
-        fab.setOnClickListener(view -> {
+        binding.fabSelectedSubredditsAndUsersActivity.setOnClickListener(view -> {
             SelectSubredditsOrUsersOptionsBottomSheetFragment selectSubredditsOrUsersOptionsBottomSheetFragment = new SelectSubredditsOrUsersOptionsBottomSheetFragment();
             selectSubredditsOrUsersOptionsBottomSheetFragment.show(getSupportFragmentManager(), selectSubredditsOrUsersOptionsBottomSheetFragment.getTag());
         });
@@ -155,10 +183,10 @@ public class SelectedSubredditsAndUsersActivity extends BaseActivity implements 
         if (resultCode == RESULT_OK) {
             if (requestCode == SUBREDDIT_SELECTION_REQUEST_CODE) {
                 if (data != null) {
-                    if (subreddits == null) {
-                        subreddits = new ArrayList<>();
-                    }
-                    subreddits = data.getStringArrayListExtra(SubredditMultiselectionActivity.EXTRA_RETURN_SELECTED_SUBREDDITS);
+                    ArrayList<SubredditWithSelection> subredditWithSelections = data.getParcelableArrayListExtra(SubredditMultiselectionActivity.EXTRA_RETURN_SELECTED_SUBREDDITS);
+                    subreddits = new ArrayList<>(subredditWithSelections.stream().map(
+                            (subredditWithSelection) -> new ExpandedSubredditInMultiReddit(subredditWithSelection.getName(), subredditWithSelection.getIconUrl())
+                    ).collect(Collectors.toList()));
                     adapter.addSubreddits(subreddits);
                 }
             } else if (requestCode == USER_SELECTION_REQUEST_CODE) {
@@ -166,7 +194,7 @@ public class SelectedSubredditsAndUsersActivity extends BaseActivity implements 
                     if (subreddits == null) {
                         subreddits = new ArrayList<>();
                     }
-                    adapter.addUserInSubredditType("u_" + data.getStringExtra(SearchActivity.EXTRA_RETURN_USER_NAME));
+                    adapter.addUserInSubredditType("u_" + data.getStringExtra(SelectThingReturnKey.RETURN_EXTRA_SUBREDDIT_OR_USER_NAME));
                 }
             }
         }
@@ -176,25 +204,32 @@ public class SelectedSubredditsAndUsersActivity extends BaseActivity implements 
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         if (adapter != null) {
-            outState.putStringArrayList(SELECTED_SUBREDDITS_STATE, adapter.getSubreddits());
+            outState.putParcelableArrayList(SELECTED_SUBREDDITS_STATE, adapter.getSubreddits());
         }
     }
 
     @Override
-    protected SharedPreferences getDefaultSharedPreferences() {
+    public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
     @Override
     protected void applyCustomTheme() {
-        coordinatorLayout.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(appBarLayout, collapsingToolbarLayout, toolbar);
-        applyFABTheme(fab);
+        binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutSelectedSubredditsAndUsersActivity,
+                binding.collapsingToolbarLayoutSelectedSubredditsAndUsersActivity, binding.toolbarSelectedSubredditsAndUsersActivity);
+        applyAppBarScrollFlagsIfApplicable(binding.collapsingToolbarLayoutSelectedSubredditsAndUsersActivity);
+        applyFABTheme(binding.fabSelectedSubredditsAndUsersActivity);
     }
 
     @Override

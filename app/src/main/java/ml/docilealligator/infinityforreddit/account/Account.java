@@ -9,26 +9,36 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+
 @Entity(tableName = "accounts")
 public class Account implements Parcelable {
+    public static final String ANONYMOUS_ACCOUNT = "-";
     @PrimaryKey
     @NonNull
     @ColumnInfo(name = "username")
-    private String accountName;
+    private final String accountName;
     @ColumnInfo(name = "profile_image_url")
-    private String profileImageUrl;
+    private final String profileImageUrl;
     @ColumnInfo(name = "banner_image_url")
-    private String bannerImageUrl;
+    private final String bannerImageUrl;
     @ColumnInfo(name = "karma")
-    private int karma;
+    private final int karma;
+    // Holds the browser session's modhash (X-Modhash) rather than an OAuth access token.
     @ColumnInfo(name = "access_token")
     private String accessToken;
     @ColumnInfo(name = "refresh_token")
-    private String refreshToken;
+    private final String refreshToken;
     @ColumnInfo(name = "code")
-    private String code;
+    private final String code;
     @ColumnInfo(name = "is_current_user")
-    private boolean isCurrentUser;
+    private final boolean isCurrentUser;
+    @ColumnInfo(name = "is_mod")
+    private final boolean isMod;
+    // JSON-serialized list of the browser session cookies (e.g. reddit_session) harvested at login.
+    @ColumnInfo(name = "session_cookies")
+    private String sessionCookies;
 
     @Ignore
     protected Account(Parcel in) {
@@ -40,6 +50,8 @@ public class Account implements Parcelable {
         refreshToken = in.readString();
         code = in.readString();
         isCurrentUser = in.readByte() != 0;
+        isMod = in.readByte() != 0;
+        sessionCookies = in.readString();
     }
 
     public static final Creator<Account> CREATOR = new Creator<Account>() {
@@ -56,11 +68,11 @@ public class Account implements Parcelable {
 
     @Ignore
     public static Account getAnonymousAccount() {
-        return new Account("-", null, null, null, null, null, 0, false);
+        return new Account(Account.ANONYMOUS_ACCOUNT, null, null, null, null, null, 0, false, false);
     }
 
     public Account(@NonNull String accountName, String accessToken, String refreshToken, String code,
-                   String profileImageUrl, String bannerImageUrl, int karma, boolean isCurrentUser) {
+                   String profileImageUrl, String bannerImageUrl, int karma, boolean isCurrentUser, boolean isMod) {
         this.accountName = accountName;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
@@ -69,6 +81,7 @@ public class Account implements Parcelable {
         this.bannerImageUrl = bannerImageUrl;
         this.karma = karma;
         this.isCurrentUser = isCurrentUser;
+        this.isMod = isMod;
     }
 
     @NonNull
@@ -100,12 +113,32 @@ public class Account implements Parcelable {
         return refreshToken;
     }
 
+    public String getSessionCookies() {
+        return sessionCookies;
+    }
+
+    public void setSessionCookies(String sessionCookies) {
+        this.sessionCookies = sessionCookies;
+    }
+
+    public String getModhash() {
+        return accessToken;
+    }
+
+    public void setModhash(String modhash) {
+        this.accessToken = modhash;
+    }
+
     public String getCode() {
         return code;
     }
 
     public boolean isCurrentUser() {
         return isCurrentUser;
+    }
+
+    public boolean isMod() {
+        return isMod;
     }
 
     @Override
@@ -123,5 +156,15 @@ public class Account implements Parcelable {
         dest.writeString(refreshToken);
         dest.writeString(code);
         dest.writeByte((byte) (isCurrentUser ? 1 : 0));
+        dest.writeByte((byte) (isMod ? 1 : 0));
+        dest.writeString(sessionCookies);
+    }
+
+    public String getJSONModel() {
+        return new Gson().toJson(this);
+    }
+
+    public static Account fromJson(String json) throws JsonParseException {
+        return new Gson().fromJson(json, Account.class);
     }
 }

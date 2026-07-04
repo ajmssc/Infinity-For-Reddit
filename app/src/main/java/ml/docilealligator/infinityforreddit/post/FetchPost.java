@@ -3,9 +3,13 @@ package ml.docilealligator.infinityforreddit.post;
 import android.os.Handler;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
+import java.io.IOException;
 import java.util.concurrent.Executor;
 
+import ml.docilealligator.infinityforreddit.account.Account;
 import ml.docilealligator.infinityforreddit.apis.RedditAPI;
 import ml.docilealligator.infinityforreddit.utils.APIUtils;
 import retrofit2.Call;
@@ -14,10 +18,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class FetchPost {
-    public static void fetchPost(Executor executor, Handler handler, Retrofit retrofit, String id, String accessToken,
+    public static void fetchPost(Executor executor, Handler handler, Retrofit retrofit, String id, @Nullable String accessToken,
+                                 @NonNull String accountName,
                                  FetchPostListener fetchPostListener) {
         Call<String> postCall;
-        if (accessToken == null) {
+        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
             postCall = retrofit.create(RedditAPI.class).getPost(id);
         } else {
             postCall = retrofit.create(RedditAPI.class).getPostOauth(id, APIUtils.getOAuthHeader(accessToken));
@@ -49,6 +54,29 @@ public class FetchPost {
         });
     }
 
+    @WorkerThread
+    @Nullable
+    public static Post fetchPostSync(Retrofit retrofit, String id, @Nullable String accessToken,
+                                 @NonNull String accountName) {
+        Call<String> postCall;
+        if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+            postCall = retrofit.create(RedditAPI.class).getPost(id);
+        } else {
+            postCall = retrofit.create(RedditAPI.class).getPostOauth(id, APIUtils.getOAuthHeader(accessToken));
+        }
+        try {
+            Response<String> response = postCall.execute();
+            if (response.isSuccessful()) {
+                return ParsePost.parsePostSync(response.body());
+            } else {
+                return null;
+            }
+
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     public static void fetchRandomPost(Executor executor, Handler handler, Retrofit retrofit, boolean isNSFW,
                                        FetchRandomPostListener fetchRandomPostListener) {
         Call<String> call;
@@ -58,7 +86,7 @@ public class FetchPost {
             call = retrofit.create(RedditAPI.class).getRandomPost();
         }
 
-        call.enqueue(new Callback<String>() {
+        call.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                 if (response.isSuccessful()) {

@@ -13,41 +13,32 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.InflateException;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.Toolbar;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-
-import com.google.android.material.appbar.AppBarLayout;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.LollipopBugFixedWebView;
+import ml.docilealligator.infinityforreddit.databinding.ActivityWebViewBinding;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 
 public class WebViewActivity extends BaseActivity {
 
-    @BindView(R.id.coordinator_layout_web_view_activity)
-    CoordinatorLayout coordinatorLayout;
-    @BindView(R.id.appbar_layout_web_view_activity)
-    AppBarLayout appBarLayout;
-    @BindView(R.id.toolbar_web_view_activity)
-    Toolbar toolbar;
-    @BindView(R.id.web_view_web_view_activity)
-    LollipopBugFixedWebView webView;
     @Inject
     @Named("default")
     SharedPreferences mSharedPreferences;
@@ -57,74 +48,116 @@ public class WebViewActivity extends BaseActivity {
     @Inject
     CustomThemeWrapper mCustomThemeWrapper;
     private String url;
+    private ActivityWebViewBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ((Infinity) getApplication()).getAppComponent().inject(this);
 
-        setImmersiveModeNotApplicable();
+        setImmersiveModeNotApplicableBelowAndroid16();
 
         super.onCreate(savedInstanceState);
 
         try {
-            setContentView(R.layout.activity_web_view);
+            binding = ActivityWebViewBinding.inflate(getLayoutInflater());
+            setContentView(binding.getRoot());
         } catch (InflateException ie) {
-            Log.e("LoginActivity", "Failed to inflate LoginActivity: " + ie.getMessage());
+            Log.e("WebViewActivity", "Failed to inflate WebViewActivity: " + ie.getMessage());
             Toast.makeText(WebViewActivity.this, R.string.no_system_webview_error, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        ButterKnife.bind(this);
-
         applyCustomTheme();
 
-        setSupportActionBar(toolbar);
+        if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
+            ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                @NonNull
+                @Override
+                public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
 
-        if (mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null) == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            webView.setAnonymous(true);
+                    setMargins(binding.toolbarWebViewActivity,
+                            allInsets.left,
+                            allInsets.top,
+                            allInsets.right,
+                            BaseActivity.IGNORE_MARGIN);
+
+                    binding.webViewWebViewActivity.setPadding(
+                            allInsets.left,
+                            0,
+                            allInsets.right,
+                            allInsets.bottom);
+
+                    return WindowInsetsCompat.CONSUMED;
+                }
+            });
         }
 
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
+        setSupportActionBar(binding.toolbarWebViewActivity);
+
+        if (mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null) == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            binding.webViewWebViewActivity.setAnonymous(true);
+        }
+
+        binding.webViewWebViewActivity.getSettings().setJavaScriptEnabled(true);
+        binding.webViewWebViewActivity.getSettings().setDomStorageEnabled(true);
 
         url = getIntent().getDataString();
         if (savedInstanceState == null) {
-            toolbar.setTitle(url);
-            webView.loadUrl(url);
+            binding.toolbarWebViewActivity.setTitle(url);
+            binding.webViewWebViewActivity.loadUrl(url);
         }
 
         WebViewClient client = new WebViewClient() {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 WebViewActivity.this.url = url;
-                toolbar.setTitle(url);
+                binding.toolbarWebViewActivity.setTitle(url);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                toolbar.setTitle(view.getTitle());
+                binding.toolbarWebViewActivity.setTitle(view.getTitle());
             }
         };
-        webView.setWebViewClient(client);
+        binding.webViewWebViewActivity.setWebViewClient(client);
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (binding.webViewWebViewActivity.canGoBack()) {
+                    binding.webViewWebViewActivity.goBack();
+                } else {
+                    setEnabled(false);
+                    triggerBackPress();
+                }
+            }
+        });
     }
 
     @Override
-    protected SharedPreferences getDefaultSharedPreferences() {
+    public SharedPreferences getDefaultSharedPreferences() {
         return mSharedPreferences;
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
     @Override
     protected void applyCustomTheme() {
-        coordinatorLayout.setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
-        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(appBarLayout, null, toolbar);
+        binding.getRoot().setBackgroundColor(mCustomThemeWrapper.getBackgroundColor());
+        applyAppBarLayoutAndCollapsingToolbarLayoutAndToolbarTheme(binding.appbarLayoutWebViewActivity,
+                null, binding.toolbarWebViewActivity);
         Drawable closeIcon = Utils.getTintedDrawable(this, R.drawable.ic_close_24dp, mCustomThemeWrapper.getToolbarPrimaryTextAndIconColor());
-        toolbar.setNavigationIcon(closeIcon);
+        binding.toolbarWebViewActivity.setNavigationIcon(closeIcon);
     }
 
     @Override
@@ -140,7 +173,7 @@ public class WebViewActivity extends BaseActivity {
             finish();
             return true;
         } else if (item.getItemId() == R.id.action_refresh_web_view_activity) {
-            webView.reload();
+            binding.webViewWebViewActivity.reload();
             return true;
         } else if (item.getItemId() == R.id.action_share_link_web_view_activity) {
             try {
@@ -177,30 +210,14 @@ public class WebViewActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (keyCode == KeyEvent.KEYCODE_BACK) {
-                if (webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    finish();
-                }
-                return true;
-            }
-
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        webView.saveState(outState);
+        binding.webViewWebViewActivity.saveState(outState);
     }
 
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        webView.restoreState(savedInstanceState);
+        binding.webViewWebViewActivity.restoreState(savedInstanceState);
     }
 }

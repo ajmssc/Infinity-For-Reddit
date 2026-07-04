@@ -22,7 +22,7 @@ import javax.inject.Named;
 
 import ml.docilealligator.infinityforreddit.Infinity;
 import ml.docilealligator.infinityforreddit.R;
-import ml.docilealligator.infinityforreddit.customviews.CustomFontPreferenceFragmentCompat;
+import ml.docilealligator.infinityforreddit.customviews.preference.CustomFontPreferenceFragmentCompat;
 import ml.docilealligator.infinityforreddit.events.ChangeAppLockEvent;
 import ml.docilealligator.infinityforreddit.events.ChangeRequireAuthToAccountSectionEvent;
 import ml.docilealligator.infinityforreddit.events.ToggleSecureModeEvent;
@@ -46,7 +46,7 @@ public class SecurityPreferenceFragment extends CustomFontPreferenceFragmentComp
         preferenceManager.setSharedPreferencesName(SharedPreferencesUtils.SECURITY_SHARED_PREFERENCES_FILE);
         setPreferencesFromResource(R.xml.security_preferences, rootKey);
 
-        ((Infinity) activity.getApplication()).getAppComponent().inject(this);
+        ((Infinity) mActivity.getApplication()).getAppComponent().inject(this);
 
         SwitchPreference requireAuthToAccountSectionSwitch = findPreference(SharedPreferencesUtils.REQUIRE_AUTHENTICATION_TO_GO_TO_ACCOUNT_SECTION_IN_NAVIGATION_DRAWER);
         SwitchPreference secureModeSwitch = findPreference(SharedPreferencesUtils.SECURE_MODE);
@@ -78,12 +78,14 @@ public class SecurityPreferenceFragment extends CustomFontPreferenceFragmentComp
                 return true;
             });
         }
+
+        applyStyle();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Executor executor = ContextCompat.getMainExecutor(activity);
+        Executor executor = ContextCompat.getMainExecutor(mActivity);
         BiometricPrompt biometricPrompt = new BiometricPrompt(SecurityPreferenceFragment.this,
                 executor, new BiometricPrompt.AuthenticationCallback() {
             @Override
@@ -94,12 +96,12 @@ public class SecurityPreferenceFragment extends CustomFontPreferenceFragmentComp
 
             @Override
             public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
-                activity.onBackPressed();
+                mActivity.triggerBackPress();
             }
         });
 
         BiometricPrompt.PromptInfo promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle(activity.getString(R.string.unlock))
+                .setTitle(mActivity.getString(R.string.unlock))
                 .setAllowedAuthenticators(BIOMETRIC_STRONG | DEVICE_CREDENTIAL)
                 .build();
 

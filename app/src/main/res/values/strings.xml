@@ -1,4 +1,4 @@
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+<resources>
     <string name="application_name" translatable="false">Infinity</string>
     <string name="login_activity_label">Login</string>
     <string name="search_activity_label" translatable="false"> </string>
@@ -40,19 +40,24 @@
     <string name="search_users_result_activity_label">Users</string>
     <string name="multireddit_selection_activity_label">Select a Multireddit</string>
     <string name="post_gallery_activity_label">Gallery Post</string>
-    <string name="trending_activity_label">Trending</string>
     <string name="wiki_activity_label">Wiki</string>
     <string name="edit_profile_activity_label">Edit Profile</string>
     <string name="post_poll_activity_label">Poll Post</string>
-    <string name="history_activity_label">History</string>
+    <string name="history_activity_read_posts_label">Read Posts</string>
+    <string name="history_activity_subtitle">Stored on this device</string>
+    <string name="subscription_activity_label">Subscription</string>
+    <string name="comment_filter_preference_activity_label">Comment Filter</string>
+    <string name="customize_comment_filter_activity_label">Customize Comment Filter</string>
+    <string name="copy_multireddit_activity_label">Copy Multireddit</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_download">Download</string>
     <string name="action_refresh">Refresh</string>
-    <string name="action_add_comment">Add a comment</string>
+    <string name="action_add_comment">Send comment</string>
     <string name="action_save_post">Save post</string>
+    <string name="action_unsave_post">Unsave post</string>
     <string name="action_view_crosspost_parent">View crosspost parent</string>
     <string name="action_search">Search</string>
     <string name="action_start_lazy_mode">Start Lazy Mode</string>
@@ -63,8 +68,8 @@
     <string name="action_unhide_post">Unhide Post</string>
     <string name="action_edit_post">Edit Post</string>
     <string name="action_delete_post">Delete Post</string>
-    <string name="action_mark_nsfw">Mark NSFW</string>
-    <string name="action_unmark_nsfw">Unmark NSFW</string>
+    <string name="action_mark_nsfw">Mark Sensitive</string>
+    <string name="action_unmark_nsfw">Unmark Sensitive</string>
     <string name="action_mark_spoiler">Mark Spoiler</string>
     <string name="action_unmark_spoiler">Unmark Spoiler</string>
     <string name="action_edit_flair">Edit Flair</string>
@@ -72,10 +77,10 @@
     <string name="action_save">Save</string>
     <string name="action_edit_multi_reddit">Edit MultiReddit</string>
     <string name="action_delete_multi_reddit">Delete Multireddit</string>
+    <string name="action_copy_multi_reddit">Copy Multireddit</string>
     <string name="action_share">Share</string>
     <string name="action_preview">Preview</string>
     <string name="action_report">Report</string>
-    <string name="action_see_removed">See Removed</string>
     <string name="action_crosspost">Crosspost</string>
     <string name="action_set_wallpaper">Set as Wallpaper</string>
     <string name="action_send_private_message">Send Private Message</string>
@@ -96,6 +101,13 @@
     <string name="action_playback_speed">Playback Speed</string>
     <string name="action_contact_mods">Contact Mods</string>
     <string name="action_more_options">More Options</string>
+    <string name="action_add_to_home_screen">Add to Home screen</string>
+    <string name="action_reset_fab_position">Reset FAB position</string>
+    <string name="action_download_all_gallery_media">Download All Gallery Media</string>
+    <string name="action_download_all_imgur_album_media">Download All Imgur Album Media</string>
+    <string name="action_next_parent_comment">Next Top-Level Comment</string>
+    <string name="action_previous_parent_comment">Previous Top-Level Comment</string>
+    <string name="action_back_content_description">Back</string>
 
     <string name="parse_json_response_error">Error occurred when parsing the JSON response</string>
     <string name="retrieve_token_error">Error Retrieving the token</string>
@@ -106,6 +118,8 @@
 
     <string name="error_loading_image_tap_to_retry">Error loading the image. Tap to retry.</string>
     <string name="load_posts_error">Error loading posts.\nTap to retry.</string>
+    <string name="load_posts_error_anonymous_403">Due to platform limitations, content cannot be loaded right now.
+        \n\nYou can try again shortly or subscribe for a more consistent experience.</string>
     <string name="load_more_posts_error">Error loading posts.</string>
     <string name="load_post_error">Error loading this post.\nTap to retry.</string>
     <string name="search_subreddits_error">Error searching subreddits.\nTap to retry.</string>
@@ -126,7 +140,7 @@
     <string name="load_messages_failed">Error loading messages.\nTap to retry.</string>
     <string name="no_messages">Empty</string>
 
-    <string name="nsfw">NSFW</string>
+    <string name="nsfw">Sensitive</string>
     <string name="karma_info">Karma: %1$,d</string>
     <string name="karma_info_user_detail">Karma:\n%1$,d (%2$d + %3$d)</string>
     <string name="cakeday_info">Cake day:\n%1$s</string>
@@ -138,12 +152,11 @@
     <string name="history">History</string>
     <string name="inbox">Inbox</string>
     <string name="inbox_with_count">Inbox (%1$,d)</string>
-    <string name="trending">Trending</string>
     <string name="upvoted">Upvoted</string>
     <string name="downvoted">Downvoted</string>
     <string name="hidden">Hidden</string>
     <string name="saved">Saved</string>
-    <string name="gilded">Gilded</string>
+    <string name="reminders">Reminders</string>
     <string name="settings">Settings</string>
     <string name="subscribers_number_detail">Subscribers: %1$,d</string>
     <string name="online_subscribers_number_detail">Online: %1$,d</string>
@@ -151,6 +164,7 @@
     <string name="cannot_fetch_user_info">Cannot fetch user info</string>
     <string name="cannot_fetch_sidebar">Cannot fetch sidebar</string>
     <string name="cannot_fetch_multireddit">Cannot fetch multireddit info</string>
+    <string name="cannot_fetch_multireddit_tap_to_retry">Unable to fetch multireddit information. Tap to retry.</string>
 
     <string name="subscribe">Subscribe</string>
     <string name="unsubscribe">Unsubscribe</string>
@@ -166,12 +180,11 @@
     <string name="unfollowed">Unfollowed</string>
     <string name="unfollow_failed">Unfollowing Failed</string>
 
-    <string name="content_description_banner_imageview">Subreddit Banner Image</string>
-
     <string name="app_label">Infinity</string>
     <string name="search_hint">Search anything</string>
     <string name="search_only_subreddits_hint">Search subreddits</string>
     <string name="search_only_users_hint">Search users</string>
+    <string name="search_subreddits_and_users_hint">Search subreddits and users</string>
 
     <string name="no_posts_no_lazy_mode">No posts available</string>
     <string name="lazy_mode_start">Lazy Mode starts in %1$.1fs</string>
@@ -205,6 +218,7 @@
     <string name="error_processing_image">Error processing image</string>
     <string name="error_processing_video">Error processing video</string>
     <string name="two_options_required">A good poll needs two or more options!</string>
+    <string name="convert_to_richtext_json_failed">Could not process markdown</string>
 
     <string name="download_started">Download Started. Check the notification for progress.</string>
 
@@ -216,6 +230,7 @@
 
     <string name="post_title_hint">Title</string>
     <string name="post_text_content_hint">Content</string>
+    <string name="post_optional_text_content_hint">Content (optional)</string>
     <string name="choose_a_subreddit">Choose a subreddit</string>
     <string name="rules">Rules</string>
     <string name="post_link_hint">URL</string>
@@ -224,6 +239,7 @@
     <string name="subreddits">Subreddits</string>
     <string name="users">Users</string>
     <string name="multi_reddits">MultiReddits</string>
+    <string name="post">Post</string>
     <string name="posts">Posts</string>
     <string name="comments">Comments</string>
     <string name="about">About</string>
@@ -244,6 +260,7 @@
     <string name="no_camera_available">No camera app available</string>
     <string name="error_creating_temp_file">Error creating temp file</string>
 
+    <string name="submit_video_or_gif_post_failed_cannot_get_cache_directory">Unable to submit post: cannot access cache directory</string>
     <string name="video_is_processing">Video is processing. Please wait.</string>
     <string name="image_is_processing">Image is processing. Please wait.</string>
     <string name="gif_is_processing">Gif is processing. Please wait.</string>
@@ -260,6 +277,12 @@
 
     <string name="search_in">Search in</string>
     <string name="all_subreddits">All subreddits</string>
+
+    <string name="confirm">Confirm</string>
+    <string name="confirm_delete_all_recent_searches">Are you sure you want to delete all recent search queries?</string>
+    <string name="all_recent_searches_deleted">All recent searches deleted</string>
+    <string name="recent_search_deleted">Recent search Deleted</string>
+    <string name="undo">Undo</string>
 
     <string name="sort_best">Best</string>
     <string name="sort_hot">Hot</string>
@@ -290,6 +313,7 @@
     <string name="archived_post_reply_unavailable">Archived post. Reply unavailable.</string>
     <string name="locked_post_comment_unavailable">Locked post. Comment unavailable.</string>
     <string name="locked_post_reply_unavailable">Locked post. Reply unavailable.</string>
+    <string name="locked_comment_reply_unavailable">Locked comment. Reply unavailable.</string>
 
     <string name="text">TEXT</string>
     <string name="link">LINK</string>
@@ -303,6 +327,7 @@
     <string name="posting_video">Posting Video</string>
     <string name="posting_image">Posting Image</string>
     <string name="posting_gallery">Posting Gallery</string>
+    <string name="posting_poll">Posting Poll</string>
     <string name="please_wait">Please wait</string>
 
     <string name="add_account">Add an account</string>
@@ -326,20 +351,15 @@
     <string name="are_you_sure">Are you sure?</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
-    <string name="see_removed_comment">See Removed Comment</string>
-    <string name="fetching_removed_comment">Fetching removed comment</string>
-    <string name="show_removed_comment_failed">Could not find the removed comment</string>
-    <string name="fetching_removed_post">Fetching removed post</string>
-    <string name="show_removed_post_failed">Could not find the removed post</string>
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="edit_success">Edit successfully</string>
     <string name="delete_post_success">Delete successfully</string>
     <string name="delete_post_failed">Delete failed</string>
-    <string name="mark_nsfw_success">Mark NSFW successfully</string>
-    <string name="mark_nsfw_failed">Mark NSFW failed</string>
-    <string name="unmark_nsfw_success">Unmark NSFW successfully</string>
-    <string name="unmark_nsfw_failed">Unmark NSFW failed</string>
+    <string name="mark_nsfw_success">Mark sensitive successfully</string>
+    <string name="mark_nsfw_failed">Mark sensitive failed</string>
+    <string name="unmark_nsfw_success">Unmark sensitive successfully</string>
+    <string name="unmark_nsfw_failed">Unmark sensitive failed</string>
     <string name="mark_spoiler_success">Mark spoiler successfully</string>
     <string name="mark_spoiler_failed">Mark spoiler failed</string>
     <string name="unmark_spoiler_success">Unmark spoiler successfully</string>
@@ -377,16 +397,15 @@
     <string name="settings_link_handler_title">Link Handler</string>
     <string name="settigns_video_title">Video</string>
     <string name="settings_video_autoplay_title">Video Autoplay</string>
+    <string name="settings_simultaneous_autoplay_limit_title">Simultaneous Autoplay Limit</string>
     <string name="settings_mute_autoplaying_videos_title">Mute Autoplaying Videos</string>
-    <string name="settings_autoplay_nsfw_videos_title">Autoplay NSFW Videos</string>
+    <string name="settings_autoplay_nsfw_videos_title">Autoplay Sensitive Videos</string>
     <string name="settings_start_autoplay_visible_area_offset_portrait_title">Autoplay Videos Visible Area Offset (Portrait)</string>
     <string name="settings_start_autoplay_visible_area_offset_portrait_summary">Start autoplaying videos when %1$d%% of them are visible</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_title">Autoplay Videos Visible Area Offset (Landscape)</string>
     <string name="settings_start_autoplay_visible_area_offset_landscape_summary">Start autoplaying videos when %1$d%% of them are visible</string>
     <string name="settings_immersive_interface_title">Immersive Interface</string>
     <string name="settings_immersive_interface_summary">Does Not Apply to All Pages</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_title">Ignore Navigation Bar in Immersive Interface</string>
-    <string name="settings_immersive_interface_ignore_nav_bar_summary">Prevent the Bottom Navigation Bar Having Extra Padding</string>
     <string name="settings_disable_immersive_interface_in_landscape_mode">Disable Immersive Interface in Landscape Mode</string>
     <string name="settings_customize_tabs_in_main_page_title">Customize Tabs in Main Page</string>
     <string name="only_for_logged_in_user">Only for Logged-in User</string>
@@ -396,8 +415,7 @@
     <string name="settings_volume_keys_navigate_comments_title">Use Volume Keys to Navigate Comments in Posts</string>
     <string name="settings_volume_keys_navigate_posts_title">Use Volume Keys to Navigate Posts</string>
     <string name="settings_mute_video_title">Mute Videos</string>
-    <string name="settings_mute_nsfw_video_title">Mute NSFW Videos</string>
-    <string name="settings_automatically_try_redgifs_title">Automatically Try Accessing Redgifs if Videos on Gfycat are Removed.</string>
+    <string name="settings_mute_nsfw_video_title">Mute Sensitive Videos</string>
     <string name="settings_video_player_ignore_nav_bar_title">Ignore Navigation Bar in Video Player</string>
     <string name="settings_video_player_ignore_nav_bar_summary">Prevent the Video Controller Having Extra Margin</string>
     <string name="settings_main_page_back_button_action">Main Page Back Button Action</string>
@@ -427,6 +445,7 @@
     <string name="settings_swipe_to_go_back_summary">Does Not Apply to All Pages</string>
     <string name="settings_swipe_vertically_to_go_back_from_media_title">Swipe Vertically to Go Back From Image and Gif</string>
     <string name="settings_lock_jump_to_next_top_level_comment_button_title">Lock Jump to Next Top-level Comment Button</string>
+    <string name="settings_lock_toolbar_title">Lock Toolbar</string>
     <string name="settings_lock_bottom_app_bar_title">Lock Bottom Navigation Bar</string>
     <string name="settings_swipe_up_to_hide_jump_to_next_top_level_comment_button_title">Swipe Up to Hide Jump to Next Top-level Comment Button</string>
     <string name="settings_lazy_mode_interval_title">Lazy Mode Interval</string>
@@ -441,11 +460,11 @@
     <string name="settings_font_size_title">Font Size</string>
     <string name="settings_title_font_size_title">Title Font Size</string>
     <string name="settings_content_font_size_title">Content Font Size</string>
-    <string name="settings_nsfw_and_spoiler_title">NSFW &amp; Spoiler</string>
-    <string name="settings_enable_nsfw_title">Enable NSFW</string>
-    <string name="settings_blur_nsfw_title">Blur NSFW Images</string>
+    <string name="settings_over_18_and_spoiler_title">Content Sensitivity Filter</string>
+    <string name="settings_over_18_title">Sensitive Content</string>
+    <string name="settings_blur_over_18_title">Blur Sensitive Images</string>
     <string name="settings_blur_spoiler_title">Blur Spoiler Images</string>
-    <string name="settings_do_not_blur_nsfw_in_nsfw_subreddits_title">Don\'t blur NSFW Images in NSFW Subreddits</string>
+    <string name="settings_do_not_blur_over_18_in_over_18_subreddits_title">Don\'t blur Sensitive Images in Sensitive Subreddits</string>
     <string name="settings_about_master_title">About</string>
     <string name="settings_acknowledgement_master_title">Acknowledgement</string>
     <string name="settings_credits_master_title">Credits</string>
@@ -455,8 +474,6 @@
     <string name="settings_credits_icon_background_summary">Background vector created by freepik - www.freepik.com</string>
     <string name="settings_credits_error_image_title">Error Image</string>
     <string name="settings_credits_error_image_summary">Technology vector created by freepik - www.freepik.com</string>
-    <string name="settings_credits_gilded_icon_title">Gilded Icon</string>
-    <string name="settings_credits_gilded_icon_summary">Icon made by Freepik from www.flaticon.com</string>
     <string name="settings_credits_crosspost_icon_title">Crosspost Icon</string>
     <string name="settings_credits_crosspost_icon_summary">Icon made by Freepik from www.flaticon.com</string>
     <string name="settings_credits_thumbtack_icon_title">Thumbtack Icon</string>
@@ -523,8 +540,8 @@
     <string name="settings_gif_download_location_title">Gif Download Location</string>
     <string name="settings_video_download_location_title">Video Download Location</string>
     <string name="settings_separate_folder_for_each_subreddit">Separate Folder for Each Subreddit</string>
-    <string name="settings_save_nsfw_media_in_different_folder_title">Save NSFW Media in Different Location</string>
-    <string name="settings_nsfw_download_location_title">NSFW Download Location</string>
+    <string name="settings_save_nsfw_media_in_different_folder_title">Save Sensitive Media in Different Location</string>
+    <string name="settings_nsfw_download_location_title">Sensitive Download Location</string>
     <string name="settings_swipe_action_title">Swipe Action</string>
     <string name="settings_swipe_action_haptic_feedback_title">Haptic Feedback</string>
     <string name="settings_disable_swiping_between_tabs_title">Disable Swiping Between Tabs</string>
@@ -566,10 +583,17 @@
     <string name="settings_language_title">Language</string>
     <string name="settings_enable_search_history_title">Enable Search History</string>
     <string name="settings_post_history_title">Post History</string>
-    <string name="settings_mark_posts_as_read_title">Mark Posts as Read</string>
+    <string name="settings_save_read_posts_title">Save Read Posts</string>
+    <string name="settings_limit_history_size_title">Limit History Size</string>
+    <string name="settings_limit_history_size_hint">History Limit</string>
+    <string name="settings_read_posts_db_summary">Read Posts DB Table \nSize: %1$d(KB) \nCount: %2$d</string>
     <string name="settings_mark_posts_as_read_after_voting_title">Mark Posts as Read After Voting</string>
     <string name="settings_mark_posts_as_read_on_scroll_title">Mark Posts as Read on Scroll</string>
     <string name="settings_hide_read_posts_automatically_title">Hide Read Posts Automatically</string>
+    <string name="settings_hide_read_posts_automatically_in_subreddits_title">Hide Read Posts Automatically in Subreddits</string>
+    <string name="settings_hide_read_posts_automatically_in_users_title">Hide Read Posts Automatically in Users</string>
+    <string name="settings_hide_read_posts_automatically_in_search_title">Hide Read Posts Automatically in Search</string>
+    <string name="settings_hide_read_posts_automatically_summary">The setting is not applied when viewing posts from searches, specific users, or subreddits.</string>
     <string name="settings_sort_type_title">Sort Type</string>
     <string name="settings_save_sort_type_title">Save Sort Type</string>
     <string name="settings_subreddit_default_sort_type_title">Subreddit Default Sort Type</string>
@@ -579,7 +603,6 @@
     <string name="settings_click_to_show_media_in_gallery_layout">Click to Show Media in Gallery Layout</string>
     <string name="settings_hide_post_type">Hide Post Type</string>
     <string name="settings_hide_post_flair">Hide Post Flair</string>
-    <string name="settings_hide_the_number_of_awards">Hide the Number of Awards</string>
     <string name="settings_hide_subreddit_and_user_prefix">Hide Subreddit and User Prefix</string>
     <string name="settings_hide_the_number_of_votes">Hide the Number of Votes</string>
     <string name="settings_hide_the_number_of_comments">Hide the Number of Comments</string>
@@ -601,12 +624,12 @@
     <string name="settings_default_search_result_tab">Default Search Result Tab</string>
     <string name="settings_crash_reports_title">Crash Reports</string>
     <string name="settings_nsfw_and_spoiler_dangerous_group_title">Dangerous</string>
-    <string name="settings_disable_nsfw_forever_title">Disable NSFW Forever</string>
+    <string name="settings_disable_over_18_forever_title">Forever Disable Sensitive Content</string>
     <string name="settings_show_only_one_comment_level_indicator">Show Only One Comment Level Indicator</string>
     <string name="settings_video_player_automatic_landscape_orientation">Switch to Landscape Orientation in Video Player Automatically</string>
     <string name="settings_loop_video_title">Loop Video</string>
     <string name="settings_loop_video_summary">Restart the app to apply this setting to autoplaying videos</string>
-    <string name="settings_remember_muting_option_in_post_feed">Remember Muting Option in Post Feed</string>
+    <string name="settings_remember_mute">Remember Mute</string>
     <string name="settings_post_details_title">Post Details</string>
     <string name="settings_separate_post_and_comments_in_portrait_mode_title">Separate Post And Comments in Portrait Mode</string>
     <string name="settings_separate_post_and_comments_in_landscape_mode_title">Separate Post And Comments in Landscape Mode</string>
@@ -632,7 +655,6 @@
     <string name="settings_custom_content_font_family_title">Custom Content Font Family</string>
     <string name="settings_fixed_height_preview_in_card_title">Fixed Height in Card</string>
     <string name="settings_hide_text_post_content">Hide Text Post Content</string>
-    <string name="settings_hide_comment_awards_title">Hide Comment Awards</string>
     <string name="settings_show_fewer_toolbar_options_threshold_title">Show Fewer Toolbar Options Starting From</string>
     <string name="settings_show_fewer_toolbar_options_threshold_summary">Level %1$d</string>
     <string name="settings_show_author_avatar_title">Show Author Avatar</string>
@@ -643,9 +665,31 @@
     <string name="settings_post_feed_max_resolution_warning_title">Increase the value to show previews in higher resolution, but the app may crash unexpectedly.</string>
     <string name="settings_post_feed_max_resolution_title">Post Feed Preview Max Resolution (Width * Height)</string>
     <string name="settings_reddit_video_default_resolution">Reddit Video Default Resolution</string>
+    <string name="settings_comment_thread_continuity_capacity_title">Comment Thread Continuity Capacity</string>
+    <string name="settings_comment_thread_continuity_capacity_summary">%1$s comment thread(s) will be cached for seamless continuity.</string>
     <string name="settings_easier_to_watch_in_full_screen_title">Easier to Watch in Full Screen</string>
     <string name="settings_hide_fab_in_post_feed">Hide FAB in Post Feed</string>
     <string name="settings_comment_divider_type">Comment Divider Type</string>
+    <string name="settings_comment_filter_title">Comment Filter</string>
+    <string name="settings_embedded_media_type_title">Embedded Media Type</string>
+    <string name="settings_proxy_title">Proxy</string>
+    <string name="settings_proxy_enabled">Proxy Enabled</string>
+    <string name="settings_proxy_type">Proxy Type</string>
+    <string name="settings_proxy_hostname">Hostname</string>
+    <string name="settings_proxy_port">Port</string>
+    <string name="settings_hide_fab_in_post_details">Hide Floating Action Button</string>
+    <string name="settings_category_media_title">Media</string>
+    <string name="settings_category_gesture_sensitivity_title">Gesture Sensitivity</string>
+    <string name="settings_tab_switching_sensitivity">Tab Switching Sensitivity</string>
+    <string name="settings_swipe_right_to_go_back_sensitivity">Swipe Right to Go Back Sensitivity</string>
+    <string name="settings_swipe_action_sensitivity_in_comments">Swipe Action Sensitivity in Comments</string>
+    <string name="default_sensitivity">Default</string>
+    <string name="low">Low</string>
+    <string name="very_low">Very Low</string>
+    <string name="settings_navigation_drawer_swipe_area">Navigation Drawer Swipe Area</string>
+    <string name="default_swipe_area">Default</string>
+    <string name="larger_swipe_area">Large</string>
+    <string name="very_larger_swipe_area">Very Large</string>
 
     <string name="no_link_available">Cannot get the link</string>
 
@@ -658,6 +702,8 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="discard_dialog_button">Discard</string>
+    <string name="save_comment_draft">Save comment draft?</string>
+    <string name="save_comment_draft_detail">Your draft will be saved.</string>
 
     <string name="no_data_received">No data received</string>
     <string name="no_image_path_received">No image path received</string>
@@ -682,8 +728,10 @@
     <string name="link_post_layout_auto">Auto</string>
     <string name="post_layout_card">Card Layout</string>
     <string name="post_layout_compact">Compact Layout</string>
+    <string name="post_layout_compact_2">Compact Layout 2</string>
     <string name="post_layout_gallery">Gallery Layout</string>
     <string name="post_layout_card_2">Card Layout 2</string>
+    <string name="post_layout_card_3">Card Layout 3</string>
 
     <string name="elapsed_time_just_now">Just Now</string>
     <string name="elapsed_time_a_minute_ago">1 Minute</string>
@@ -696,6 +744,19 @@
     <string name="elapsed_time_months_ago">%1$d Months</string>
     <string name="elapsed_time_a_year_ago">1 Year</string>
     <string name="elapsed_time_years_ago">%1$d Years</string>
+
+    <string name="remaining_time_passed">In the past</string>
+    <string name="remaining_time_less_than_1_minute">Less than 1 minute</string>
+    <string name="remaining_time_1_minute">1 Minute</string>
+    <string name="remaining_time_in_minutes">%1$d Minutes</string>
+    <string name="remaining_time_1_hour">1 Hour</string>
+    <string name="remaining_time_in_hours">%1$d Hours</string>
+    <string name="remaining_time_1_day">1 Day</string>
+    <string name="remaining_time_in_days">%1$d Days</string>
+    <string name="remaining_time_1_month">1 Month</string>
+    <string name="remaining_time_in_months">%1$d Months</string>
+    <string name="remaining_time_1_year">1 Year</string>
+    <string name="remaining_time_in_years">%1$d Years</string>
 
     <string name="error_getting_multi_reddit_data">Error getting multireddit data</string>
     <string name="error_loading_multi_reddit_list">Cannot sync multireddits</string>
@@ -716,6 +777,7 @@
     <string name="copy_video_link">Copy Video Link</string>
     <string name="copy_link">Copy Link</string>
     <string name="open_link">Open Link</string>
+    <string name="share_as_image">Share as Image</string>
 
     <string name="copy_success">Copied</string>
     <string name="copy_link_failed">Cannot copy the link</string>
@@ -734,6 +796,7 @@
     <string name="device_default">Device Default</string>
     <string name="set_by_battery_saver">Set by Battery Saver</string>
 
+    <string name="multi_reddit_name_explanation">The name should be unique.</string>
     <string name="multi_reddit_name_hint">Name (Max 50 Characters)</string>
     <string name="multi_reddit_description_hint">Description</string>
     <string name="private_multi_reddit">Private</string>
@@ -745,9 +808,7 @@
     <string name="delete_multi_reddit_success">Deleted successfully</string>
     <string name="delete_multi_reddit_failed">Delete failed</string>
     <string name="delete_multi_reddit_dialog_message">Are you sure?</string>
-
-    <string name="enable_nsfw">Enable NSFW</string>
-    <string name="disable_nsfw">Disable NSFW</string>
+    <string name="copy_multi_reddit_failed">Cannot copy this multireddit.</string>
 
     <string name="cannot_save_image">Cannot save the image</string>
     <string name="cannot_save_gif">Cannot save the gif</string>
@@ -764,9 +825,9 @@
     <string name="theme_item_color_primary_dark">Color Primary Dark</string>
     <string name="theme_item_color_primary_dark_detail">Applied to: Status Bar</string>
     <string name="theme_item_color_accent">Color Accent</string>
-    <string name="theme_item_color_accent_detail">Applied to: Progress Bar, etc</string>
+    <string name="theme_item_color_accent_detail">Applied to: Progress Bar and background of Floating Action Button, etc</string>
     <string name="theme_item_color_primary_light_theme">Color Primary Light Theme</string>
-    <string name="theme_item_color_primary_light_theme_detail">Applied to: background of Floating Action Button and Button</string>
+    <string name="theme_item_color_primary_light_theme_detail">Applied to: Button</string>
     <string name="theme_item_primary_text_color">Primary Text Color</string>
     <string name="theme_item_primary_text_color_detail">Applied to: Primary text</string>
     <string name="theme_item_secondary_text_color">Secondary Text Color</string>
@@ -797,6 +858,10 @@
     <string name="theme_item_card_view_background_color_detail">Applied to: Post background and message background</string>
     <string name="theme_item_read_post_card_view_background_color">Read Post Card View Background Color</string>
     <string name="theme_item_read_post_card_view_background_color_detail">Applied to: Read Post background</string>
+    <string name="theme_item_filled_card_view_background_color">Filled Card View Background Color</string>
+    <string name="theme_item_filled_card_view_background_color_detail">Applied to: Background of a post in a filled card view, some edit text fields</string>
+    <string name="theme_item_read_post_filled_card_view_background_color">Read Post Filled Card View Background Color</string>
+    <string name="theme_item_read_post_filled_card_view_background_color_detail">Applied to: Background of a read post in a filled card view</string>
     <string name="theme_item_comment_background_color">Comment Background Color</string>
     <string name="theme_item_comment_background_color_detail">Applied to: Comment background</string>
     <string name="theme_item_fully_collapsed_comment_background_color">Fully-Collapsed Comment Background Color</string>
@@ -855,10 +920,10 @@
     <string name="theme_item_spoiler_background_color_detail">Applied to: Background of the spoiler tag</string>
     <string name="theme_item_spoiler_text_color">Spoiler Text Color</string>
     <string name="theme_item_spoiler_text_color_detail">Applied to: Text color in the spoiler tag</string>
-    <string name="theme_item_nsfw_background_color">NSFW Background Color</string>
-    <string name="theme_item_nsfw_background_color_detail">Applied to: Background of the NSFW tag</string>
-    <string name="theme_item_nsfw_text_color">NSFW text color</string>
-    <string name="theme_item_nsfw_text_color_detail">Applied to: Text color of the NSFW tag</string>
+    <string name="theme_item_nsfw_background_color">Sensitive Tag Background Color</string>
+    <string name="theme_item_nsfw_background_color_detail">Applied to: Background of the sensitive tag</string>
+    <string name="theme_item_nsfw_text_color">Sensitive Tag Text Color</string>
+    <string name="theme_item_nsfw_text_color_detail">Applied to: Text color of the sensitive tag</string>
     <string name="theme_item_flair_background_color">Flair Background Color</string>
     <string name="theme_item_flair_background_color_detail">Applied to: Background of the flair tag</string>
     <string name="theme_item_flair_text_color">Flair Text Color</string>
@@ -955,6 +1020,7 @@
     <string name="theme_copied">Copied! Paste and share it to other people.</string>
     <string name="copy_theme_faied">Cannot copy the theme configuration</string>
     <string name="cannot_find_theme">Cannot find this theme</string>
+    <string name="cannot_download_theme_data">Cannot download theme data</string>
     <string name="import_theme">Import Theme</string>
     <string name="no_data_in_clipboard">Cannot find data in clipboard</string>
     <string name="import_theme_success">Import theme successfully</string>
@@ -963,6 +1029,16 @@
     <string name="duplicate_theme_name_dialog_message">A theme in the database is also called %1$s. Do you want to change the name of this imported theme?</string>
     <string name="rename">Rename</string>
     <string name="override">Override</string>
+    <string name="save_theme_options_title">Save options</string>
+    <string name="save_theme_options_message">You uploaded this theme so you can make changes.</string>
+    <string name="save_locally">Save locally</string>
+    <string name="save_online">Save online</string>
+    <string name="save_online_anonymous">Save online (anonymously)</string>
+    <string name="save_locally_and_online">Save both locally and online</string>
+    <string name="save_locally_and_online_anonymous">Save both locally and online (anonymously)</string>
+    <string name="theme_saved_locally">Theme saved locally</string>
+    <string name="theme_saved_online">Theme saved online</string>
+    <string name="upload_theme_failed">Failed to upload this theme. Try again later.</string>
 
     <string name="color_picker">Color Picker</string>
     <string name="invalid_color">Invalid Color</string>
@@ -994,9 +1070,6 @@
     <string name="edit_multi_reddit">Edit Multireddit</string>
     <string name="delete_multi_reddit">Delete Multireddit</string>
 
-    <string name="n_awards">%1$,d Awards</string>
-    <string name="one_award">1 Award</string>
-
     <string name="report">Report</string>
     <string name="reporting">Reporting</string>
     <string name="report_successful">Reported</string>
@@ -1014,7 +1087,6 @@
     <string name="messages">Messages</string>
     <string name="message">Message</string>
 
-    <string name="fetch_gfycat_video_failed">Fetch Gfycat video failed</string>
     <string name="fetch_redgifs_video_failed">Fetch Redgifs video failed</string>
     <string name="fetching_video_info_please_wait">Fetching video info. Please wait.</string>
     <string name="fetch_streamable_video_failed">Fetch Streamable video failed</string>
@@ -1026,6 +1098,7 @@
     <string name="downloading_reddit_video_muxing">Muxing Video and Audio</string>
     <string name="downloading_reddit_video_save_file_to_public_dir">Saving Video</string>
     <string name="downloading_reddit_video_finished">Downloaded</string>
+    <string name="downloading_reddit_video_failed_invalid_video_url">Download failed: invalid video url </string>
     <string name="downloading_reddit_video_failed_cannot_get_cache_directory">Download failed: cannot access cache directory </string>
     <string name="downloading_reddit_video_failed_cannot_download_video">Download failed: cannot download video</string>
     <string name="downloading_reddit_video_failed_cannot_save_video">Download failed: cannot save video to cache directory</string>
@@ -1035,9 +1108,15 @@
 
     <string name="downloading">Downloading</string>
     <string name="downloading_media_finished">Downloaded</string>
-    <string name="downloading_image_or_gif_failed_cannot_get_destination_directory">Download failed: cannot access destination directory</string>
+    <string name="downloading_image_or_gif_failed_cannot_get_destination_directory">Download failed: cannot access destination directory. Please reselect your preferred download location in Settings->Download Location.</string>
     <string name="downloading_media_failed_cannot_download_media">Download failed</string>
-    <string name="downloading_media_failed_cannot_save_to_destination_directory">Download failed: cannot save the file to destination directory</string>
+    <string name="downloading_media_failed_cannot_save_to_destination_directory">Download failed: cannot save the file to destination directory. Please reselect your preferred download location in Settings->Download Location.</string>
+    <string name="download_media_failed_cannot_fetch_redgifs_url">Download failed: cannot fetch Redgifs video url</string>
+    <string name="download_media_failed_cannot_fetch_streamable_url">Download failed: cannot fetch Streamable video url</string>
+    <string name="download_media_failed_invalid_argument">Invalid argument</string>
+    <string name="download_all_gallery_media_notification_title">All Gallery Media</string>
+    <string name="download_all_imgur_album_media_notification_title">All Imgur Album Media</string>
+    <string name="download_gallery_failed_some_images">Downloaded. Some media failed to download.</string>
 
     <string name="wallpaper_set">Wallpaper set</string>
     <string name="error_set_wallpaper">Cannot set wallpaper</string>
@@ -1052,7 +1131,19 @@
 
     <string name="top_score">%1$s pts</string>
 
-    <string name="login_activity_2fa_prompt">If you have 2-factor authentication enabled, kindly type your password like the following: &lt;password&gt;:&lt;2FA code&gt;.\nExample: yourpass:123456</string>
+    <string name="login_activity_2fa_prompt">2-factor authentication: &lt;password&gt;:&lt;2FA code&gt;.\nExample: yourpass:123456\nGoogle login or having trouble login: click the bottom right button.</string>
+    <string name="login_activity_internet_disconnected_error">No Internet Connection</string>
+    <string name="login">Log in</string>
+    <string name="login_using_different_method">You can try a different login method if this one doesn’t work.</string>
+    <string name="login_using_chrome_custom_tab">Chrome Custom Tab</string>
+    <string name="login_using_webview">WebView (legacy)</string>
+    <string name="login_chrome_required">You must have Chrome browser installed.</string>
+    <string name="login_failed_error">Login failed. Error:</string>
+    <string name="login_failed_auth_result_verification_failed">Verification failed.</string>
+    <string name="login_failed_auth_result_verification_timed_out">Verification timed out.</string>
+    <string name="login_failed_auth_result_unknown_error">Unknown error.</string>
+    <string name="login_failed_result_url_error">No code found in the result URL</string>
+    <string name="login_failed_result_url_unknown_error">No code found in the result URL. No error provided.</string>
 
     <string name="block_user">Block User</string>
     <string name="block_user_success">Blocked</string>
@@ -1078,18 +1169,13 @@
     <string name="change_sort_type">Change Sort Type</string>
     <string name="change_post_layout">Change Post Layout</string>
 
-    <string name="give_award_dialog_title">Give Award?</string>
-    <string name="anonymous">Anonymous</string>
-    <string name="give_award_error_message">Code: %1$d/\n Message: %2$s</string>
-    <string name="give_award_success">Award given</string>
-    <string name="give_award_failed">Failed</string>
-
     <string name="edited">Edited</string>
     <string name="edited_time">Edited on %s</string>
 
     <string name="warning">Warning</string>
-    <string name="this_is_a_nsfw_subreddit">This is a NSFW subreddit.</string>
-    <string name="this_user_has_nsfw_content">This user has NSFW content</string>
+    <string name="this_is_a_nsfw_subreddit">This is a sensitive subreddit.</string>
+    <string name="this_user_has_nsfw_content">This user has sensitive content</string>
+    <string name="this_post_contains_sensitive_content">This post contains sensitive content.</string>
     <string name="dismiss">Dismiss</string>
     <string name="leave">Leave</string>
 
@@ -1099,9 +1185,9 @@
     <string name="go_to_top">Go To Top</string>
     <string name="random">Random</string>
     <string name="random_subreddit">Random Subreddit</string>
-    <string name="random_nsfw_subreddit">Random NSFW Subreddit</string>
+    <string name="random_nsfw_subreddit">Random Sensitive Subreddit</string>
     <string name="random_post">Random Post</string>
-    <string name="random_nsfw_post">Random NSFW post</string>
+    <string name="random_nsfw_post">Random Sensitive post</string>
     <string name="fetch_random_thing_failed">Try again later</string>
 
     <string name="select_video_quality">Select Video Quality</string>
@@ -1109,14 +1195,16 @@
     <string name="hide_read_posts">Hide Read Posts</string>
     <string name="filter_posts">Filter Posts</string>
 
-    <string name="only_nsfw">Only NSFW</string>
+    <string name="only_sensitive_content">Only Sensitive Content</string>
     <string name="only_spoiler">Only Spoiler</string>
     <string name="title_excludes_strings_hint">Title: excludes keywords (key1,key2)</string>
     <string name="title_contains_strings_hint">Title: contains keywords (key1,key2)</string>
     <string name="title_excludes_regex_hint">Title: excludes regex</string>
     <string name="title_contains_regex_hint">Title: contains regex</string>
     <string name="exclude_subreddits_hint">Exclude subreddits (e.g. funny,AskReddit)</string>
+    <string name="contain_subreddits_hint">Contain subreddits (e.g. funny,AskReddit)</string>
     <string name="exclude_users_hint">Exclude users (e.g. Hostilenemy,random)</string>
+    <string name="contain_users_hint">Contain users (e.g. Hostilenemy,random)</string>
     <string name="exclude_flairs_hint">Exclude flairs (e.g. flair1,flair2)</string>
     <string name="contain_flairs_hint">Contain flairs (e.g. flair1,flair2)</string>
     <string name="exclude_domains_hint">Exclude domains</string>
@@ -1131,18 +1219,50 @@
     <string name="post_filter_requires_a_name">What is the name of this post filter?</string>
     <string name="duplicate_post_filter_dialog_title">\'%1$s\' Already Exists</string>
     <string name="duplicate_post_filter_dialog_message">Override it?</string>
-    <string name="apply_post_filter_to">Apply to</string>
+    <string name="apply_to">Apply to</string>
     <string name="post_filter_usage_home">Home</string>
     <string name="post_filter_usage_subreddit">Subreddit: %1$s</string>
     <string name="post_filter_usage_subreddit_all">Subreddit</string>
+    <string name="post_filter_usage_embedded_subreddit_all">All subreddits</string>
     <string name="post_filter_usage_user">User: %1$s</string>
     <string name="post_filter_usage_user_all">User</string>
+    <string name="post_filter_usage_embedded_user_all">All users</string>
     <string name="post_filter_usage_multireddit">MultiReddit: %1$s</string>
     <string name="post_filter_usage_multireddit_all">MultiReddit</string>
+    <string name="post_filter_usage_embedded_multireddit_all">All Multireddits</string>
     <string name="post_filter_usage_search">Search</string>
     <string name="subreddit">Subreddit</string>
     <string name="user">User</string>
     <string name="edit_post_filter_name_of_usage_info">Leave it blank to apply this post filter to all the subreddits / users / multireddits</string>
+    <string name="click_to_apply_post_filter">Click here to apply it to some post feeds</string>
+    <string name="post_filter_usage_embedded_more_count">and %1$d more</string>
+    <string name="post_filter_name_explanation">The post filter name should be unique.</string>
+    <string name="post_filter_post_type_explanation">To see certain types of posts, please turn on the switch corresponding to the types.</string>
+    <string name="post_filter_only_sensitive_spoiler_explanation">To only see sensitive or spoiler posts, please turn on the corresponding switch.</string>
+    <string name="post_filter_title_excludes_strings_explanation">Posts will be filtered out if they contain the following keywords in their title.</string>
+    <string name="post_filter_title_contains_strings_explanation">Posts will be filtered out if they do not contain the following keywords in their title.</string>
+    <string name="post_filter_title_excludes_regex_explanation">Posts will be filtered out if their title matches the following regular expression.</string>
+    <string name="post_filter_title_contains_regex_explanation">Posts will be filtered out if their title does not match the following regular expression.</string>
+    <string name="post_filter_exclude_subreddits_explanation">Posts from the following subreddits will be filtered out.</string>
+    <string name="post_filter_contain_subreddits_explanation">Posts will be filtered out if they are not from the following subreddits.</string>
+    <string name="post_filter_exclude_users_explanation">Posts submitted by the following users will be filtered out.</string>
+    <string name="post_filter_contain_users_explanation">Posts will be filtered out if they are not from the following users.</string>
+    <string name="post_filter_exclude_flairs_explanation">Posts that have the following flairs will be filtered out.</string>
+    <string name="post_filter_contain_flairs_explanation">Posts that do not have the following flairs will be filtered out.</string>
+    <string name="post_filter_exclude_domains_explanation">Link posts that have the following urls will be filtered out.</string>
+    <string name="post_filter_contain_domains_explanation">Link posts that do not have the following urls will be filtered out.</string>
+    <string name="post_filter_min_vote_explanation">Posts that have a score lower than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="post_filter_max_vote_explanation">Posts that have a score higher than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="post_filter_min_comments_explanation">Posts will be filtered out if the number of their comments is less than the following value. (-1 means no restriction).</string>
+    <string name="post_filter_max_comments_explanation">Posts will be filtered out if the number of their comments is larger than the following value. (-1 means no restriction).</string>
+
+    <string name="excludes_strings_hint">Exclude keywords (key1,key2)</string>
+    <string name="comment_filter_name_hint">Comment Filter Name</string>
+    <string name="comment_filter_requires_a_name">What is the name of this comment filter?</string>
+    <string name="duplicate_comment_filter_dialog_title">\'%1$s\' Already Exists</string>
+    <string name="duplicate_comment_filter_dialog_message">Override it?</string>
+    <string name="comment_filter_applied_to_all_subreddits">Applied to all subreddits</string>
+    <string name="comment_filter_usage_embedded_more_count">and %1$d more</string>
 
     <string name="read_all_messages_time_limit">You are doing this too frequently. Try again later. This is Reddit API\'s rate limit.</string>
     <string name="read_all_messages_success">Read all messages successfully</string>
@@ -1153,27 +1273,32 @@
 
     <string name="choose_a_user">Choose a user</string>
 
-    <string name="have_trouble_login_title">Having Trouble Login</string>
-    <string name="have_trouble_login_message">Do you want to try another way to login?</string>
+    <string name="open_login_page">Open login page</string>
+    <string name="custom_tab_not_available">Chrome custom tab not available. Is Chrome installed?</string>
 
     <string name="vote">Vote</string>
 
     <string name="anonymous_front_page_no_subscriptions">Start by joining a subreddit!</string>
     <string name="anonymous_multireddit_no_subreddit">This multireddit does not have a subreddit!</string>
 
-    <string name="backup_settings_success">Successfully exported settings to the destination directory. The password of the generated zip file is 123321. Please don\'t modify the zip file.</string>
+    <string name="backup_settings_success">Successfully exported settings to the destination directory.</string>
     <string name="create_zip_in_destination_directory_failed">Could not create backup zip in the destination directory</string>
     <string name="backup_some_settings_failed">Could not backup some settings but others were successfully exported to the destination directory</string>
     <string name="restore_settings_success">Successfully restored settings. Restart the app to see the changes.</string>
     <string name="restore_settings_partially_failed">Some settings may not be restored successfully. Restart the app to see the changes.</string>
     <string name="restore_settings_failed_file_corrupted">Cannot restore settings. The file may be corrupted.</string>
     <string name="restore_settings_failed_cannot_get_file">Cannot access the file</string>
+    <string name="restore_settings_failed_cannot_get_cache_dir">Cannot access cache directory</string>
 
     <string name="suicide_prevention_quote">If you are looking for a sign not to kill yourself, this is it.\u2764</string>
     <string name="do_not_show_this_again">Don\'t show this again</string>
     <string name="continue_suicide_prevention_activity">Continue</string>
 
-    <string name="error_fetching_v_redd_it_video_cannot_get_redirect_url">Error fetching v.redd.it video: Cannot get the redirect url</string>
+    <string name="error_fetching_video">Error fetching video</string>
+    <string name="error_fetching_video_invalid_type">Error fetching video: Invalid type</string>
+    <string name="error_fetching_v_redd_it_video_invalid_url">Error fetching v.redd.it video: Invalid url</string>
+    <string name="error_fetching_v_redd_it_video_cannot_get_redirect_url">Error fetching v.redd.it video: Cannot get the redirected url</string>
+    <string name="error_fetching_v_redd_it_video_cannot_parse_redirect_url">Error fetching v.redd.it video: Cannot parse the redirected url</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_post">Error fetching v.redd.it video: Cannot get the post</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_post_id">Error fetching v.redd.it video: Cannot get the post id</string>
     <string name="error_fetching_v_redd_it_video_cannot_get_video_url">Error fetching v.redd.it video: Cannot get the video url</string>
@@ -1181,6 +1306,7 @@
     <string name="always_on">Always On</string>
     <string name="only_on_wifi">Only on Wifi</string>
     <string name="never">Never</string>
+    <string name="unlimited">Unlimited</string>
     <string name="normal">Normal</string>
     <string name="extra_small">Extra Small</string>
     <string name="extra_large">Extra Large</string>
@@ -1193,7 +1319,9 @@
 
     <string name="select">Select</string>
     <string name="exclude_subreddit">Exclude this subreddit</string>
+    <string name="contain_subreddit">Contain this subreddit</string>
     <string name="exclude_user">Exclude this user</string>
+    <string name="contain_user">Contain this user</string>
     <string name="exclude_flair">Exclude this flair</string>
     <string name="contain_flair">Contain this flair</string>
     <string name="exclude_domain">Exclude this domain</string>
@@ -1204,17 +1332,40 @@
 
     <string name="crash_reports_deleted">Crash reports have been deleted</string>
 
-    <string name="disable_nsfw_forever_message">Once enabled, NSFW will be permanently disabled, regardless of whether the NSFW setting is enabled or not. This option is irreversible, the only way to re-enable NSFW is to clear the app data.\n\nDo you still want to enable it?</string>
+    <string name="disable_over_18_forever_message">Once enabled, sensitive content will always be hidden, regardless of the sensitive content setting. This option is irreversible; the only way to re-enable the sensitive content is to clear the app data.\n\nDo you still want to enable it?</string>
 
     <string name="reply">Reply</string>
 
     <string name="uploaded_images">Uploaded Images</string>
+    <string name="uploaded_images_explanation">This is an experimental feature, and here are some things you need to know:\n
+        1. Uploaded images will not be shown in the text editor, and instead, a piece of text will be inserted as a block,
+        with a format similar to ![](XXXXX). XXXXX is the image id, and it should not be modified. To add a caption for
+        your image, simply type between the brackets. Example: ![This is a caption](XXXXX). Note that the caption will be treated
+        as plain text.\n
+        2. To write a superscript, please use ^(), and put the texts inside the parentheses, instead of only
+        using a single ^. For simplicity, click the superscript option in the formatting tools to insert a superscript.\n
+        3. This feature converts your markdown to rich text format and some formatting may be lost in the process.\n
+        4. Uploaded images may not be shown on the preview screen.\n
+        5. You cannot edit a submitted post with embedded images in it.\n
+        6. Please do not change your account using the account chooser on the editing screen. You should switch
+        your account in the navigation drawer on the main screen.</string>
     <string name="select_image">Select an Image</string>
     <string name="capture">Capture</string>
     <string name="uploading_image">Uploading</string>
     <string name="upload_image_success">Upload image successfully. Click the image button again to see the uploaded images.</string>
     <string name="get_image_bitmap_failed">Unable to get the bitmap of the image</string>
     <string name="upload_image_failed">Unable to upload the image</string>
+    <string name="select_giphy_gif">Select a Giphy GIF</string>
+    <string name="select_giphy_gif_explanation">This is an experimental feature, and here are some things you need to know:\n
+        1. Giphy gifs will not be shown in the text editor, and instead, a piece of text will be inserted as a block,
+        with a format similar to ![gif](XXXXX). XXXXX is the Giphy gif id, and it should not be modified.\n
+        2. You can only insert one Giphy gif per comment.\n
+        3. To write a superscript, please use ^(), and put the texts inside the parentheses, instead of only
+        using a single ^. For simplicity, click the superscript option in the formatting tools to insert a superscript.\n
+        4. This feature converts your markdown to rich text format and some formatting may be lost in the process.\n
+        5. Giphy gifs may not be shown on the preview screen.\n
+        6. Please do not change your account using the account chooser on the editing screen. You should switch
+        your account in the navigation drawer on the main screen.</string>
 
     <string name="search_comments">Search Comments</string>
 
@@ -1248,9 +1399,9 @@
     <string name="app_lock_timeout_24_hours">24 hours</string>
 
     <!--EditProfileService Notification-->
-    <string name="submit_change_avatar">Submit Change Avatar</string>
-    <string name="submit_change_banner">Submit Change Banner</string>
-    <string name="submit_save_profile">Submit Save Profile</string>
+    <string name="submit_change_avatar">Changing Avatar</string>
+    <string name="submit_change_banner">Changing Banner</string>
+    <string name="submit_save_profile">Saving Profile</string>
 
     <!--EditProfileActivity-->
     <string name="action_edit_profile">Edit Profile</string>
@@ -1267,7 +1418,7 @@
     <string name="message_remove_banner_failed">Failed to remove banner %s</string>
     <string name="message_change_avatar_success">Change avatar successfully</string>
     <string name="message_change_avatar_failed">Failed to change avatar %s</string>
-    <string name="message_change_banner_success">Changing banner successfully</string>
+    <string name="message_change_banner_success">Change banner successfully</string>
     <string name="message_change_banner_failed">Failed to change banner %s</string>
     <string name="message_save_profile_success">Save profile successfully</string>
     <string name="message_save_profile_failed">Failed to save profile %s</string>
@@ -1281,7 +1432,8 @@
     <string name="reddit_gallery_item_url_hint">Url</string>
 
     <string name="user_agreement_dialog_title">User Agreement</string>
-    <string name="user_agreement_message">You need to agree to Reddit User Agreement (%1$s) and Infinity for Reddit\'s Privacy Policy (%2$s) before logging in.</string>
+    <string name="user_agreement_message">You need to agree to Reddit User Agreement (%1$s) and Infinity for Reddit\'s Privacy Policy (%2$s) before logging in.\n\nFrom now on, you will need a monthly subscription to access the Reddit API within Infinity for Reddit and this is because Reddit has started charging for API access since July 1st, 2023.</string>
+    <string name="warning_message_sensitive_content">Infinity neither promotes nor recommends sensitive content. Due to Reddit\'s policy, you are unlikely to encounter sensitive content within the app. You need to agree to Reddit User Agreement (%1$s) and Infinity for Reddit\'s Privacy Policy (%2$s) before changing these settings.</string>
     <string name="agree">Agree</string>
     <string name="do_not_agree">Don\'t Agree</string>
 
@@ -1293,6 +1445,8 @@
     <string name="option_6_hint">Option 6</string>
 
     <string name="not_a_valid_number">Not a valid number</string>
+    <string name="not_a_valid_ip_or_hostname">Not a valid IP or host name</string>
+    <string name="not_a_valid_port">Not a valid port (0 - 65535)</string>
 
     <string name="post_karma">Post Karma:</string>
     <string name="comment_karma">Comment Karma:</string>
@@ -1302,12 +1456,8 @@
     <string name="handle_link">Handle Link</string>
     <string name="invalid_link">Invalid link</string>
 
-    <string name="unexpected_intent_action">Unexpected intent action: <xliff:g id="action">%1$s</xliff:g></string>
-    <string name="enable_random_adaptation">Enable random adaptation</string>
     <string name="error_unsupported_video">Media includes video tracks, but none are playable by this device</string>
     <string name="error_unsupported_audio">Media includes audio tracks, but none are playable by this device</string>
-    <string name="storage_permission_denied">Permission to access storage was denied</string>
-    <string name="sample_list_load_error">One or more sample lists failed to load</string>
 
     <string name="exo_controls_volume_up_description">Volume Up</string>
     <string name="exo_controls_volume_off_description">Volume Off</string>
@@ -1322,8 +1472,237 @@
     <string name="denied_notification_permission">Notification permission is not granted</string>
     <string name="go_to_settings">Settings</string>
 
-    <string name="reddit_api_info_title">Important Notice Regarding Reddit API Changes</string>
-    <string name="reddit_api_info">Starting from July 1st, 2023, Reddit API will be pay-per-use for 3rd-party clients, which include Infinity for Reddit. The announcement from Reddit can be found here: %1$s\n\nIn order to survive this change, Infinity will become a subscription-only app after July 1st. You can learn more about the changes in this post: %2$s\n\nIt\'s required for you to update Infinity after July 1st so that you will get the new version with subscription options. None of the previous versions (including this one) will work after July 1st. But due to a tight timeline Reddit gave, the update may not be available immediately on July 1st since it requires proper testing. Thank you for your understanding!</string>
-    <string name="i_understand">I understand</string>
+    <string name="welcome_to_infinity">Welcome to Infinity for Reddit, your gateway to a whole new dimension of Reddit browsing!</string>
+    <string name="subscription_prompt">Before you dive into the countless possibilities this app offers,
+        I want to be upfront and transparent about a significant change I\'ve implemented to ensure the best possible service for you.
+        \n\nFrom now on, you will need a monthly subscription to access the Reddit API within Infinity for Reddit and
+        this is because Reddit has started charging for API access since July 1st, 2023.
+        \n\nAll the tiers work the same. If you want to support Infinity, you can subscribe to a higher tier.
+        Most of the money from the lowest tier goes to Reddit.
+    </string>
+    <string name="monthly">Monthly</string>
+    <string name="yearly">Yearly</string>
+    <string name="weekly">Weekly</string>
+    <string name="billing_error_billing_unavailable">Billing service unavailable on device.</string>
+    <string name="billing_error_developer_error">The developer made some errors. Not your fault.</string>
+    <string name="billing_error_error">Fatal error during the API action.</string>
+    <string name="billing_error_feature_not_supported">The requested feature is not supported by the Play Store on the current device.</string>
+    <string name="billing_error_item_already_owned">The purchase failed because the item is already owned.</string>
+    <string name="billing_error_item_unavailable">The requested product is not available for purchase.</string>
+    <string name="billing_error_network_error">A network error occurred during the operation.</string>
+    <string name="billing_error_service_disconnected">The app is not connected to the Play Store service via the Google Play Billing Library.</string>
+    <string name="billing_error_service_unavailable">The service is currently unavailable.</string>
+    <string name="billing_error_user_canceled">Transaction was canceled by the user.</string>
+    <string name="subscription_plan_description_monthly">Bronze</string>
+    <string name="subscription_plan_description_monthly_399">Silver</string>
+    <string name="subscription_plan_description_monthly_499">Gold - Perfect Choice!</string>
+    <string name="subscription_plan_description_monthly_699">Platinum</string>
+    <string name="subscription_plan_description_monthly_899">Diamond</string>
+    <string name="subscription_plan_description_monthly_999">Infinity</string>
+    <string name="acknowledge_purchase_failed">Cannot acknowledge purchase</string>
+    <string name="connect_to_billing_system_failed">Failed to connect to the billing system</string>
+    <string name="connecting_to_billing_system">Connecting to the billing system. Please wait.</string>
+    <string name="thank_you_for_subscription">Thank you for your subscription</string>
+    <string name="load_subscription_options">Load subscription options</string>
+    <string name="acknowledging_subscription">Acknowledging your subscription. Please wait.</string>
+    <string name="acknowledgement_purchase_failed_description">Oops, there was an error when acknowledging your purchase. If this problem persists for three days, you will automatically get a refund.\nDon\'t worry, you can still enjoy Infinity for Reddit.</string>
+    <string name="continue_to_app">Continue to app</string>
+    <string name="restore_subscription_purchase_details">Already paid for the subscription?</string>
+    <string name="restore_subscription_purchase">Restore subscription purchase</string>
 
+    <string name="important_info_title">Please re-login your account</string>
+    <string name="important_info">Infinity for Reddit with subscription uses a new API key from Reddit and you have to re-login to continue using the app.\n\nJust
+        open the navigation drawer and click your account header and select \"Add an account\" to login to Reddit using the same account again.
+        Otherwise, Infinity may not load posts at all. Sorry for the inconvenience.</string>
+    <string name="i_understand">I understand</string>
+    <string name="important_info_post_comments_rework_title">Important Beta Information</string>
+    <string name="important_info_post_comments_rework_description">You are currently using the beta version of the new release.\n\nThis beta includes major under-the-hood changes to the post comments section as part of a large code cleanup and rewrite. The functionality should remain mostly the same, but because many internal systems have changed, bugs and unexpected issues are to be expected during this stage.\n\nThis release is focused primarily on stabilizing the new foundation before additional features are gradually introduced in future beta updates.\n\nThank you for testing the beta and for your patience.</string>
+    <string name="important_info_post_comments_rework_join_subreddit">Click here to join r/Infinity_For_Reddit</string>
+
+    <string name="add_to_comment_filter">Add to Comment Filter</string>
+    <string name="cannot_edit_post_with_images">Editing posts with images is not allowed.</string>
+
+    <string name="local">Local</string>
+    <string name="online">Online</string>
+
+    <string name="image_and_gif">Image and GIF</string>
+    <string name="image_and_emote">Image and emote</string>
+    <string name="gif_and_emote">GIF and emote</string>
+    <string name="image_embedded_media">Image</string>
+    <string name="emote">Emote</string>
+    <string name="none">None</string>
+
+    <string name="comment_filter_display_mode">Display mode</string>
+    <string name="comment_filter_display_mode_remove_comments">Remove comments</string>
+    <string name="comment_filter_display_mode_fully_collapse_comments">Fully collapse comments</string>
+    <string name="comment_filter_name_explanation">The comment filter name should be unique.</string>
+    <string name="comment_filter_display_mode_explanation">Filtered out comments will be shown as the following selected option.</string>
+    <string name="comment_filter_exclude_strings_explanation">Comments will be filtered out if they contain the following keywords.</string>
+    <string name="comment_filter_exclude_users_explanation">Comments will be filtered out if they were submitted by the following users.</string>
+    <string name="comment_filter_min_vote_explanation">Comments that have a score lower than the following value will be filtered out (-1 means no restriction).</string>
+    <string name="comment_filter_max_vote_explanation">Comments that have a score higher than the following value will be filtered out (-1 means no restriction).</string>
+
+    <string name="content_description_banner_imageview">Banner Image</string>
+    <string name="content_description_create_comment_filter">Create comment filter</string>
+    <string name="content_description_add_comment_filter_usage">Apply comment filter to somewhere</string>
+    <string name="content_description_comment_filter_add_user">Add a user to comment filter</string>
+    <string name="content_description_create_custom_theme">Create custom theme</string>
+    <string name="content_description_create_post_filter">Create post filter</string>
+    <string name="content_description_add_post_filter_usage">Apply post filter to somewhere</string>
+    <string name="content_description_post_filter_add_subreddit">Add a subreddit to post filter</string>
+    <string name="content_description_post_filter_add_user">Add a user to post filter</string>
+    <string name="content_description_change_banner">Change banner</string>
+    <string name="content_description_change_avatar">Change avatar</string>
+    <string name="content_description_customize_post_filter">Customize post filter</string>
+    <string name="content_description_compose_message">Compose message</string>
+    <string name="content_description_alternative_login_method">Alternative login method</string>
+    <string name="content_description_capture_photo">Capture photo</string>
+    <string name="content_description_select_image">Select image</string>
+    <string name="content_description_selected_image">Selected image</string>
+    <string name="content_description_record_video">Record video</string>
+    <string name="content_description_select_video">Select video</string>
+    <string name="content_description_delete_texts">Delete texts</string>
+    <string name="content_description_handle_link">Handle link</string>
+    <string name="content_description_submit_post">Submit post</string>
+    <string name="content_description_refresh">Refresh</string>
+    <string name="content_description_change_sort_type">Change sort type</string>
+    <string name="content_description_change_post_layout">Change post layout</string>
+    <string name="content_description_search">Search</string>
+    <string name="content_description_go_to_subreddit">Go to subreddit</string>
+    <string name="content_description_go_to_user">Go to user</string>
+    <string name="content_description_random">Random</string>
+    <string name="content_description_filter_posts">Filter posts</string>
+    <string name="content_description_hide_read_posts">Hide read posts</string>
+    <string name="content_description_go_to_top">Go to top</string>
+    <string name="content_description_add_subreddit_or_user">Add subreddit or user</string>
+    <string name="content_description_video_indicator">Video indicator</string>
+    <string name="content_description_no_subscriptions_indicator">No subscriptions indicator</string>
+    <string name="content_description_create_multireddit">Create multireddit</string>
+    <string name="content_description_bottom_navigation_bar_button">Bottom navigation bar button</string>
+    <string name="content_description_fab">Floating action button</string>
+    <string name="content_description_download">Download</string>
+    <string name="content_description_share">Share</string>
+    <string name="content_description_set_as_wallpaper">Set as wallpaper</string>
+    <string name="content_description_previous_result">Go to previous result</string>
+    <string name="content_description_next_result">Go to next result</string>
+    <string name="content_description_close_search_panel">Close search panel</string>
+    <string name="content_description_send_message">Send message</string>
+    <string name="content_description_home">Home</string>
+    <string name="content_description_subscriptions">Subscriptions</string>
+    <string name="content_description_inbox">Inbox</string>
+    <string name="content_description_profile">Profile</string>
+    <string name="content_description_multireddits">Multireddits</string>
+    <string name="content_description_upvoted">Upvoted</string>
+    <string name="content_description_downvoted">Downvoted</string>
+    <string name="content_description_hidden">Hidden</string>
+    <string name="content_description_saved">Saved</string>
+
+    <string name="comment">Comment</string>
+    <string name="enable_reply_notifications">Receive reply notifications</string>
+    <string name="disable_reply_notifications">Disable reply notifications</string>
+    <string name="reply_notifications_enabled">Reply notifications enabled</string>
+    <string name="reply_notifications_disabled">Reply notifications disabled</string>
+    <string name="toggle_reply_notifications_failed">Toggle reply notifications failed</string>
+    <string name="cannot_find_comment">Cannot find comment</string>
+
+    <string name="download_image">Download Image</string>
+    <string name="download_gif">Download Gif</string>
+    <string name="download_video">Download Video</string>
+    <string name="download_all_gallery_images">Download All Gallery Images</string>
+
+    <string name="proxy_http">HTTP</string>
+    <string name="proxy_socks">SOCKS</string>
+    <string name="proxy_direct">Direct</string>
+
+    <string name="jump_to_parent_comment">Jump to Parent Comment</string>
+    <string name="long_press_post_non_media_area">Long Press on Post (Non-Media Area)</string>
+    <string name="long_press_post_media">Long Press on Post Media</string>
+    <string name="show_post_options">Show Post Options</string>
+    <string name="preview_in_fullscreen">Preview in Fullscreen</string>
+
+    <string name="moderation">Moderation</string>
+    <string name="approve">Approve</string>
+    <string name="approved">Approved</string>
+    <string name="approve_failed">Approve failed</string>
+    <string name="remove">Remove</string>
+    <string name="removed">Removed</string>
+    <string name="remove_failed">Remove failed</string>
+    <string name="mark_as_spam">Mark as spam</string>
+    <string name="marked_as_spam">Marked as spam</string>
+    <string name="mark_as_spam_failed">Mark as spam failed</string>
+    <string name="set_sticky_post">Set sticky post</string>
+    <string name="set_sticky_post_failed">Set sticky post failed</string>
+    <string name="unset_sticky_post">Unset sticky post</string>
+    <string name="unset_sticky_post_failed">Unset sticky post failed</string>
+    <string name="lock">Lock</string>
+    <string name="locked">Locked</string>
+    <string name="lock_failed">Lock failed</string>
+    <string name="unlocked">Unlocked</string>
+    <string name="unlock_failed">Unlock failed</string>
+    <string name="distinguish_as_mod">Distinguish as moderator</string>
+    <string name="undistinguish_as_mod">Undistinguish as moderator</string>
+    <string name="distinguished_as_mod">Distinguished as mod</string>
+    <string name="distinguish_as_mod_failed">Distinguish as moderator failed</string>
+    <string name="undistinguished_as_mod">Undistinguished as moderator</string>
+    <string name="undistinguish_as_mod_failed">Undistinguish as moderator failed</string>
+    <string name="approved_status">Approved by %1$s</string>
+    <string name="post_removed_status">This post is removed</string>
+    <string name="post_spam_status">This post is removed as spam</string>
+    <string name="comment_removed_status">This comment is removed</string>
+    <string name="comment_spam_status">This comment is removed as spam</string>
+
+    <string name="copying_multi_reddit">Copying</string>
+
+    <string name="set_reminder">Set Reminder</string>
+    <string name="choose_a_predefined_reminder_time">Choose a predefined reminder time:</string>
+    <string name="in_6_hours">In 6 hours</string>
+    <string name="in_1_day">In 1 day</string>
+    <string name="in_2_days">In 2 days</string>
+    <string name="in_3_days">In 3 days</string>
+    <string name="in_1_week">In 1 week</string>
+    <string name="in_2_weeks">In 2 weeks</string>
+    <string name="or_set_a_custom_reminder_time">Or, set a custom reminder time:</string>
+    <string name="set_date">Set Date</string>
+    <string name="set_time">Set Time</string>
+    <string name="you_will_receive_reminder_notification">You\'ll receive a reminder notification on the date and time you set:</string>
+    <string name="please_set_reminder_time">Please set a reminder time</string>
+    <string name="reminder_time_must_be_in_future">The reminder time must be in the future.</string>
+    <string name="invalid_reminder_post_id">Invalid post id</string>
+    <string name="note">Note:</string>
+    <string name="reminder_reliability_notice_app_update_force_stop_title">"App Updates \u0026 Force Stops: "</string>
+    <string name="reminder_reliability_notice_app_update_force_stop_description">If you force-close the app or it updates, reminders will pause. Simply open the app once to reactivate them.</string>
+    <string name="reminder_reliability_notice_battery_title">"Battery \u0026 Timing: "</string>
+    <string name="reminder_reliability_notice_battery_description">To save battery, your phone may slightly delay reminders rather than triggering them at the exact time.</string>
+    <string name="reminder_reliability_notice_device_settings_title">"Device Settings: "</string>
+    <string name="reminder_reliability_notice_device_settings_description">Some phones (like Xiaomi, Oppo, or Vivo) require you to turn on "Auto-start" or "Background App Launch" in your phone\'s system settings. Otherwise, reminders will stop working if your phone restarts.</string>
+    <string name="reminder_set">Reminder set</string>
+    <string name="reminder">Reminder</string>
+
+    <string name="welcome_to_infinity_onboarding">Welcome to Infinity for Reddit!</string>
+    <string name="content_description_infinity_icon">Icon of Infinity for Reddit</string>
+    <string name="content_description_background">Background</string>
+    <string name="infinitely_better_experience">The infinitely better Reddit experience</string>
+    <string name="take_a_quick_tour">Take a quick tour</string>
+    <string name="next">Next</string>
+    <string name="get_started">Get started</string>
+    <string name="by_continuing_1">"By continuing, you agree to the "</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="by_continuing_2">" and "</string>
+    <string name="reddit_user_agreement">Reddit User Agreement</string>
+    <string name="by_continuing_3">.\nInfinity is an independent client for Reddit. Not affiliated or endorsed by Reddit.</string>
+    <string name="filter_what_you_see">Filter What You See</string>
+    <string name="filter_what_you_see_description">Advanced rules for a clean feed</string>
+    <string name="content_description_filter_what_you_see">Screenshot of filter what you see</string>
+    <string name="post_like_a_pro">Post Like a Pro</string>
+    <string name="post_like_a_pro_description">Every post type supported\nPlus GIFs in comments</string>
+    <string name="content_description_post_like_a_pro">Screenshot of post like a pro</string>
+    <string name="make_it_yours">Make it Yours</string>
+    <string name="make_it_yours_description">Customize every color, button, and gesture</string>
+    <string name="content_description_make_it_yours">Screenshot of make it yours</string>
+    <string name="private_browsing">Private Browsing</string>
+    <string name="private_browsing_description">Browse Anonymously\nLogin Anytime</string>
+    <string name="content_description_private_browsing">Screenshot of private browsing</string>
+    <string name="more_features">And There\'s More!</string>
+    <string name="more_features_description">Discover even more tools and features waiting for you inside the app</string>
+    <string name="content_description_more_features">Screenshot of more features</string>
 </resources>

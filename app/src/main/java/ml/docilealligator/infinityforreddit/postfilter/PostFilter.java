@@ -9,6 +9,7 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,8 +51,12 @@ public class PostFilter implements Parcelable {
     public String postTitleContainsStrings;
     @ColumnInfo(name = "exclude_subreddits")
     public String excludeSubreddits;
+    @ColumnInfo(name = "contain_subreddits")
+    public String containSubreddits;
     @ColumnInfo(name = "exclude_users")
     public String excludeUsers;
+    @ColumnInfo(name = "contain_users")
+    public String containUsers;
     @ColumnInfo(name = "contain_flairs")
     public String containFlairs;
     @ColumnInfo(name = "exclude_flairs")
@@ -72,6 +77,10 @@ public class PostFilter implements Parcelable {
     public boolean containVideoType = true;
     @ColumnInfo(name = "contain_gallery_type")
     public boolean containGalleryType = true;
+    @Ignore
+    public ArrayList<String> postTitleExcludesRegexes = new ArrayList<>();
+    @Ignore
+    public ArrayList<String> postTitleContainsRegexes = new ArrayList<>();
 
     public PostFilter() {
 
@@ -93,7 +102,9 @@ public class PostFilter implements Parcelable {
         postTitleExcludesStrings = in.readString();
         postTitleContainsStrings = in.readString();
         excludeSubreddits = in.readString();
+        containSubreddits = in.readString();
         excludeUsers = in.readString();
+        containUsers = in.readString();
         containFlairs = in.readString();
         excludeFlairs = in.readString();
         excludeDomains = in.readString();
@@ -104,6 +115,10 @@ public class PostFilter implements Parcelable {
         containGifType = in.readByte() != 0;
         containVideoType = in.readByte() != 0;
         containGalleryType = in.readByte() != 0;
+        postTitleExcludesRegexes = new ArrayList<>();
+        in.readStringList(postTitleExcludesRegexes);
+        postTitleContainsRegexes = new ArrayList<>();
+        in.readStringList(postTitleContainsRegexes);
     }
 
     public static final Creator<PostFilter> CREATOR = new Creator<PostFilter>() {
@@ -137,12 +152,6 @@ public class PostFilter implements Parcelable {
         if (postFilter.minComments > 0 && post.getNComments() < postFilter.minComments) {
             return false;
         }
-        if (postFilter.maxAwards > 0 && post.getNAwards() > postFilter.maxAwards) {
-            return false;
-        }
-        if (postFilter.minAwards > 0 && post.getNAwards() < postFilter.minAwards) {
-            return false;
-        }
         if (postFilter.onlyNSFW && !post.isNSFW()) {
             if (postFilter.onlySpoiler) {
                 return post.isSpoiler();
@@ -173,24 +182,47 @@ public class PostFilter implements Parcelable {
         if (!postFilter.containGalleryType && post.getPostType() == Post.GALLERY_TYPE) {
             return false;
         }
-        if (postFilter.postTitleExcludesRegex != null && !postFilter.postTitleExcludesRegex.equals("")) {
-            try {
-                Pattern pattern = Pattern.compile(postFilter.postTitleExcludesRegex);
-                Matcher matcher = pattern.matcher(post.getTitle());
-                if (matcher.find()) {
-                    return false;
-                }
-            } catch (PatternSyntaxException ignore) {}
+        if (postFilter.postTitleExcludesRegexes.isEmpty()
+                && postFilter.postTitleExcludesRegex != null
+                && !postFilter.postTitleExcludesRegex.isEmpty()
+        ) {
+            postFilter.postTitleExcludesRegexes.add(postFilter.postTitleExcludesRegex);
         }
-        if (postFilter.postTitleContainsRegex != null && !postFilter.postTitleContainsRegex.equals("")) {
-            try {
-                Pattern pattern = Pattern.compile(postFilter.postTitleContainsRegex);
-                Matcher matcher = pattern.matcher(post.getTitle());
-                if (!matcher.find()) {
-                    return false;
+        if (!postFilter.postTitleExcludesRegexes.isEmpty()) {
+            for (String regex : postFilter.postTitleExcludesRegexes) {
+                try {
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher matcher = pattern.matcher(post.getTitle());
+                    if (matcher.find()) {
+                        return false;
+                    }
+                } catch (PatternSyntaxException e) {
+                    e.printStackTrace();
                 }
-            } catch (PatternSyntaxException e) {
-                e.printStackTrace();
+            }
+        }
+        if (postFilter.postTitleContainsRegexes.isEmpty()
+                && postFilter.postTitleContainsRegex != null
+                && !postFilter.postTitleContainsRegex.isEmpty()
+        ) {
+            postFilter.postTitleContainsRegexes.add(postFilter.postTitleContainsRegex);
+        }
+        if (!postFilter.postTitleContainsRegexes.isEmpty()) {
+            boolean matched = false;
+            for (String regex : postFilter.postTitleContainsRegexes) {
+                try {
+                    Pattern pattern = Pattern.compile(regex);
+                    Matcher matcher = pattern.matcher(post.getTitle());
+                    if (matcher.find()) {
+                        matched = true;
+                        break;
+                    }
+                } catch (PatternSyntaxException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (!matched) {
+                return false;
             }
         }
         if (postFilter.postTitleExcludesStrings != null && !postFilter.postTitleExcludesStrings.equals("")) {
@@ -222,12 +254,40 @@ public class PostFilter implements Parcelable {
                 }
             }
         }
+        if (postFilter.containSubreddits != null && !postFilter.containSubreddits.equals("")) {
+            String[] subreddits = postFilter.containSubreddits.split(",", 0);
+            boolean hasRequiredSubreddit = false;
+            String subreddit = post.getSubredditName();
+            for (String s : subreddits) {
+                if (!s.trim().equals("") && subreddit.equalsIgnoreCase(s.trim())) {
+                    hasRequiredSubreddit = true;
+                    break;
+                }
+            }
+            if (!hasRequiredSubreddit) {
+                return false;
+            }
+        }
         if (postFilter.excludeUsers != null && !postFilter.excludeUsers.equals("")) {
             String[] users = postFilter.excludeUsers.split(",", 0);
             for (String u : users) {
                 if (!u.trim().equals("") && post.getAuthor().equalsIgnoreCase(u.trim())) {
                     return false;
                 }
+            }
+        }
+        if (postFilter.containUsers != null && !postFilter.containUsers.equals("")) {
+            String[] users = postFilter.containUsers.split(",", 0);
+            boolean hasRequiredUser = false;
+            String user = post.getAuthor();
+            for (String s : users) {
+                if (!s.trim().equals("") && user.equalsIgnoreCase(s.trim())) {
+                    hasRequiredUser = true;
+                    break;
+                }
+            }
+            if (!hasRequiredUser) {
+                return false;
             }
         }
         if (postFilter.excludeFlairs != null && !postFilter.excludeFlairs.equals("")) {
@@ -301,11 +361,13 @@ public class PostFilter implements Parcelable {
             postFilter.onlyNSFW = p.onlyNSFW ? p.onlyNSFW : postFilter.onlyNSFW;
             postFilter.onlySpoiler = p.onlySpoiler ? p.onlySpoiler : postFilter.onlySpoiler;
 
-            if (p.postTitleExcludesRegex != null && !p.postTitleExcludesRegex.equals("")) {
+            if (p.postTitleExcludesRegex != null && !p.postTitleExcludesRegex.isEmpty()) {
+                postFilter.postTitleExcludesRegexes.add(p.postTitleExcludesRegex);
                 postFilter.postTitleExcludesRegex = p.postTitleExcludesRegex;
             }
 
-            if (p.postTitleContainsRegex != null && !p.postTitleContainsRegex.equals("")) {
+            if (p.postTitleContainsRegex != null && !p.postTitleContainsRegex.isEmpty()) {
+                postFilter.postTitleContainsRegexes.add(p.postTitleContainsRegex);
                 postFilter.postTitleContainsRegex = p.postTitleContainsRegex;
             }
 
@@ -327,10 +389,22 @@ public class PostFilter implements Parcelable {
                 postFilter.excludeSubreddits = stringBuilder.toString();
             }
 
+            if (p.containSubreddits != null && !p.containSubreddits.equals("")) {
+                stringBuilder = new StringBuilder(postFilter.containSubreddits == null ? "" : postFilter.containSubreddits);
+                stringBuilder.append(",").append(p.containSubreddits);
+                postFilter.containSubreddits = stringBuilder.toString();
+            }
+
             if (p.excludeUsers != null && !p.excludeUsers.equals("")) {
                 stringBuilder = new StringBuilder(postFilter.excludeUsers == null ? "" : postFilter.excludeUsers);
                 stringBuilder.append(",").append(p.excludeUsers);
                 postFilter.excludeUsers = stringBuilder.toString();
+            }
+
+            if (p.containUsers != null && !p.containUsers.equals("")) {
+                stringBuilder = new StringBuilder(postFilter.containUsers == null ? "" : postFilter.containUsers);
+                stringBuilder.append(",").append(p.containUsers);
+                postFilter.containUsers = stringBuilder.toString();
             }
 
             if (p.containFlairs != null && !p.containFlairs.equals("")) {
@@ -390,7 +464,9 @@ public class PostFilter implements Parcelable {
         parcel.writeString(postTitleExcludesStrings);
         parcel.writeString(postTitleContainsStrings);
         parcel.writeString(excludeSubreddits);
+        parcel.writeString(containSubreddits);
         parcel.writeString(excludeUsers);
+        parcel.writeString(containUsers);
         parcel.writeString(containFlairs);
         parcel.writeString(excludeFlairs);
         parcel.writeString(excludeDomains);
@@ -401,5 +477,7 @@ public class PostFilter implements Parcelable {
         parcel.writeByte((byte) (containGifType ? 1 : 0));
         parcel.writeByte((byte) (containVideoType ? 1 : 0));
         parcel.writeByte((byte) (containGalleryType ? 1 : 0));
+        parcel.writeStringList(postTitleExcludesRegexes);
+        parcel.writeStringList(postTitleContainsRegexes);
     }
 }

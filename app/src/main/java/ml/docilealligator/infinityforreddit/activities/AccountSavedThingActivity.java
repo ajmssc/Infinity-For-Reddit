@@ -6,11 +6,17 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewGroupCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -27,22 +33,23 @@ import java.util.concurrent.Executor;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import ml.docilealligator.infinityforreddit.ActivityToolbarInterface;
 import ml.docilealligator.infinityforreddit.Infinity;
-import ml.docilealligator.infinityforreddit.MarkPostAsReadInterface;
 import ml.docilealligator.infinityforreddit.R;
 import ml.docilealligator.infinityforreddit.RedditDataRoomDatabase;
 import ml.docilealligator.infinityforreddit.bottomsheetfragments.PostLayoutBottomSheetFragment;
 import ml.docilealligator.infinityforreddit.customtheme.CustomThemeWrapper;
-import ml.docilealligator.infinityforreddit.customviews.slidr.Slidr;
 import ml.docilealligator.infinityforreddit.databinding.ActivityAccountSavedThingBinding;
 import ml.docilealligator.infinityforreddit.events.ChangeNSFWEvent;
 import ml.docilealligator.infinityforreddit.events.SwitchAccountEvent;
 import ml.docilealligator.infinityforreddit.fragments.CommentsListingFragment;
 import ml.docilealligator.infinityforreddit.fragments.PostFragment;
+import ml.docilealligator.infinityforreddit.post.MarkPostAsReadInterface;
 import ml.docilealligator.infinityforreddit.post.Post;
 import ml.docilealligator.infinityforreddit.post.PostPagingSource;
-import ml.docilealligator.infinityforreddit.readpost.InsertReadPost;
+import ml.docilealligator.infinityforreddit.post.PostType;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostModification;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostType;
+import ml.docilealligator.infinityforreddit.readpost.ReadPostsUtils;
 import ml.docilealligator.infinityforreddit.utils.SharedPreferencesUtils;
 import ml.docilealligator.infinityforreddit.utils.Utils;
 import retrofit2.Retrofit;
@@ -59,6 +66,9 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
     @Named("default")
     SharedPreferences mSharedPreferences;
     @Inject
+    @Named("post_history")
+    SharedPreferences mPostHistorySharedPreferences;
+    @Inject
     @Named("post_layout")
     SharedPreferences mPostLayoutSharedPreferences;
     @Inject
@@ -70,8 +80,6 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
     Executor mExecutor;
     private FragmentManager fragmentManager;
     private SectionsPagerAdapter sectionsPagerAdapter;
-    private String mAccessToken;
-    private String mAccountName;
     private PostLayoutBottomSheetFragment postLayoutBottomSheetFragment;
     private ActivityAccountSavedThingBinding binding;
 
@@ -87,9 +95,7 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
 
         applyCustomTheme();
 
-        if (mSharedPreferences.getBoolean(SharedPreferencesUtils.SWIPE_RIGHT_TO_GO_BACK, true)) {
-            mSliderPanel = Slidr.attach(this);
-        }
+        attachSliderPanelIfApplicable();
 
         mViewPager2 = binding.accountSavedThingViewPager2;
 
@@ -100,13 +106,32 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                 addOnOffsetChangedListener(binding.accountSavedThingAppbarLayout);
             }
 
-            if (isImmersiveInterface()) {
+            if (isImmersiveInterfaceRespectForcedEdgeToEdge()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     window.setDecorFitsSystemWindows(false);
                 } else {
                     window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
                 }
-                adjustToolbar(binding.accountSavedThingToolbar);
+
+                ViewGroupCompat.installCompatInsetsDispatch(binding.getRoot());
+                ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
+                    @NonNull
+                    @Override
+                    public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
+                        Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
+
+                        setMargins(binding.accountSavedThingToolbar,
+                                allInsets.left,
+                                allInsets.top,
+                                allInsets.right,
+                                BaseActivity.IGNORE_MARGIN);
+
+                        binding.accountSavedThingViewPager2.setPadding(allInsets.left, 0, allInsets.right, 0);
+
+                        return insets;
+                    }
+                });
+                //adjustToolbar(binding.accountSavedThingToolbar);
             }
         }
 
@@ -117,9 +142,6 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
         postLayoutBottomSheetFragment = new PostLayoutBottomSheetFragment();
 
         fragmentManager = getSupportFragmentManager();
-
-        mAccessToken = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCESS_TOKEN, null);
-        mAccountName = mCurrentAccountSharedPreferences.getString(SharedPreferencesUtils.ACCOUNT_NAME, null);
 
         initializeViewPager();
     }
@@ -139,7 +161,12 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
     }
 
     @Override
-    protected CustomThemeWrapper getCustomThemeWrapper() {
+    public SharedPreferences getCurrentAccountSharedPreferences() {
+        return mCurrentAccountSharedPreferences;
+    }
+
+    @Override
+    public CustomThemeWrapper getCustomThemeWrapper() {
         return mCustomThemeWrapper;
     }
 
@@ -150,13 +177,13 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
                 binding.accountSavedThingAppbarLayout,
                 binding.accountSavedThingCollapsingToolbarLayout,
                 binding.accountSavedThingToolbar);
+        applyAppBarScrollFlagsIfApplicable(binding.accountSavedThingCollapsingToolbarLayout);
         applyTabLayoutTheme(binding.accountSavedThingTabLayout);
     }
 
     private void initializeViewPager() {
         sectionsPagerAdapter = new SectionsPagerAdapter(this);
         binding.accountSavedThingViewPager2.setAdapter(sectionsPagerAdapter);
-        binding.accountSavedThingViewPager2.setOffscreenPageLimit(2);
         binding.accountSavedThingViewPager2.setUserInputEnabled(!mSharedPreferences.getBoolean(SharedPreferencesUtils.DISABLE_SWIPING_BETWEEN_TABS, false));
         new TabLayoutMediator(binding.accountSavedThingTabLayout, binding.accountSavedThingViewPager2, (tab, position) -> {
             switch (position) {
@@ -246,14 +273,15 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
     @Override
     public void postLayoutSelected(int postLayout) {
         if (sectionsPagerAdapter != null) {
-            mPostLayoutSharedPreferences.edit().putInt(SharedPreferencesUtils.POST_LAYOUT_USER_POST_BASE + mAccountName, postLayout).apply();
+            mPostLayoutSharedPreferences.edit().putInt(SharedPreferencesUtils.POST_LAYOUT_USER_POST_BASE + accountName, postLayout).apply();
             sectionsPagerAdapter.changePostLayout(postLayout);
         }
     }
 
     @Override
     public void markPostAsRead(Post post) {
-        InsertReadPost.insertReadPost(mRedditDataRoomDatabase, mExecutor, mAccountName, post.getId());
+        int readPostsLimit = ReadPostsUtils.GetReadPostsLimit(accountName, mPostHistorySharedPreferences);
+        ReadPostModification.insertReadPost(mRedditDataRoomDatabase, mExecutor, accountName, post.getId(), ReadPostType.READ_POSTS, readPostsLimit);
     }
 
     private class SectionsPagerAdapter extends FragmentStateAdapter {
@@ -268,20 +296,16 @@ public class AccountSavedThingActivity extends BaseActivity implements ActivityT
             if (position == 0) {
                 PostFragment fragment = new PostFragment();
                 Bundle bundle = new Bundle();
-                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostPagingSource.TYPE_USER);
-                bundle.putString(PostFragment.EXTRA_USER_NAME, mAccountName);
+                bundle.putInt(PostFragment.EXTRA_POST_TYPE, PostType.USER);
+                bundle.putString(PostFragment.EXTRA_USER_NAME, accountName);
                 bundle.putString(PostFragment.EXTRA_USER_WHERE, PostPagingSource.USER_WHERE_SAVED);
-                bundle.putString(PostFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-                bundle.putString(PostFragment.EXTRA_ACCOUNT_NAME, mAccountName);
                 bundle.putBoolean(PostFragment.EXTRA_DISABLE_READ_POSTS, true);
                 fragment.setArguments(bundle);
                 return fragment;
             }
             CommentsListingFragment fragment = new CommentsListingFragment();
             Bundle bundle = new Bundle();
-            bundle.putString(CommentsListingFragment.EXTRA_USERNAME, mAccountName);
-            bundle.putString(CommentsListingFragment.EXTRA_ACCESS_TOKEN, mAccessToken);
-            bundle.putString(CommentsListingFragment.EXTRA_ACCOUNT_NAME, mAccountName);
+            bundle.putString(CommentsListingFragment.EXTRA_USERNAME, accountName);
             bundle.putBoolean(CommentsListingFragment.EXTRA_ARE_SAVED_COMMENTS, true);
             fragment.setArguments(bundle);
             return fragment;
