@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.SpannableString;
@@ -13,6 +14,8 @@ import android.util.Log;
 import android.view.InflateException;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -26,6 +29,7 @@ import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
 import androidx.core.view.OnApplyWindowInsetsListener;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewGroupCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -106,11 +110,22 @@ public class LoginActivity extends BaseActivity {
                 addOnOffsetChangedListener(binding.appbarLayoutLoginActivity);
             }
 
+            Window window = getWindow();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.setDecorFitsSystemWindows(false);
+            } else {
+                window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+            }
+            ViewGroupCompat.installCompatInsetsDispatch(binding.getRoot());
             ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), new OnApplyWindowInsetsListener() {
                 @NonNull
                 @Override
                 public WindowInsetsCompat onApplyWindowInsets(@NonNull View v, @NonNull WindowInsetsCompat insets) {
-                    Insets allInsets = Utils.getInsets(insets, true, isForcedImmersiveInterface());
+                    // includeIME = false: this listener only positions the toolbar/linearLayout/FAB
+                    // around system bars. The IME inset itself must keep propagating (not be consumed
+                    // below) so windowSoftInputMode="adjustResize" can still resize the WebView for the
+                    // keyboard.
+                    Insets allInsets = Utils.getInsets(insets, false, isForcedImmersiveInterface());
 
                     setMargins(binding.toolbarLoginActivity,
                             allInsets.left,
@@ -131,7 +146,7 @@ public class LoginActivity extends BaseActivity {
                             (int) Utils.convertDpToPixel(16, LoginActivity.this) + allInsets.right,
                             (int) Utils.convertDpToPixel(16, LoginActivity.this) + allInsets.bottom);
 
-                    return WindowInsetsCompat.CONSUMED;
+                    return insets;
                 }
             });
         }
