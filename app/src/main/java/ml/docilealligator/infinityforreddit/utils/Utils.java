@@ -71,7 +71,10 @@ public final class Utils {
     public static final long MONTH_MILLIS = 30 * DAY_MILLIS;
     public static final long YEAR_MILLIS = 12 * MONTH_MILLIS;
 
-    public static String HOSTNAME_REGEX = "^(?=^.{1,253}$)(([a-z\\d]([a-z\\d-]{0,62}[a-z\\d])*[\\.]){1,3}[a-z]{1,61})$";
+    // The label group avoids a `(X{0,n}X)*`-style nested quantifier (flagged by CodeQL as
+    // exponential-backtracking-prone on long runs of repeated characters) by making the
+    // middle/end part of each label optional instead of unbounded-repeated.
+    public static String HOSTNAME_REGEX = "^(?=^.{1,253}$)((?:[a-z\\d](?:[a-z\\d-]{0,61}[a-z\\d])?[\\.]){1,3}[a-z]{1,61})$";
     private static final Pattern[] REGEX_PATTERNS = {
             Pattern.compile("((?<=[\\s])|^)/[rRuU]/[\\w-]+/{0,1}"),
             Pattern.compile("((?<=[\\s])|^)[rRuU]/[\\w-]+/{0,1}"),
