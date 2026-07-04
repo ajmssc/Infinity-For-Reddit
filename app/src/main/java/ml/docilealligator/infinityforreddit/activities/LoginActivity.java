@@ -192,8 +192,11 @@ public class LoginActivity extends BaseActivity {
                     return;
                 }
 
+                // Don't gate on a specific cookie name (e.g. "reddit_session") -- Reddit's set of
+                // session cookies isn't guaranteed to be stable, so let the identity fetch below be
+                // the actual source of truth for whether the harvested session is authenticated.
                 String cookieHeader = CookieManager.getInstance().getCookie(APIUtils.API_BASE_URI);
-                if (cookieHeader == null || !cookieHeader.contains("reddit_session")) {
+                if (cookieHeader == null || cookieHeader.isEmpty()) {
                     return;
                 }
 
