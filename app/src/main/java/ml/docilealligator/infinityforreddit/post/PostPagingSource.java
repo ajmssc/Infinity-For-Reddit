@@ -233,35 +233,38 @@ public class PostPagingSource extends ListenableFuturePagingSource<String, Post>
     public LoadResult<String, Post> transformData(Response<String> response) {
         if (response.isSuccessful()) {
             String responseString = response.body();
-            LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, readPostsList);
+            LinkedHashSet<Post> newPosts;
+            try {
+                newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, readPostsList);
+            } catch (ParsePost.ParsePostsException e) {
+                Throwable cause = e.getCause();
+                String reason = cause != null && cause.getMessage() != null ? cause.getMessage() : e.getMessage();
+                return new LoadResult.Error<>(new PostPagingSourceError(response.code(), "Error parsing posts: " + reason));
+            }
             String lastItem = ParsePost.getLastItem(responseString);
-            if (newPosts == null) {
-                return new LoadResult.Error<>(new PostPagingSourceError(response.code(), "Error parsing posts"));
+            int currentPostsSize = posts.size();
+            if (lastItem != null && lastItem.equals(previousLastItem)) {
+                lastItem = null;
+            }
+            previousLastItem = lastItem;
+
+            if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
+                setMetadataToAnonymousPosts(newPosts);
+            }
+
+            for (Post p : newPosts) {
+                if (existingPostIds.contains(p.getId())) {
+                    continue;
+                }
+
+                existingPostIds.add(p.getId());
+                posts.add(p);
+            }
+
+            if (currentPostsSize == posts.size()) {
+                return new LoadResult.Page<>(new ArrayList<>(), null, lastItem);
             } else {
-                int currentPostsSize = posts.size();
-                if (lastItem != null && lastItem.equals(previousLastItem)) {
-                    lastItem = null;
-                }
-                previousLastItem = lastItem;
-
-                if (Account.ANONYMOUS_ACCOUNT.equals(accountName)) {
-                    setMetadataToAnonymousPosts(newPosts);
-                }
-
-                for (Post p : newPosts) {
-                    if (existingPostIds.contains(p.getId())) {
-                        continue;
-                    }
-
-                    existingPostIds.add(p.getId());
-                    posts.add(p);
-                }
-
-                if (currentPostsSize == posts.size()) {
-                    return new LoadResult.Page<>(new ArrayList<>(), null, lastItem);
-                } else {
-                    return new LoadResult.Page<>(new ArrayList<>(posts.subList(currentPostsSize, posts.size())), null, lastItem);
-                }
+                return new LoadResult.Page<>(new ArrayList<>(posts.subList(currentPostsSize, posts.size())), null, lastItem);
             }
         } else {
             return new LoadResult.Error<>(new PostPagingSourceError(response.code(), "Error getting response"));

@@ -31,6 +31,12 @@ import ml.docilealligator.infinityforreddit.utils.Utils;
  */
 
 public class ParsePost {
+    public static class ParsePostsException extends RuntimeException {
+        public ParsePostsException(Throwable cause) {
+            super(cause);
+        }
+    }
+
     @WorkerThread
     public static LinkedHashSet<Post> parsePostsSync(String response, int nPosts, PostFilter postFilter, @Nullable ReadPostsListInterface readPostsList) {
         LinkedHashSet<Post> newPosts = new LinkedHashSet<>();
@@ -71,7 +77,7 @@ public class ParsePost {
             return newPosts;
         } catch (JSONException e) {
             e.printStackTrace();
-            return null;
+            throw new ParsePostsException(e);
         }
     }
 

@@ -90,19 +90,22 @@ public class HistoryPostPagingSource extends ListenableFuturePagingSource<String
             Response<String> response = historyPosts.execute();
             if (response.isSuccessful()) {
                 String responseString = response.body();
-                LinkedHashSet<Post> newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, NullReadPostsList.getInstance());
-                if (newPosts == null) {
-                    return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(response.code(), "Error parsing posts"));
-                } else {
-                    if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
-                        setMetadataToAnonymousPosts(newPosts);
-                    }
-
-                    if (newPosts.size() < 25) {
-                        return new LoadResult.Page<>(new ArrayList<>(newPosts), null, null);
-                    }
-                    return new LoadResult.Page<>(new ArrayList<>(newPosts), null, Long.toString(lastItem));
+                LinkedHashSet<Post> newPosts;
+                try {
+                    newPosts = ParsePost.parsePostsSync(responseString, -1, postFilter, NullReadPostsList.getInstance());
+                } catch (ParsePost.ParsePostsException e) {
+                    Throwable cause = e.getCause();
+                    String reason = cause != null && cause.getMessage() != null ? cause.getMessage() : e.getMessage();
+                    return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(response.code(), "Error parsing posts: " + reason));
                 }
+                if (accountName.equals(Account.ANONYMOUS_ACCOUNT)) {
+                    setMetadataToAnonymousPosts(newPosts);
+                }
+
+                if (newPosts.size() < 25) {
+                    return new LoadResult.Page<>(new ArrayList<>(newPosts), null, null);
+                }
+                return new LoadResult.Page<>(new ArrayList<>(newPosts), null, Long.toString(lastItem));
             } else {
                 return new LoadResult.Error<>(new PostPagingSource.PostPagingSourceError(response.code(), "Error getting response"));
             }
